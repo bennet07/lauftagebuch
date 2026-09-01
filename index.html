@@ -121,8 +121,12 @@ button{font:inherit;color:inherit}
   box-shadow:var(--schatten-karte);
 }
 @media (max-width:600px){
-  .kopfzahlen{grid-template-columns:repeat(2,1fr)}
-  .kopfzahl:last-child{grid-column:1 / -1}
+  /* Auf schmalen Bildschirmen als Zeilen: Bezeichnung links, Wert rechts */
+  .kopfzahlen{grid-template-columns:1fr}
+  .kopfzahl{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:13px 18px}
+  .kopfzahl-name{order:-1;margin-top:0;flex:1 1 auto}
+  .kopfzahl-wert{font-size:1.4rem;text-align:right;flex:0 0 auto}
+  .kopfzahl-wert.ist-text{font-size:1rem;padding:0}
 }
 .kopfzahl{
   background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 70%),var(--flaeche);
