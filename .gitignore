@@ -1,0 +1,5 @@
+# Lokale Verknüpfungen und Systemdateien, die nicht ins Repository gehören
+*.url
+Thumbs.db
+desktop.ini
+.DS_Store

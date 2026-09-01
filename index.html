@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lauftagebuch</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+
+:root{
+  color-scheme:dark;
+
+  /* Grundflächen – sehr dunkles, leicht kühles Grau, kein reines Schwarz */
+  --bg:#15181d;
+  --bg-tief:#111419;
+  --flaeche:#1c2027;
+  --flaeche-hoch:#232832;
+  --flaeche-sanft:#1a1e25;
+  --rand:#2b313b;
+  --rand-stark:#3b4351;
+
+  /* Text in vier Abstufungen */
+  --text:#eef1f6;
+  --text-2:#a9b2bf;
+  --text-3:#727c8b;
+  --text-4:#59616e;
+
+  /* Ein Akzent für alles Interaktive */
+  --akzent:#5b9cf8;
+  --akzent-sanft:rgba(91,156,248,.14);
+  --akzent-rand:rgba(91,156,248,.38);
+  --akzent-text:#0b1626;
+
+  /* Zwei Statusfarben, gedeckt */
+  --ok:#74b98d;
+  --ok-sanft:rgba(116,185,141,.13);
+  --ok-rand:rgba(116,185,141,.34);
+  --schmerz:#d9926a;
+  --schmerz-sanft:rgba(217,146,106,.13);
+  --schmerz-rand:rgba(217,146,106,.34);
+
+  /* Kritische Aktion */
+  --kritisch:#e06f5f;
+  --kritisch-sanft:rgba(224,111,95,.14);
+  --kritisch-rand:rgba(224,111,95,.4);
+
+  --radius-gross:20px;
+  --radius:16px;
+  --radius-klein:11px;
+
+  --schatten-karte:0 1px 1px rgba(0,0,0,.5),0 14px 30px -18px rgba(0,0,0,.9);
+  --schatten-hoch:0 2px 4px rgba(0,0,0,.4),0 30px 60px -22px rgba(0,0,0,.95);
+
+  --schrift:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI Variable Text","Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+
+  --weich:cubic-bezier(.22,.61,.36,1);
+}
+
+html{-webkit-text-size-adjust:100%}
+
+body{
+  margin:0;
+  background:var(--bg-tief);
+  color:var(--text);
+  font-family:var(--schrift);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  min-height:100vh;
+}
+
+/* Ruhiger Verlauf und feines Rauschen, damit die Ränder nicht leer wirken */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(1200px 640px at 8% -10%,rgba(91,156,248,.13),transparent 62%),
+    radial-gradient(1000px 700px at 104% 4%,rgba(116,185,141,.075),transparent 60%),
+    radial-gradient(1100px 780px at 46% 118%,rgba(217,146,106,.06),transparent 64%),
+    var(--bg);
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23r)' opacity='.22'/%3E%3C/svg%3E");
+}
+
+.huelle{max-width:840px;margin:0 auto;padding:0 24px 140px;position:relative}
+@media (max-width:560px){.huelle{padding:0 16px 110px}}
+
+h1,h2,h3{margin:0;font-weight:640}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--akzent);outline-offset:3px;border-radius:6px}
+
+/* ---------- Kopfbereich ---------- */
+
+.kopf{padding:44px 0 18px}
+.kopf h1{
+  font-size:clamp(2rem,5.4vw,2.75rem);
+  font-weight:700;
+  letter-spacing:-.035em;
+  line-height:1.05;
+}
+.kopf .unterzeile{
+  color:var(--text-2);
+  font-size:1.02rem;
+  margin-top:10px;
+  max-width:46ch;
+}
+
+.kopfzahlen{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  margin-top:30px;
+  background:var(--rand);
+  border:1px solid var(--rand);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--schatten-karte);
+}
+@media (max-width:600px){
+  .kopfzahlen{grid-template-columns:repeat(2,1fr)}
+  .kopfzahl:last-child{grid-column:1 / -1}
+}
+.kopfzahl{
+  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 70%),var(--flaeche);
+  padding:16px 18px;
+}
+.kopfzahl-wert{
+  font-size:1.7rem;font-weight:680;letter-spacing:-.03em;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.kopfzahl-wert.ist-text{font-size:1.02rem;font-weight:620;letter-spacing:-.015em;padding-top:9px;padding-bottom:8px}
+.kopfzahl-wert.ist-ok{color:var(--ok)}
+.kopfzahl-wert.ist-schmerz{color:var(--schmerz)}
+.kopfzahl-name{
+  font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--text-4);font-weight:640;margin-top:6px;
+}
+
+.reiter{
+  display:flex;gap:4px;margin-top:26px;
+  background:rgba(28,32,39,.82);
+  border:1px solid var(--rand);
+  padding:5px;border-radius:var(--radius);
+  position:sticky;top:10px;z-index:20;
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:var(--schatten-karte);
+}
+.reiter button{
+  flex:1;border:0;background:transparent;padding:10px 12px;border-radius:11px;
+  font-size:.94rem;font-weight:560;letter-spacing:-.005em;color:var(--text-3);
+  cursor:pointer;transition:background .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
+}
+.reiter button:hover{color:var(--text)}
+.reiter button:active{transform:translateY(1px)}
+.reiter button[aria-selected="true"]{
+  background:var(--flaeche-hoch);color:var(--text);
+  box-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+/* ---------- Karten ---------- */
+
+.karte{
+  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 84px),var(--flaeche);
+  border:1px solid var(--rand);
+  border-radius:var(--radius-gross);
+  padding:22px;
+  box-shadow:var(--schatten-karte);
+}
+.karte + .karte{margin-top:16px}
+.karte h2{font-size:1.12rem;letter-spacing:-.02em}
+
+/* ---------- Knöpfe ---------- */
+
+.knopf{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--rand-stark);
+  background:var(--flaeche-hoch);
+  border-radius:999px;padding:9px 16px;
+  font-size:.89rem;font-weight:560;letter-spacing:-.005em;
+  cursor:pointer;
+  transition:background .16s var(--weich),border-color .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
+}
+.knopf:hover{border-color:var(--text-4);background:#272d38}
+.knopf:active{transform:translateY(1px) scale(.985)}
+.knopf--primaer{background:var(--akzent);border-color:var(--akzent);color:var(--akzent-text);font-weight:620}
+.knopf--primaer:hover{background:#74acfa;border-color:#74acfa}
+.knopf--ok{background:var(--ok-sanft);border-color:var(--ok-rand);color:var(--ok)}
+.knopf--ok:hover{background:rgba(116,185,141,.2);border-color:var(--ok)}
+.knopf--schmerz{background:var(--schmerz-sanft);border-color:var(--schmerz-rand);color:var(--schmerz)}
+.knopf--schmerz:hover{background:rgba(217,146,106,.2);border-color:var(--schmerz)}
+.knopf--kritisch{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch);font-weight:620}
+.knopf--kritisch:hover{background:rgba(224,111,95,.24);border-color:var(--kritisch)}
+.knopf--klein{padding:6px 12px;font-size:.82rem}
+
+.link{
+  background:none;border:0;padding:2px 4px;color:var(--akzent);
+  font-size:.85rem;font-weight:560;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;
+  border-radius:5px;transition:color .16s var(--weich)
+}
+.link:hover{color:#8bb9fb}
+.link:active{transform:translateY(1px)}
+.link--still{color:var(--text-3)}
+.link--still:hover{color:var(--text-2)}
+
+/* ---------- Chips und Felder ---------- */
+
+.chip-reihe{display:flex;flex-wrap:wrap;gap:7px}
+.chip{
+  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);
+  border-radius:999px;padding:7px 13px;font-size:.85rem;color:var(--text-2);
+  cursor:pointer;
+  transition:background .16s var(--weich),border-color .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
+}
+.chip:hover{background:#272d38;color:var(--text);border-color:var(--text-4)}
+.chip:active{transform:translateY(1px) scale(.98)}
+.chip[aria-pressed="true"]{
+  background:var(--akzent);border-color:var(--akzent);color:var(--akzent-text);font-weight:620;
+}
+.feld-gruppe{margin-top:16px}
+.feld-gruppe .feld-titel{
+  font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--text-4);font-weight:640;margin-bottom:8px;display:block;
+}
+.fehlt .feld-titel{color:var(--kritisch)}
+.fehlt .chip-reihe{outline:1px dashed var(--kritisch-rand);outline-offset:6px;border-radius:12px}
+
+input[type="text"],input[type="date"],textarea,select{
+  font:inherit;color:var(--text);background:var(--flaeche-sanft);
+  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
+  padding:10px 12px;width:100%;max-width:100%;
+  transition:border-color .16s var(--weich),background .16s var(--weich);
+}
+input[type="text"]:hover,input[type="date"]:hover,textarea:hover,select:hover{border-color:var(--text-4)}
+input[type="text"]:focus,input[type="date"]:focus,textarea:focus,select:focus{
+  outline:none;border-color:var(--akzent);background:var(--flaeche-hoch);
+  box-shadow:0 0 0 3px var(--akzent-sanft);
+}
+input[type="file"]{font-size:.86rem;max-width:100%;color:var(--text-2)}
+textarea{min-height:130px;resize:vertical;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6}
+label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640;margin-bottom:7px}
+
+/* ---------- Tag und Aktivität ---------- */
+
+.tag{margin-top:38px}
+.tag-kopf{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  margin-bottom:12px;padding:0 4px;
+}
+.tag-datum{font-size:1.06rem;font-weight:660;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tag-wochentag{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:600}
+
+.aktivitaet{
+  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 92px),var(--flaeche);
+  border:1px solid var(--rand);
+  border-radius:var(--radius-gross);
+  padding:20px;
+  box-shadow:var(--schatten-karte);
+  position:relative;overflow:hidden;
+}
+.aktivitaet::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--rand-stark);
+}
+.aktivitaet.ist-lauf::before{background:linear-gradient(180deg,var(--akzent),rgba(91,156,248,.25))}
+.aktivitaet + .aktivitaet{margin-top:10px}
+.akt-kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.akt-titel{font-size:1.06rem;font-weight:620;letter-spacing:-.02em;overflow-wrap:anywhere}
+.akt-meta{font-size:.78rem;color:var(--text-3);margin-top:3px;letter-spacing:.005em}
+.akt-werkzeuge{display:flex;align-items:center;gap:6px;flex-shrink:0}
+
+.marke{
+  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);color:var(--text-3);
+  border-radius:999px;padding:4px 11px;font-size:.73rem;font-weight:620;letter-spacing:.01em;
+  cursor:pointer;white-space:nowrap;
+  transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich),transform .08s var(--weich);
+}
+.marke:hover{border-color:var(--text-4);color:var(--text)}
+.marke:active{transform:translateY(1px)}
+.marke.ist-lauf{background:var(--akzent-sanft);color:var(--akzent);border-color:var(--akzent-rand)}
+.weg{
+  border:0;background:transparent;color:var(--text-4);
+  font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:9px;cursor:pointer;
+  transition:background .16s var(--weich),color .16s var(--weich);
+}
+.weg:hover{background:var(--kritisch-sanft);color:var(--kritisch)}
+.weg:active{transform:translateY(1px)}
+
+.kennzahlen{display:flex;flex-wrap:wrap;gap:22px;margin-top:16px}
+.kz-wert{font-size:1.16rem;font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.025em}
+.kz-name{font-size:.68rem;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
+
+details.alle{margin-top:16px}
+details.alle > summary{
+  cursor:pointer;font-size:.79rem;color:var(--text-3);font-weight:600;
+  padding:5px 0;list-style:none;display:inline-flex;align-items:center;gap:7px;border-radius:7px;
+  transition:color .16s var(--weich);
+}
+details.alle > summary::-webkit-details-marker{display:none}
+details.alle > summary::before{content:"\25B8";font-size:.72rem;display:inline-block;transition:transform .2s var(--weich)}
+details.alle[open] > summary::before{transform:rotate(90deg)}
+details.alle > summary:hover{color:var(--text)}
+.werte{
+  display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:4px 18px;
+  margin:10px 0 0;padding:14px 16px;
+  background:var(--flaeche-sanft);border:1px solid var(--rand);
+  border-radius:var(--radius-klein);font-size:.82rem;
+}
+.werte dt{color:var(--text-3);min-width:0;overflow-wrap:anywhere}
+.werte dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
+
+/* ---------- Befinden ---------- */
+
+.befinden{margin-top:16px;padding-top:16px;border-top:1px solid var(--rand)}
+.bef-knoepfe{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640;width:100%;margin-bottom:2px}
+.bef-fazit{
+  display:inline-flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:10px 16px;border-radius:999px;font-size:.89rem;font-weight:620;
+  border:1px solid transparent;max-width:100%;
+}
+.bef-fazit.ist-ok{background:var(--ok-sanft);color:var(--ok);border-color:var(--ok-rand)}
+.bef-fazit.ist-schmerz{background:var(--schmerz-sanft);color:var(--schmerz);border-color:var(--schmerz-rand)}
+.bef-fazit .link{color:inherit;opacity:.8;font-weight:560}
+.bef-fazit .link:hover{opacity:1;color:inherit}
+.bef-notiz{font-weight:400;font-size:.83rem;opacity:.85;overflow-wrap:anywhere}
+.formular{
+  margin-top:14px;background:var(--flaeche-sanft);
+  border:1px solid var(--rand);border-radius:var(--radius);padding:18px;
+}
+.formular-fuss{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
+
+/* ---------- Noch offen ---------- */
+
+.offen-karte{
+  border-color:var(--akzent-rand);
+  background:linear-gradient(180deg,rgba(91,156,248,.09),rgba(91,156,248,.02) 120px),var(--flaeche);
+  margin-top:28px;
+}
+.offen-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.offen-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
+.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640}
+.offen-zeile{border-top:1px solid var(--rand);padding-top:14px;margin-top:14px}
+.offen-info{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;font-size:.92rem}
+.offen-datum{font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
+.offen-detail{color:var(--text-3);font-size:.85rem}
+.offen-zeile .bef-knoepfe{margin-top:11px}
+
+/* ---------- Leiste und Filter ---------- */
+
+.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:30px}
+.zaehler{font-size:.79rem;color:var(--text-3);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.schalter{display:flex;background:var(--flaeche);border:1px solid var(--rand);border-radius:999px;padding:4px}
+.schalter button{
+  border:0;background:transparent;padding:6px 15px;border-radius:999px;
+  font-size:.82rem;font-weight:560;color:var(--text-3);cursor:pointer;
+  transition:background .16s var(--weich),color .16s var(--weich);
+}
+.schalter button:hover{color:var(--text)}
+.schalter button:active{transform:translateY(1px)}
+.schalter button[aria-pressed="true"]{background:var(--flaeche-hoch);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+
+/* ---------- Leerzustand ---------- */
+
+.leer{text-align:center;padding:56px 28px 52px;margin-top:28px}
+.leer-bild{color:var(--akzent);opacity:.6;margin-bottom:26px;display:flex;justify-content:center}
+.leer-bild svg{width:170px;height:auto;max-width:70%}
+.leer h2{font-size:1.5rem;letter-spacing:-.03em;margin-bottom:12px}
+.leer p{color:var(--text-2);font-size:1rem;max-width:44ch;margin:0 auto 26px}
+
+/* ---------- Zusatztag ---------- */
+
+.zusatz-tag{
+  background:var(--flaeche-sanft);border:1px dashed var(--rand-stark);
+  border-radius:var(--radius);padding:13px 18px;font-size:.89rem;color:var(--text-2);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag{margin-top:10px}
+.zusatz-formular{margin-top:44px}
+.zusatz-formular > summary{
+  cursor:pointer;font-size:.82rem;color:var(--text-3);font-weight:600;
+  padding:8px 0;border-radius:7px;transition:color .16s var(--weich);
+}
+.zusatz-formular > summary:hover{color:var(--text)}
+.zusatz-gitter{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media (max-width:520px){.zusatz-gitter{grid-template-columns:1fr}}
+
+.hinweis-text{font-size:.88rem;color:var(--text-2);margin-top:10px;line-height:1.6}
+.ergebnis{
+  margin-top:16px;font-size:.88rem;padding:13px 16px;border-radius:var(--radius-klein);
+  background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--akzent);font-weight:560;
+}
+.trenn{height:1px;background:var(--rand);margin:22px 0}
+pre.ausgabe{
+  background:var(--flaeche-sanft);border:1px solid var(--rand);border-radius:var(--radius-klein);
+  padding:16px;overflow-x:auto;font-size:.78rem;line-height:1.55;max-height:60vh;margin-top:18px;
+  white-space:pre;color:var(--text-2);
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+
+/* ---------- Bestätigungsdialog ---------- */
+
+.dialog-huelle{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.dialog-schirm{
+  position:absolute;inset:0;background:rgba(8,10,13,.72);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  opacity:0;transition:opacity .2s var(--weich);
+}
+.dialog{
+  position:relative;width:100%;max-width:420px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),transparent 100px),var(--flaeche);
+  border:1px solid var(--rand-stark);border-radius:var(--radius-gross);
+  padding:26px;box-shadow:var(--schatten-hoch);
+  opacity:0;transform:translateY(12px) scale(.98);
+  transition:opacity .2s var(--weich),transform .2s var(--weich);
+}
+.dialog-huelle.offen .dialog-schirm{opacity:1}
+.dialog-huelle.offen .dialog{opacity:1;transform:none}
+.dialog h2{font-size:1.22rem;letter-spacing:-.025em}
+.dialog p{margin-top:10px;color:var(--text-2);font-size:.94rem;line-height:1.6}
+.dialog-fuss{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+
+/* ---------- Einblenden beim Scrollen ---------- */
+
+.einblenden{
+  opacity:0;transform:translateY(15px);
+  transition:opacity .45s var(--weich),transform .45s var(--weich);
+}
+.einblenden.sichtbar{opacity:1;transform:none}
+
+/* ---------- Rückmeldung ---------- */
+
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);
+  background:var(--flaeche-hoch);color:var(--text);
+  border:1px solid var(--rand-stark);
+  padding:12px 22px;border-radius:999px;
+  font-size:.88rem;font-weight:560;opacity:0;pointer-events:none;
+  transition:opacity .22s var(--weich),transform .22s var(--weich);
+  z-index:120;box-shadow:var(--schatten-hoch);max-width:90vw;text-align:center;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+#toast.sichtbar{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.001ms !important;animation-duration:.001ms !important}
+  .einblenden{opacity:1 !important;transform:none !important}
+  #toast{transform:translate(-50%,0)}
+}
+</style>
+</head>
+<body>
+<div class="huelle">
+  <header class="kopf">
+    <h1>Lauftagebuch</h1>
+    <p class="unterzeile">Aktivitäten aus Garmin, Befinden nach dem Lauf, Export als Text.</p>
+    <div class="kopfzahlen" id="kopfzahlen" hidden></div>
+    <nav class="reiter" role="tablist" aria-label="Bereiche">
+      <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf">Verlauf</button>
+      <button type="button" role="tab" id="reiter-import" aria-selected="false" data-tab="import">Import</button>
+      <button type="button" role="tab" id="reiter-export" aria-selected="false" data-tab="export">Export</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="tab-verlauf" role="tabpanel" aria-labelledby="reiter-verlauf"></section>
+
+    <section id="tab-import" role="tabpanel" aria-labelledby="reiter-import" hidden>
+      <div class="karte">
+        <h2>CSV importieren</h2>
+        <p class="hinweis-text">Aktivitätenliste aus Garmin Connect als CSV exportieren, dann hier die Datei auswählen oder den Inhalt einfügen. Bereits vorhandene Aktivitäten werden übersprungen.</p>
+        <div style="margin-top:14px">
+          <label class="feld" for="datei">Datei</label>
+          <input type="file" id="datei" accept=".csv,text/csv">
+        </div>
+        <div class="trenn"></div>
+        <label class="feld" for="einfuegen">Oder CSV-Inhalt einfügen</label>
+        <textarea id="einfuegen" spellcheck="false" placeholder="Aktivitätstyp,Datum,Favorit,Titel,Distanz,…"></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="knopf knopf--primaer" id="text-importieren">Text importieren</button>
+          <button type="button" class="knopf" id="text-leeren">Feld leeren</button>
+        </div>
+        <div id="import-ergebnis" role="status" aria-live="polite"></div>
+      </div>
+
+      <div class="karte">
+        <h2>Einstufung Lauf / kein Lauf</h2>
+        <p class="hinweis-text">Die Einstufung entsteht automatisch aus Aktivitätstyp und Titel. In der Verlaufsansicht lässt sie sich pro Aktivität umschalten; eine manuelle Einstufung bleibt bei neuen Importen erhalten.</p>
+        <div style="margin-top:12px">
+          <button type="button" class="knopf" id="neu-einstufen">Automatisch neu einstufen</button>
+        </div>
+        <p class="hinweis-text" id="manuell-zaehler"></p>
+      </div>
+    </section>
+
+    <section id="tab-export" role="tabpanel" aria-labelledby="reiter-export" hidden>
+      <div class="karte">
+        <h2>Export als Text</h2>
+        <p class="hinweis-text">Ein Block pro Tag, chronologisch aufsteigend, mit allen belegten Feldern jeder Aktivität. Läufe ohne Befinden sind als „nicht erfasst“ ausgewiesen.</p>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="knopf knopf--primaer" id="kopieren">Kopieren</button>
+          <button type="button" class="knopf" id="anzeigen">Text anzeigen</button>
+        </div>
+        <div id="export-bereich"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div class="dialog-huelle" id="dialog-huelle" hidden>
+  <div class="dialog-schirm" id="dialog-schirm"></div>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-titel" aria-describedby="dialog-text">
+    <h2 id="dialog-titel">Löschen?</h2>
+    <p id="dialog-text"></p>
+    <div class="dialog-fuss">
+      <button type="button" class="knopf" id="dialog-abbrechen">Abbrechen</button>
+      <button type="button" class="knopf knopf--kritisch" id="dialog-bestaetigen">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SCHLUESSEL_AKT = 'lauftagebuch.aktivitaeten.v2';
+  var SCHLUESSEL_BEF = 'lauftagebuch.befinden.v2';
+
+  var ORTE = ['Knie', 'Schienbein', 'Ferse', 'Hüfte', 'Achillessehne', 'Wade', 'Fuß', 'Rücken'];
+  var SEITEN = ['links', 'rechts', 'beidseitig', 'keine Angabe'];
+  var STAERKEN = [1, 2, 3, 4, 5];
+  var WOCHENTAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+  var ZUSATZ_ARTEN = [
+    { wert: 'nichts', label: 'nichts' },
+    { wert: 'kraft', label: 'Kraft/Mobility' },
+    { wert: 'andere', label: 'andere Sportart' }
+  ];
+  var KENNZAHLEN = [
+    { name: 'Distanz', spalten: ['Distanz'], nullVerbergen: true },
+    { name: 'Zeit', spalten: ['Zeit', 'Zeit in Bewegung'], nullVerbergen: true },
+    { name: 'Ø HF', spalten: ['Ø Herzfrequenz'], nullVerbergen: true },
+    { name: 'Ø Schrittfr.', spalten: ['Ø Schrittfrequenz (Laufen)', 'Ø Schrittfrequenz'], nullVerbergen: true },
+    { name: 'Anstieg', spalten: ['Anstieg gesamt'], nullVerbergen: true }
+  ];
+
+  /* ---------- kleine Helfer ---------- */
+
+  function el(tag, attrs, kinder) {
+    var n = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+        var v = attrs[k];
+        if (v === null || v === undefined || v === false) continue;
+        if (k === 'text') n.textContent = v;
+        else if (k === 'class') n.className = v;
+        else if (k === 'html') { /* bewusst nicht unterstützt */ }
+        else if (k.indexOf('on') === 0 && typeof v === 'function') n.addEventListener(k.slice(2), v);
+        else if (v === true) n.setAttribute(k, '');
+        else n.setAttribute(k, String(v));
+      }
+    }
+    if (kinder) {
+      var liste = Array.isArray(kinder) ? kinder : [kinder];
+      for (var i = 0; i < liste.length; i++) {
+        var kind = liste[i];
+        if (kind === null || kind === undefined || kind === false) continue;
+        n.appendChild(typeof kind === 'string' ? document.createTextNode(kind) : kind);
+      }
+    }
+    return n;
+  }
+
+  function leeren(knoten) { while (knoten.firstChild) knoten.removeChild(knoten.firstChild); }
+
+  var toastTimer = null;
+  function quittiere(text) {
+    var t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('sichtbar');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('sichtbar'); }, 2000);
+  }
+
+  function neueId() {
+    return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function istLeer(wert) {
+    return wert === null || wert === undefined || String(wert).trim() === '' || String(wert).trim() === '--';
+  }
+
+  /* ---------- Speicher ---------- */
+
+  var aktivitaeten = [];
+  var befinden = { eintraege: [], zusatztage: [] };
+
+  function ladeRoh(schluessel) {
+    try {
+      var roh = window.localStorage.getItem(schluessel);
+      if (!roh) return null;
+      return JSON.parse(roh);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function ladeAktivitaeten() {
+    var daten = ladeRoh(SCHLUESSEL_AKT);
+    if (!Array.isArray(daten)) return [];
+    var sauber = [];
+    for (var i = 0; i < daten.length; i++) {
+      var a = daten[i];
+      if (!a || typeof a !== 'object') continue;
+      if (!a.felder || typeof a.felder !== 'object') continue;
+      sauber.push({
+        id: typeof a.id === 'string' && a.id ? a.id : neueId(),
+        datum: typeof a.datum === 'string' ? a.datum : '',
+        datumOriginal: typeof a.datumOriginal === 'string' ? a.datumOriginal : '',
+        felder: a.felder,
+        istLaufAuto: !!a.istLaufAuto,
+        istLaufManuell: (a.istLaufManuell === true || a.istLaufManuell === false) ? a.istLaufManuell : null
+      });
+    }
+    return sauber;
+  }
+
+  function ladeBefinden() {
+    var daten = ladeRoh(SCHLUESSEL_BEF);
+    var ergebnis = { eintraege: [], zusatztage: [] };
+    if (!daten) return ergebnis;
+    var eintraege = Array.isArray(daten) ? daten : (Array.isArray(daten.eintraege) ? daten.eintraege : []);
+    var zusatz = (!Array.isArray(daten) && Array.isArray(daten.zusatztage)) ? daten.zusatztage : [];
+    var gesehen = {};
+    for (var i = 0; i < eintraege.length; i++) {
+      var e = eintraege[i];
+      if (!e || typeof e !== 'object') continue;
+      if (typeof e.aktivitaetId !== 'string' || !e.aktivitaetId) continue;
+      if (gesehen[e.aktivitaetId]) continue;
+      gesehen[e.aktivitaetId] = true;
+      ergebnis.eintraege.push({
+        aktivitaetId: e.aktivitaetId,
+        art: e.art === 'schmerz' ? 'schmerz' : 'keine',
+        ort: typeof e.ort === 'string' ? e.ort : '',
+        seite: typeof e.seite === 'string' ? e.seite : '',
+        staerke: typeof e.staerke === 'number' ? e.staerke : null,
+        notiz: typeof e.notiz === 'string' ? e.notiz : '',
+        erfasstAm: typeof e.erfasstAm === 'string' ? e.erfasstAm : ''
+      });
+    }
+    var gesehenTag = {};
+    for (var j = 0; j < zusatz.length; j++) {
+      var z = zusatz[j];
+      if (!z || typeof z !== 'object') continue;
+      if (typeof z.datum !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(z.datum)) continue;
+      if (gesehenTag[z.datum]) continue;
+      gesehenTag[z.datum] = true;
+      ergebnis.zusatztage.push({
+        datum: z.datum,
+        art: typeof z.art === 'string' ? z.art : 'nichts'
+      });
+    }
+    return ergebnis;
+  }
+
+  function speichere(schluessel, daten) {
+    try {
+      window.localStorage.setItem(schluessel, JSON.stringify(daten));
+      return true;
+    } catch (e) {
+      quittiere('Speichern nicht möglich (Speicher voll oder blockiert)');
+      return false;
+    }
+  }
+
+  function speichereAktivitaeten() { return speichere(SCHLUESSEL_AKT, aktivitaeten); }
+  function speichereBefinden() { return speichere(SCHLUESSEL_BEF, befinden); }
+
+  /* ---------- CSV ---------- */
+
+  function erkenneTrenner(text) {
+    var kandidaten = [',', ';', '\t'];
+    var zaehler = [0, 0, 0];
+    var inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text.charAt(i);
+      if (c === '"') { inQ = !inQ; continue; }
+      if (inQ) continue;
+      if (c === '\n') break;
+      var idx = kandidaten.indexOf(c);
+      if (idx >= 0) zaehler[idx]++;
+    }
+    var best = 0;
+    for (var j = 1; j < zaehler.length; j++) if (zaehler[j] > zaehler[best]) best = j;
+    return zaehler[best] > 0 ? kandidaten[best] : ',';
+  }
+
+  function parseCSV(text) {
+    if (typeof text !== 'string') return { kopf: [], zeilen: [] };
+    if (text.charCodeAt(0) === 65279) text = text.slice(1);
+    if (!text.trim()) return { kopf: [], zeilen: [] };
+    var trenner = erkenneTrenner(text);
+    var zeilen = [];
+    var zeile = [];
+    var feld = '';
+    var inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text.charAt(i);
+      if (inQ) {
+        if (c === '"') {
+          if (text.charAt(i + 1) === '"') { feld += '"'; i++; }
+          else inQ = false;
+        } else {
+          feld += c;
+        }
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === trenner) { zeile.push(feld); feld = ''; }
+        else if (c === '\n') { zeile.push(feld); zeilen.push(zeile); zeile = []; feld = ''; }
+        else if (c === '\r') { /* ignorieren */ }
+        else feld += c;
+      }
+    }
+    if (feld !== '' || zeile.length > 0) { zeile.push(feld); zeilen.push(zeile); }
+
+    var gefiltert = [];
+    for (var z = 0; z < zeilen.length; z++) {
+      var hatInhalt = false;
+      for (var s = 0; s < zeilen[z].length; s++) {
+        if (String(zeilen[z][s]).trim() !== '') { hatInhalt = true; break; }
+      }
+      if (hatInhalt) gefiltert.push(zeilen[z]);
+    }
+    if (!gefiltert.length) return { kopf: [], zeilen: [] };
+
+    var kopf = [];
+    for (var k = 0; k < gefiltert[0].length; k++) {
+      var name = String(gefiltert[0][k]).trim();
+      if (!name) name = 'Spalte ' + (k + 1);
+      var basis = name, zusatz = 2;
+      while (kopf.indexOf(name) >= 0) { name = basis + ' (' + zusatz + ')'; zusatz++; }
+      kopf.push(name);
+    }
+    return { kopf: kopf, zeilen: gefiltert.slice(1) };
+  }
+
+  function normalisiereWert(roh) {
+    if (roh === null || roh === undefined) return '';
+    var w = String(roh).trim();
+    if (w === '--') return '';
+    return w;
+  }
+
+  function findeDatumSpalte(kopf) {
+    for (var i = 0; i < kopf.length; i++) {
+      var h = kopf[i].toLowerCase();
+      if (h === 'datum' || h === 'date') return i;
+    }
+    for (var j = 0; j < kopf.length; j++) {
+      if (/datum|date/i.test(kopf[j])) return j;
+    }
+    return -1;
+  }
+
+  function normalisiereDatum(roh) {
+    if (!roh) return '';
+    var w = String(roh).trim();
+    var m = w.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (m) return m[1] + '-' + pad2(m[2]) + '-' + pad2(m[3]);
+    m = w.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    if (m) return m[3] + '-' + pad2(m[2]) + '-' + pad2(m[1]);
+    m = w.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})(?!\d)/);
+    if (m) return '20' + m[3] + '-' + pad2(m[2]) + '-' + pad2(m[1]);
+    return '';
+  }
+
+  function pad2(n) { n = String(parseInt(n, 10)); return n.length < 2 ? '0' + n : n; }
+
+  function signatur(felder) {
+    var schluessel = Object.keys(felder).sort();
+    var paare = [];
+    for (var i = 0; i < schluessel.length; i++) {
+      paare.push([schluessel[i], felder[schluessel[i]]]);
+    }
+    return JSON.stringify(paare);
+  }
+
+  function wertVon(akt, spalte) {
+    if (Object.prototype.hasOwnProperty.call(akt.felder, spalte)) return akt.felder[spalte];
+    var ziel = spalte.toLowerCase();
+    var schluessel = Object.keys(akt.felder);
+    for (var i = 0; i < schluessel.length; i++) {
+      if (schluessel[i].toLowerCase() === ziel) return akt.felder[schluessel[i]];
+    }
+    return '';
+  }
+
+  /* ---------- Lauf-Erkennung ---------- */
+
+  function erkenneLaufAuto(typ, titel) {
+    var s = ((typ || '') + ' ' + (titel || '')).toLowerCase();
+    if (/gehen|geh-|spazier|wander|walk|hike|nordic/.test(s)) return false;
+    return /lauf|run|jogg|trail/.test(s);
+  }
+
+  function istLauf(akt) {
+    if (akt.istLaufManuell === true || akt.istLaufManuell === false) return akt.istLaufManuell;
+    return !!akt.istLaufAuto;
+  }
+
+  /* ---------- Import ---------- */
+
+  function importiere(text) {
+    var ergebnis = parseCSV(text);
+    if (!ergebnis.kopf.length) {
+      return { fehler: 'Keine Tabellendaten erkannt.' };
+    }
+    var datumIndex = findeDatumSpalte(ergebnis.kopf);
+    if (datumIndex < 0) {
+      return { fehler: 'Keine Datumsspalte gefunden.' };
+    }
+
+    var vorhanden = {};
+    for (var i = 0; i < aktivitaeten.length; i++) {
+      vorhanden[signatur(aktivitaeten[i].felder)] = true;
+    }
+
+    var neu = 0, uebersprungen = 0, ohneDatum = 0;
+    var zugefuegt = [];
+
+    for (var z = 0; z < ergebnis.zeilen.length; z++) {
+      var zeile = ergebnis.zeilen[z];
+      var felder = {};
+      for (var s = 0; s < ergebnis.kopf.length; s++) {
+        felder[ergebnis.kopf[s]] = normalisiereWert(zeile[s]);
+      }
+      var datumOriginal = String(zeile[datumIndex] === undefined ? '' : zeile[datumIndex]).trim();
+      var datum = normalisiereDatum(datumOriginal);
+      if (!datum) { ohneDatum++; continue; }
+
+      var sig = signatur(felder);
+      if (vorhanden[sig]) { uebersprungen++; continue; }
+      vorhanden[sig] = true;
+
+      zugefuegt.push({
+        id: neueId(),
+        datum: datum,
+        datumOriginal: datumOriginal,
+        felder: felder,
+        istLaufAuto: erkenneLaufAuto(
+          sucheFeld(felder, ['aktivitätstyp', 'aktivitaetstyp', 'activity type', 'typ']),
+          sucheFeld(felder, ['titel', 'title', 'name'])
+        ),
+        istLaufManuell: null
+      });
+      neu++;
+    }
+
+    if (zugefuegt.length) {
+      aktivitaeten = aktivitaeten.concat(zugefuegt);
+      aktivitaeten.sort(sortiereAbsteigend);
+      speichereAktivitaeten();
+    }
+    return { neu: neu, uebersprungen: uebersprungen, ohneDatum: ohneDatum };
+  }
+
+  function sucheFeld(felder, namen) {
+    var schluessel = Object.keys(felder);
+    for (var n = 0; n < namen.length; n++) {
+      for (var i = 0; i < schluessel.length; i++) {
+        if (schluessel[i].toLowerCase() === namen[n]) return felder[schluessel[i]];
+      }
+    }
+    return '';
+  }
+
+  function sortiereAbsteigend(a, b) {
+    if (a.datum !== b.datum) return a.datum < b.datum ? 1 : -1;
+    var za = a.datumOriginal || '', zb = b.datumOriginal || '';
+    if (za !== zb) return za < zb ? 1 : -1;
+    return 0;
+  }
+
+  /* ---------- Befinden ---------- */
+
+  function befindenFuer(id) {
+    for (var i = 0; i < befinden.eintraege.length; i++) {
+      if (befinden.eintraege[i].aktivitaetId === id) return befinden.eintraege[i];
+    }
+    return null;
+  }
+
+  function setzeBefinden(id, eintrag) {
+    var neu = {
+      aktivitaetId: id,
+      art: eintrag.art,
+      ort: eintrag.ort || '',
+      seite: eintrag.seite || '',
+      staerke: typeof eintrag.staerke === 'number' ? eintrag.staerke : null,
+      notiz: eintrag.notiz || '',
+      erfasstAm: new Date().toISOString()
+    };
+    var gefunden = false;
+    for (var i = 0; i < befinden.eintraege.length; i++) {
+      if (befinden.eintraege[i].aktivitaetId === id) {
+        befinden.eintraege[i] = neu;
+        gefunden = true;
+        break;
+      }
+    }
+    if (!gefunden) befinden.eintraege.push(neu);
+    speichereBefinden();
+  }
+
+  function entferneBefinden(id) {
+    var rest = [];
+    for (var i = 0; i < befinden.eintraege.length; i++) {
+      if (befinden.eintraege[i].aktivitaetId !== id) rest.push(befinden.eintraege[i]);
+    }
+    befinden.eintraege = rest;
+    speichereBefinden();
+  }
+
+  function befindenText(b) {
+    if (!b) return '';
+    if (b.art === 'keine') return 'Keine Beschwerden';
+    var t = 'Schmerz ' + (b.staerke || '?') + '/5';
+    var detail = [];
+    if (b.ort) detail.push(b.ort);
+    if (b.seite && b.seite !== 'keine Angabe') detail.push(b.seite);
+    if (detail.length) t += ' · ' + detail.join(' ');
+    return t;
+  }
+
+  function befindenExport(b) {
+    if (!b) return 'nicht erfasst';
+    if (b.art === 'keine') return 'Keine Beschwerden';
+    var teile = ['Schmerz ' + (b.staerke || '?') + '/5'];
+    if (b.ort) teile.push(b.ort);
+    if (b.seite && b.seite !== 'keine Angabe') teile.push(b.seite);
+    var t = teile.join(', ');
+    if (b.notiz) t += ', Notiz: ' + b.notiz;
+    return t;
+  }
+
+  function zusatzLabel(art) {
+    for (var i = 0; i < ZUSATZ_ARTEN.length; i++) if (ZUSATZ_ARTEN[i].wert === art) return ZUSATZ_ARTEN[i].label;
+    return art;
+  }
+
+  function setzeZusatztag(datum, art) {
+    for (var i = 0; i < befinden.zusatztage.length; i++) {
+      if (befinden.zusatztage[i].datum === datum) {
+        befinden.zusatztage[i] = { datum: datum, art: art };
+        speichereBefinden();
+        return;
+      }
+    }
+    befinden.zusatztage.push({ datum: datum, art: art });
+    speichereBefinden();
+  }
+
+  function entferneZusatztag(datum) {
+    var rest = [];
+    for (var i = 0; i < befinden.zusatztage.length; i++) {
+      if (befinden.zusatztage[i].datum !== datum) rest.push(befinden.zusatztage[i]);
+    }
+    befinden.zusatztage = rest;
+    speichereBefinden();
+  }
+
+  /* ---------- Ansicht-Zustand ---------- */
+
+  var aktiverTab = 'verlauf';
+  var filter = 'alle';
+  var entwuerfe = {};
+  var offeneDetails = {};
+  var exportSichtbar = false;
+
+  function oeffneFormular(id) {
+    var b = befindenFuer(id);
+    if (b && b.art === 'schmerz') {
+      entwuerfe[id] = { ort: b.ort || '', seite: b.seite || 'keine Angabe', staerke: b.staerke, notiz: b.notiz || '', fehlt: false };
+    } else {
+      entwuerfe[id] = { ort: '', seite: 'keine Angabe', staerke: null, notiz: '', fehlt: false };
+    }
+    zeichne();
+  }
+
+  function schliesseFormular(id) {
+    delete entwuerfe[id];
+    zeichne();
+  }
+
+  /* ---------- Datumsanzeige ---------- */
+
+  function datumLang(iso) {
+    var teile = iso.split('-');
+    return teile[2] + '.' + teile[1] + '.' + teile[0];
+  }
+
+  function wochentag(iso) {
+    var teile = iso.split('-');
+    var d = new Date(Number(teile[0]), Number(teile[1]) - 1, Number(teile[2]));
+    if (isNaN(d.getTime())) return '';
+    return WOCHENTAGE[d.getDay()];
+  }
+
+  function uhrzeit(datumOriginal) {
+    var m = String(datumOriginal || '').match(/(\d{1,2}:\d{2})/);
+    return m ? m[1] : '';
+  }
+
+  function istNullWert(wert) {
+    return /^[0.,:]+$/.test(String(wert).trim());
+  }
+
+  function titelVon(akt) {
+    return sucheFeld(akt.felder, ['titel', 'title', 'name']) ||
+           sucheFeld(akt.felder, ['aktivitätstyp', 'aktivitaetstyp', 'activity type', 'typ']) ||
+           'Aktivität';
+  }
+
+  function typVon(akt) {
+    return sucheFeld(akt.felder, ['aktivitätstyp', 'aktivitaetstyp', 'activity type', 'typ']);
+  }
+
+  function kennzahlenVon(akt) {
+    var raus = [];
+    for (var i = 0; i < KENNZAHLEN.length; i++) {
+      var k = KENNZAHLEN[i];
+      var w = '';
+      for (var s = 0; s < k.spalten.length && !w; s++) {
+        var v = wertVon(akt, k.spalten[s]);
+        if (!istLeer(v)) w = v;
+      }
+      if (!w) continue;
+      if (k.nullVerbergen && istNullWert(w)) continue;
+      raus.push({ name: k.name, wert: w });
+    }
+    return raus;
+  }
+
+  /* ---------- Bausteine ---------- */
+
+  function chipGruppe(titel, werte, aktuell, beiWahl) {
+    var gruppe = el('div', { class: 'feld-gruppe' });
+    gruppe.appendChild(el('span', { class: 'feld-titel', text: titel }));
+    var reihe = el('div', { class: 'chip-reihe' });
+    werte.forEach(function (w) {
+      var knopf = el('button', {
+        type: 'button',
+        class: 'chip',
+        'aria-pressed': String(w) === String(aktuell) ? 'true' : 'false'
+      }, String(w));
+      knopf.addEventListener('click', function () {
+        beiWahl(w);
+        var alle = reihe.querySelectorAll('.chip');
+        for (var i = 0; i < alle.length; i++) {
+          alle[i].setAttribute('aria-pressed', alle[i] === knopf ? 'true' : 'false');
+        }
+        gruppe.classList.remove('fehlt');
+      });
+      reihe.appendChild(knopf);
+    });
+    gruppe.appendChild(reihe);
+    return gruppe;
+  }
+
+  function schmerzFormular(akt) {
+    var e = entwuerfe[akt.id];
+    var box = el('div', { class: 'formular' });
+
+    var gOrt = chipGruppe('Ort', ORTE, e.ort, function (v) { e.ort = v; });
+    var gSeite = chipGruppe('Seite', SEITEN, e.seite, function (v) { e.seite = v; });
+    var gStaerke = chipGruppe('Stärke', STAERKEN, e.staerke, function (v) { e.staerke = v; });
+    box.appendChild(gOrt);
+    box.appendChild(gSeite);
+    box.appendChild(gStaerke);
+
+    var gNotiz = el('div', { class: 'feld-gruppe' });
+    gNotiz.appendChild(el('span', { class: 'feld-titel', text: 'Notiz (optional)' }));
+    var notiz = el('input', { type: 'text', maxlength: '300', 'aria-label': 'Notiz' });
+    notiz.value = e.notiz || '';
+    notiz.addEventListener('input', function () { e.notiz = notiz.value; });
+    gNotiz.appendChild(notiz);
+    box.appendChild(gNotiz);
+
+    var fuss = el('div', { class: 'formular-fuss' });
+    var speichern = el('button', { type: 'button', class: 'knopf knopf--primaer' }, 'Speichern');
+    speichern.addEventListener('click', function () {
+      var vollstaendig = true;
+      if (!e.ort) { gOrt.classList.add('fehlt'); vollstaendig = false; }
+      if (!e.staerke) { gStaerke.classList.add('fehlt'); vollstaendig = false; }
+      if (!vollstaendig) { quittiere('Ort und Stärke wählen'); return; }
+      setzeBefinden(akt.id, { art: 'schmerz', ort: e.ort, seite: e.seite, staerke: e.staerke, notiz: e.notiz });
+      delete entwuerfe[akt.id];
+      quittiere('Gespeichert');
+      zeichne();
+    });
+    fuss.appendChild(speichern);
+
+    var abbrechen = el('button', { type: 'button', class: 'link link--still' }, 'Abbrechen');
+    abbrechen.addEventListener('click', function () { schliesseFormular(akt.id); });
+    fuss.appendChild(abbrechen);
+
+    if (befindenFuer(akt.id)) {
+      var weg = el('button', { type: 'button', class: 'link link--still' }, 'Eintrag entfernen');
+      weg.addEventListener('click', function () {
+        entferneBefinden(akt.id);
+        delete entwuerfe[akt.id];
+        quittiere('Eintrag entfernt');
+        zeichne();
+      });
+      fuss.appendChild(weg);
+    }
+    box.appendChild(fuss);
+    return box;
+  }
+
+  function befindenBereich(akt, kompakt) {
+    var vorhanden = befindenFuer(akt.id);
+    var offen = Object.prototype.hasOwnProperty.call(entwuerfe, akt.id);
+    var box = el('div', { class: kompakt ? 'befinden-kompakt' : 'befinden' });
+
+    if (vorhanden && !offen) {
+      var fazit = el('div', { class: 'bef-fazit ' + (vorhanden.art === 'keine' ? 'ist-ok' : 'ist-schmerz') });
+      fazit.appendChild(el('span', null, befindenText(vorhanden)));
+      if (vorhanden.art === 'schmerz' && vorhanden.notiz) {
+        fazit.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
+      }
+      var aendern = el('button', { type: 'button', class: 'link' }, 'ändern');
+      aendern.addEventListener('click', function () { oeffneFormular(akt.id); });
+      fazit.appendChild(aendern);
+      box.appendChild(fazit);
+      return box;
+    }
+
+    var reihe = el('div', { class: 'bef-knoepfe' });
+    if (!kompakt && !offen) {
+      reihe.appendChild(el('span', { class: 'bef-hinweis', text: 'Befinden nach dem Lauf' }));
+    }
+    var keine = el('button', { type: 'button', class: 'knopf knopf--ok' }, 'Keine Beschwerden');
+    keine.addEventListener('click', function () {
+      delete entwuerfe[akt.id];
+      setzeBefinden(akt.id, { art: 'keine' });
+      quittiere('Gespeichert');
+      zeichne();
+    });
+    reihe.appendChild(keine);
+
+    var schmerz = el('button', {
+      type: 'button',
+      class: 'knopf knopf--schmerz',
+      'aria-pressed': offen ? 'true' : 'false'
+    }, 'Schmerz');
+    schmerz.addEventListener('click', function () { if (!offen) oeffneFormular(akt.id); });
+    reihe.appendChild(schmerz);
+    box.appendChild(reihe);
+
+    if (offen) box.appendChild(schmerzFormular(akt));
+    return box;
+  }
+
+  function aktivitaetKarte(akt) {
+    var lauf = istLauf(akt);
+    var karte = el('article', { class: 'aktivitaet' + (lauf ? ' ist-lauf' : ''), 'data-id': akt.id });
+
+    var kopf = el('div', { class: 'akt-kopf' });
+    var links = el('div');
+    links.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var metaTeile = [];
+    var typ = typVon(akt);
+    if (typ) metaTeile.push(typ);
+    var zeit = uhrzeit(akt.datumOriginal);
+    if (zeit) metaTeile.push(zeit + ' Uhr');
+    if (metaTeile.length) links.appendChild(el('div', { class: 'akt-meta', text: metaTeile.join(' · ') }));
+    kopf.appendChild(links);
+
+    var werkzeuge = el('div', { class: 'akt-werkzeuge' });
+    var marke = el('button', {
+      type: 'button',
+      class: 'marke' + (lauf ? ' ist-lauf' : ''),
+      title: akt.istLaufManuell === null ? 'Automatisch eingestuft – klicken zum Umschalten' : 'Manuell eingestuft – klicken zum Umschalten'
+    }, (lauf ? 'Lauf' : 'kein Lauf') + (akt.istLaufManuell === null ? '' : ' ·M'));
+    marke.addEventListener('click', function () {
+      akt.istLaufManuell = !lauf;
+      speichereAktivitaeten();
+      quittiere(akt.istLaufManuell ? 'Als Lauf eingestuft' : 'Als „kein Lauf“ eingestuft');
+      zeichne();
+    });
+    werkzeuge.appendChild(marke);
+
+    var weg = el('button', { type: 'button', class: 'weg', title: 'Aktivität löschen', 'aria-label': 'Aktivität löschen' }, '×');
+    weg.addEventListener('click', function () {
+      var text = titelVon(akt) + ' vom ' + datumLang(akt.datum) + ' löschen?';
+      if (befindenFuer(akt.id)) text += ' Das zugehörige Befinden geht mit verloren.';
+      frageNach('Aktivität löschen?', text, 'Löschen', function () {
+        var rest = [];
+        for (var i = 0; i < aktivitaeten.length; i++) if (aktivitaeten[i].id !== akt.id) rest.push(aktivitaeten[i]);
+        aktivitaeten = rest;
+        speichereAktivitaeten();
+        entferneBefinden(akt.id);
+        delete entwuerfe[akt.id];
+        quittiere('Aktivität gelöscht');
+        zeichne();
+      });
+    });
+    werkzeuge.appendChild(weg);
+    kopf.appendChild(werkzeuge);
+    karte.appendChild(kopf);
+
+    var kz = kennzahlenVon(akt);
+    if (kz.length) {
+      var reihe = el('div', { class: 'kennzahlen' });
+      kz.forEach(function (k) {
+        var block = el('div', { class: 'kz' });
+        block.appendChild(el('div', { class: 'kz-wert', text: k.wert }));
+        block.appendChild(el('div', { class: 'kz-name', text: k.name }));
+        reihe.appendChild(block);
+      });
+      karte.appendChild(reihe);
+    }
+
+    var spalten = Object.keys(akt.felder).filter(function (sp) { return !istLeer(akt.felder[sp]); });
+    if (spalten.length) {
+      var details = el('details', { class: 'alle' });
+      if (offeneDetails[akt.id]) details.setAttribute('open', '');
+      details.appendChild(el('summary', null, 'alle Werte (' + spalten.length + ')'));
+      var dl = el('dl', { class: 'werte' });
+      spalten.forEach(function (sp) {
+        dl.appendChild(el('dt', { text: sp }));
+        dl.appendChild(el('dd', { text: akt.felder[sp] }));
+      });
+      details.appendChild(dl);
+      details.addEventListener('toggle', function () {
+        if (details.open) offeneDetails[akt.id] = true; else delete offeneDetails[akt.id];
+      });
+      karte.appendChild(details);
+    }
+
+    if (lauf) karte.appendChild(befindenBereich(akt, false));
+    return karte;
+  }
+
+  function offeneLaeufe() {
+    var raus = [];
+    for (var i = 0; i < aktivitaeten.length; i++) {
+      if (istLauf(aktivitaeten[i]) && !befindenFuer(aktivitaeten[i].id)) raus.push(aktivitaeten[i]);
+    }
+    return raus;
+  }
+
+  function offeneKarte(liste) {
+    var karte = el('div', { class: 'karte offen-karte' });
+    var kopf = el('div', { class: 'offen-kopf' });
+    kopf.appendChild(el('h2', null, 'Noch offen (' + liste.length + ')'));
+    kopf.appendChild(el('span', { class: 'hinweis', text: 'Läufe ohne Befinden-Eintrag' }));
+    karte.appendChild(kopf);
+
+    liste.forEach(function (akt) {
+      var zeile = el('div', { class: 'offen-zeile' });
+      var info = el('div', { class: 'offen-info' });
+      info.appendChild(el('span', { class: 'offen-datum', text: datumLang(akt.datum) }));
+      info.appendChild(el('span', null, titelVon(akt)));
+      var distanz = wertVon(akt, 'Distanz');
+      var teile = [];
+      if (!istLeer(distanz) && !istNullWert(distanz)) teile.push('Distanz ' + distanz);
+      var dauer = wertVon(akt, 'Zeit');
+      if (!istLeer(dauer) && !istNullWert(dauer)) teile.push(dauer);
+      if (teile.length) info.appendChild(el('span', { class: 'offen-detail', text: teile.join(' · ') }));
+      zeile.appendChild(info);
+      zeile.appendChild(befindenBereich(akt, true));
+      karte.appendChild(zeile);
+    });
+    return karte;
+  }
+
+  function tagesGruppen() {
+    var karte = {};
+    var reihenfolge = [];
+    function hole(datum) {
+      if (!karte[datum]) { karte[datum] = { datum: datum, akt: [], zusatz: null }; reihenfolge.push(datum); }
+      return karte[datum];
+    }
+    aktivitaeten.forEach(function (a) { hole(a.datum).akt.push(a); });
+    befinden.zusatztage.forEach(function (z) { hole(z.datum).zusatz = z; });
+    var gruppen = reihenfolge.map(function (d) { return karte[d]; });
+    gruppen.sort(function (a, b) { return a.datum < b.datum ? 1 : (a.datum > b.datum ? -1 : 0); });
+    gruppen.forEach(function (g) { g.akt.sort(sortiereAbsteigend); });
+    return gruppen;
+  }
+
+  function leerBild() {
+    var huelle = el('div', { class: 'leer-bild', 'aria-hidden': 'true' });
+    huelle.innerHTML =
+      '<svg viewBox="0 0 132 104" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" focusable="false">' +
+      '<rect x="9" y="9" width="114" height="86" rx="14" opacity=".32"/>' +
+      '<path d="M9 30h114" opacity=".2" stroke-dasharray="3 7"/>' +
+      '<path d="M25 76c17 0 14-28 30-28s13 20 29 20c11 0 12-22 23-27" opacity=".95"/>' +
+      '<circle cx="25" cy="76" r="4"/>' +
+      '<circle cx="107" cy="41" r="4"/>' +
+      '<path d="M19 20h10M35 20h6" opacity=".3"/>' +
+      '</svg>';
+    return huelle;
+  }
+
+  function leerzustand() {
+    var karte = el('div', { class: 'karte leer' });
+    karte.appendChild(leerBild());
+    karte.appendChild(el('h2', null, 'Noch keine Daten'));
+    karte.appendChild(el('p', null, 'Aktivitätenliste aus Garmin Connect als CSV exportieren und hier importieren. Danach wird pro Lauf das Befinden erfasst.'));
+    var knopf = el('button', { type: 'button', class: 'knopf knopf--primaer' }, 'CSV importieren');
+    knopf.addEventListener('click', function () { zeigeTab('import'); });
+    karte.appendChild(knopf);
+    return karte;
+  }
+
+  function leiste() {
+    var laeufe = 0, offen = 0;
+    aktivitaeten.forEach(function (a) {
+      if (istLauf(a)) { laeufe++; if (!befindenFuer(a.id)) offen++; }
+    });
+    var box = el('div', { class: 'leiste' });
+    box.appendChild(el('span', {
+      class: 'zaehler',
+      text: aktivitaeten.length + ' Aktivitäten · ' + laeufe + ' Läufe · ' + offen + ' ohne Befinden'
+    }));
+    var schalter = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Filter' });
+    [['alle', 'alles'], ['laeufe', 'nur Läufe']].forEach(function (paar) {
+      var knopf = el('button', { type: 'button', 'aria-pressed': filter === paar[0] ? 'true' : 'false' }, paar[1]);
+      knopf.addEventListener('click', function () { filter = paar[0]; zeichne(); });
+      schalter.appendChild(knopf);
+    });
+    box.appendChild(schalter);
+    return box;
+  }
+
+  function zusatzFormular() {
+    var details = el('details', { class: 'zusatz-formular' });
+    if (offeneDetails['__zusatz']) details.setAttribute('open', '');
+    details.addEventListener('toggle', function () {
+      if (details.open) offeneDetails['__zusatz'] = true; else delete offeneDetails['__zusatz'];
+    });
+    details.appendChild(el('summary', null, 'Tag ohne Aufzeichnung ergänzen'));
+    var karte = el('div', { class: 'karte', style: 'margin-top:10px' });
+    karte.appendChild(el('p', { class: 'hinweis-text', text: 'Für Tage, an denen etwas nicht von der Uhr aufgezeichnet wurde. Pro Datum ein Eintrag; erneutes Speichern überschreibt ihn.' }));
+    var gitter = el('div', { class: 'zusatz-gitter' });
+
+    var feldDatum = el('div');
+    feldDatum.appendChild(el('label', { class: 'feld', for: 'zusatz-datum' }, 'Datum'));
+    var datum = el('input', { type: 'date', id: 'zusatz-datum' });
+    var heute = new Date();
+    datum.value = heute.getFullYear() + '-' + pad2(heute.getMonth() + 1) + '-' + pad2(heute.getDate());
+    feldDatum.appendChild(datum);
+    gitter.appendChild(feldDatum);
+
+    var feldArt = el('div');
+    feldArt.appendChild(el('label', { class: 'feld', for: 'zusatz-art' }, 'Eintrag'));
+    var auswahl = el('select', { id: 'zusatz-art' });
+    ZUSATZ_ARTEN.forEach(function (a) {
+      auswahl.appendChild(el('option', { value: a.wert }, a.label));
+    });
+    feldArt.appendChild(auswahl);
+    gitter.appendChild(feldArt);
+    karte.appendChild(gitter);
+
+    var speichern = el('button', { type: 'button', class: 'knopf', style: 'margin-top:12px' }, 'Speichern');
+    speichern.addEventListener('click', function () {
+      if (!datum.value || !/^\d{4}-\d{2}-\d{2}$/.test(datum.value)) { quittiere('Datum wählen'); return; }
+      setzeZusatztag(datum.value, auswahl.value);
+      quittiere('Gespeichert');
+      zeichne();
+    });
+    karte.appendChild(speichern);
+    details.appendChild(karte);
+    return details;
+  }
+
+  /* ---------- Bestätigungsdialog ---------- */
+
+  var dialogJa = null;
+  var dialogVorherigerFokus = null;
+  var dialogTimer = null;
+
+  function dialogOffen() {
+    return !document.getElementById('dialog-huelle').hasAttribute('hidden');
+  }
+
+  function frageNach(titel, text, knopfText, beiJa) {
+    var huelle = document.getElementById('dialog-huelle');
+    document.getElementById('dialog-titel').textContent = titel;
+    document.getElementById('dialog-text').textContent = text;
+    document.getElementById('dialog-bestaetigen').textContent = knopfText;
+    dialogJa = beiJa;
+    dialogVorherigerFokus = document.activeElement;
+    if (dialogTimer) { window.clearTimeout(dialogTimer); dialogTimer = null; }
+    huelle.removeAttribute('hidden');
+    /* Fokus bewusst auf „Abbrechen“, damit Enter nichts löscht */
+    document.getElementById('dialog-abbrechen').focus();
+    window.requestAnimationFrame(function () { huelle.classList.add('offen'); });
+  }
+
+  function schliesseDialog() {
+    var huelle = document.getElementById('dialog-huelle');
+    if (huelle.hasAttribute('hidden')) return;
+    huelle.classList.remove('offen');
+    dialogJa = null;
+    var fertig = function () {
+      dialogTimer = null;
+      huelle.setAttribute('hidden', '');
+      if (dialogVorherigerFokus && document.contains(dialogVorherigerFokus)) {
+        try { dialogVorherigerFokus.focus(); } catch (e) { /* Element ist weg */ }
+      }
+      dialogVorherigerFokus = null;
+    };
+    if (dialogTimer) { window.clearTimeout(dialogTimer); dialogTimer = null; }
+    if (bewegungReduziert()) fertig(); else dialogTimer = window.setTimeout(fertig, 200);
+  }
+
+  document.getElementById('dialog-abbrechen').addEventListener('click', schliesseDialog);
+  document.getElementById('dialog-schirm').addEventListener('click', schliesseDialog);
+  document.getElementById('dialog-bestaetigen').addEventListener('click', function () {
+    var handlung = dialogJa;
+    schliesseDialog();
+    if (handlung) handlung();
+  });
+  document.addEventListener('keydown', function (ereignis) {
+    if (!dialogOffen()) return;
+    if (ereignis.key === 'Escape') { ereignis.preventDefault(); schliesseDialog(); return; }
+    if (ereignis.key !== 'Tab') return;
+    var erster = document.getElementById('dialog-abbrechen');
+    var letzter = document.getElementById('dialog-bestaetigen');
+    if (ereignis.shiftKey && document.activeElement === erster) { ereignis.preventDefault(); letzter.focus(); }
+    else if (!ereignis.shiftKey && document.activeElement === letzter) { ereignis.preventDefault(); erster.focus(); }
+    else if (document.activeElement !== erster && document.activeElement !== letzter) { ereignis.preventDefault(); erster.focus(); }
+  });
+
+  /* ---------- Einblenden beim Scrollen ---------- */
+
+  var bereitsGezeigt = {};
+  var beobachter = null;
+
+  function bewegungReduziert() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function animationMoeglich() {
+    return !!window.IntersectionObserver && !bewegungReduziert();
+  }
+
+  function hlBeobachter() {
+    if (beobachter || !animationMoeglich()) return beobachter;
+    beobachter = new window.IntersectionObserver(function (eintraege) {
+      eintraege.forEach(function (eintrag) {
+        if (!eintrag.isIntersecting) return;
+        var knoten = eintrag.target;
+        knoten.classList.add('sichtbar');
+        beobachter.unobserve(knoten);
+        var id = knoten.getAttribute('data-id');
+        if (id) bereitsGezeigt[id] = true;
+      });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.04 });
+    return beobachter;
+  }
+
+  function einblenden(knoten, position) {
+    var id = knoten.getAttribute('data-id');
+    if (!animationMoeglich() || (id && bereitsGezeigt[id])) return knoten;
+    knoten.classList.add('einblenden');
+    var verzoegerung = Math.min(position || 0, 5) * 55;
+    if (verzoegerung) knoten.style.transitionDelay = verzoegerung + 'ms';
+    hlBeobachter().observe(knoten);
+    return knoten;
+  }
+
+  /* ---------- Zeichnen ---------- */
+
+  function zeichneKopfzahlen() {
+    var ziel = document.getElementById('kopfzahlen');
+    leeren(ziel);
+    if (!aktivitaeten.length) { ziel.setAttribute('hidden', ''); return; }
+    ziel.removeAttribute('hidden');
+
+    var laeufe = 0, erfasst = 0, mitSchmerz = 0, frueh = null, spaet = null;
+    aktivitaeten.forEach(function (a) {
+      if (a.datum) {
+        if (!frueh || a.datum < frueh) frueh = a.datum;
+        if (!spaet || a.datum > spaet) spaet = a.datum;
+      }
+      if (!istLauf(a)) return;
+      laeufe++;
+      var b = befindenFuer(a.id);
+      if (!b) return;
+      erfasst++;
+      if (b.art === 'schmerz') mitSchmerz++;
+    });
+
+    var zeitraum = '–';
+    if (frueh && spaet) {
+      zeitraum = frueh === spaet
+        ? datumLang(frueh)
+        : (frueh.slice(0, 4) === spaet.slice(0, 4)
+            ? datumLang(frueh).slice(0, 6) + ' – ' + datumLang(spaet)
+            : datumLang(frueh) + ' – ' + datumLang(spaet));
+    }
+
+    [
+      { wert: String(laeufe), name: 'Läufe', klasse: '' },
+      { wert: String(erfasst), name: 'Befinden erfasst', klasse: ' ist-ok' },
+      { wert: String(mitSchmerz), name: 'davon mit Schmerz', klasse: ' ist-schmerz' },
+      { wert: zeitraum, name: 'Zeitraum', klasse: ' ist-text' }
+    ].forEach(function (z) {
+      var block = el('div', { class: 'kopfzahl' });
+      block.appendChild(el('div', { class: 'kopfzahl-wert' + z.klasse, text: z.wert }));
+      block.appendChild(el('div', { class: 'kopfzahl-name', text: z.name }));
+      ziel.appendChild(block);
+    });
+  }
+
+  function zeichneVerlauf() {
+    var ziel = document.getElementById('tab-verlauf');
+    leeren(ziel);
+
+    if (!aktivitaeten.length && !befinden.zusatztage.length) {
+      ziel.appendChild(leerzustand());
+      return;
+    }
+
+    var offen = offeneLaeufe();
+    if (offen.length) ziel.appendChild(offeneKarte(offen));
+    ziel.appendChild(leiste());
+
+    var gruppen = tagesGruppen();
+    var gezeigt = 0;
+    gruppen.forEach(function (g) {
+      var liste = filter === 'laeufe' ? g.akt.filter(istLauf) : g.akt;
+      var zeigeZusatz = g.zusatz && filter !== 'laeufe';
+      if (!liste.length && !zeigeZusatz) return;
+      gezeigt++;
+
+      var tag = el('section', { class: 'tag' });
+      var kopf = el('div', { class: 'tag-kopf' });
+      kopf.appendChild(el('span', { class: 'tag-datum', text: datumLang(g.datum) }));
+      kopf.appendChild(el('span', { class: 'tag-wochentag', text: wochentag(g.datum) }));
+      tag.appendChild(kopf);
+
+      liste.forEach(function (akt, position) {
+        tag.appendChild(einblenden(aktivitaetKarte(akt), position));
+      });
+
+      if (zeigeZusatz) {
+        var zeile = el('div', { class: 'zusatz-tag' });
+        zeile.appendChild(el('span', null, 'Ohne Aufzeichnung: ' + zusatzLabel(g.zusatz.art)));
+        var weg = el('button', { type: 'button', class: 'weg', 'aria-label': 'Eintrag löschen', title: 'Eintrag löschen' }, '×');
+        weg.addEventListener('click', function () {
+          entferneZusatztag(g.datum);
+          quittiere('Eintrag gelöscht');
+          zeichne();
+        });
+        zeile.appendChild(weg);
+        tag.appendChild(zeile);
+      }
+      ziel.appendChild(tag);
+    });
+
+    if (!gezeigt) {
+      ziel.appendChild(el('p', { class: 'hinweis-text', style: 'margin-top:20px' }, 'Keine Einträge in dieser Auswahl.'));
+    }
+    ziel.appendChild(zusatzFormular());
+  }
+
+  function zeichneImport() {
+    var manuell = 0;
+    aktivitaeten.forEach(function (a) { if (a.istLaufManuell !== null) manuell++; });
+    document.getElementById('manuell-zaehler').textContent = manuell === 0
+      ? 'Zurzeit ist keine Aktivität manuell eingestuft.'
+      : (manuell === 1 ? '1 Aktivität ist manuell eingestuft.' : manuell + ' Aktivitäten sind manuell eingestuft.');
+  }
+
+  function zeichneExport() {
+    var bereich = document.getElementById('export-bereich');
+    leeren(bereich);
+    if (!exportSichtbar) return;
+    var text = exportText();
+    bereich.appendChild(el('pre', { class: 'ausgabe', text: text || 'Keine Daten vorhanden.' }));
+  }
+
+  function zeichne() {
+    zeichneKopfzahlen();
+    zeichneVerlauf();
+    zeichneImport();
+    zeichneExport();
+  }
+
+  function zeigeTab(name) {
+    aktiverTab = name;
+    ['verlauf', 'import', 'export'].forEach(function (n) {
+      var panel = document.getElementById('tab-' + n);
+      var reiter = document.getElementById('reiter-' + n);
+      if (n === name) { panel.removeAttribute('hidden'); reiter.setAttribute('aria-selected', 'true'); }
+      else { panel.setAttribute('hidden', ''); reiter.setAttribute('aria-selected', 'false'); }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- Export ---------- */
+
+  function exportText() {
+    var karte = {};
+    var reihenfolge = [];
+    function hole(datum) {
+      if (!karte[datum]) { karte[datum] = { akt: [], zusatz: null }; reihenfolge.push(datum); }
+      return karte[datum];
+    }
+    aktivitaeten.forEach(function (a) { hole(a.datum).akt.push(a); });
+    befinden.zusatztage.forEach(function (z) { hole(z.datum).zusatz = z; });
+    reihenfolge.sort();
+
+    var aus = '';
+    reihenfolge.forEach(function (d) {
+      aus += '=== ' + d + ' ===\n';
+      var liste = karte[d].akt.slice().sort(function (a, b) {
+        var za = a.datumOriginal || '', zb = b.datumOriginal || '';
+        return za < zb ? -1 : (za > zb ? 1 : 0);
+      });
+      liste.forEach(function (a) {
+        var lauf = istLauf(a);
+        aus += (lauf ? 'Lauf: ' : 'Andere Aktivität: ') + titelVon(a) + '\n';
+        Object.keys(a.felder).forEach(function (sp) {
+          if (istLeer(a.felder[sp])) return;
+          aus += '  ' + sp + ': ' + a.felder[sp] + '\n';
+        });
+        if (lauf) aus += '  Befinden: ' + befindenExport(befindenFuer(a.id)) + '\n';
+        aus += '\n';
+      });
+      if (karte[d].zusatz) {
+        aus += 'Ohne Aufzeichnung: ' + zusatzLabel(karte[d].zusatz.art) + '\n\n';
+      }
+    });
+    return aus;
+  }
+
+  function inZwischenablage(text) {
+    function ersatzweg() {
+      var feld = document.createElement('textarea');
+      feld.value = text;
+      feld.setAttribute('readonly', '');
+      feld.style.position = 'fixed';
+      feld.style.top = '-1000px';
+      document.body.appendChild(feld);
+      feld.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(feld);
+      if (ok) {
+        quittiere('In die Zwischenablage kopiert');
+      } else {
+        quittiere('Kopieren nicht möglich – Text wird angezeigt');
+        exportSichtbar = true;
+        zeichneExport();
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        quittiere('In die Zwischenablage kopiert');
+      }, ersatzweg);
+    } else {
+      ersatzweg();
+    }
+  }
+
+  /* ---------- Ereignisse ---------- */
+
+  function zeigeImportErgebnis(ergebnis) {
+    var ziel = document.getElementById('import-ergebnis');
+    leeren(ziel);
+    var box = el('div', { class: 'ergebnis' });
+    if (ergebnis.fehler) {
+      box.textContent = ergebnis.fehler;
+    } else {
+      box.textContent = ergebnis.neu + ' neu · ' + ergebnis.uebersprungen + ' bereits vorhanden · ' +
+        ergebnis.ohneDatum + ' ohne lesbares Datum';
+    }
+    ziel.appendChild(box);
+  }
+
+  function starteImport(text) {
+    if (!text || !text.trim()) {
+      zeigeImportErgebnis({ fehler: 'Kein Inhalt zum Importieren.' });
+      return;
+    }
+    var ergebnis = importiere(text);
+    zeigeImportErgebnis(ergebnis);
+    zeichne();
+    if (!ergebnis.fehler) quittiere(ergebnis.neu + ' neue Aktivitäten');
+  }
+
+  document.querySelectorAll('.reiter button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { zeigeTab(knopf.getAttribute('data-tab')); });
+  });
+
+  document.getElementById('datei').addEventListener('change', function (ereignis) {
+    var datei = ereignis.target.files && ereignis.target.files[0];
+    if (!datei) return;
+    var leser = new FileReader();
+    leser.onload = function () {
+      starteImport(String(leser.result || ''));
+      ereignis.target.value = '';
+    };
+    leser.onerror = function () {
+      zeigeImportErgebnis({ fehler: 'Datei konnte nicht gelesen werden.' });
+      ereignis.target.value = '';
+    };
+    leser.readAsText(datei, 'utf-8');
+  });
+
+  document.getElementById('text-importieren').addEventListener('click', function () {
+    starteImport(document.getElementById('einfuegen').value);
+  });
+
+  document.getElementById('text-leeren').addEventListener('click', function () {
+    document.getElementById('einfuegen').value = '';
+  });
+
+  document.getElementById('neu-einstufen').addEventListener('click', function () {
+    aktivitaeten.forEach(function (a) {
+      a.istLaufManuell = null;
+      a.istLaufAuto = erkenneLaufAuto(typVon(a), sucheFeld(a.felder, ['titel', 'title', 'name']));
+    });
+    speichereAktivitaeten();
+    quittiere('Alle Aktivitäten automatisch eingestuft');
+    zeichne();
+  });
+
+  document.getElementById('kopieren').addEventListener('click', function () {
+    var text = exportText();
+    if (!text) { quittiere('Keine Daten vorhanden'); return; }
+    inZwischenablage(text);
+  });
+
+  document.getElementById('anzeigen').addEventListener('click', function () {
+    exportSichtbar = !exportSichtbar;
+    document.getElementById('anzeigen').textContent = exportSichtbar ? 'Text ausblenden' : 'Text anzeigen';
+    zeichneExport();
+  });
+
+  /* ---------- Start ---------- */
+
+  aktivitaeten = ladeAktivitaeten();
+  aktivitaeten.sort(sortiereAbsteigend);
+  befinden = ladeBefinden();
+  zeichne();
+})();
+</script>
+</body>
+</html>
