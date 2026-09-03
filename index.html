@@ -165,6 +165,17 @@ button{font:inherit;color:inherit}
   background:var(--flaeche-hoch);color:var(--text);
   box-shadow:0 1px 2px rgba(0,0,0,.4);
 }
+/* Zurückhaltender Hinweis, keine Signalfarbe */
+.reiter-zahl{
+  display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
+  background:var(--flaeche-hoch);border:1px solid var(--rand);
+  font-size:.72rem;font-weight:640;color:var(--text-3);
+  font-variant-numeric:tabular-nums;vertical-align:1px;
+}
+.reiter button[aria-selected="true"] .reiter-zahl{background:var(--bg-tief);color:var(--text-2)}
+.verlaufs-meldung{margin-top:24px}
+.bef-notiz-link{margin-top:8px;display:inline-block}
+.formular--notiz{margin-top:10px}
 /* Vier Reiter müssen auch auf schmalen Bildschirmen nebeneinander passen */
 @media (max-width:480px){
   .reiter{gap:2px;padding:4px}
@@ -478,7 +489,7 @@ pre.ausgabe{
     <p class="unterzeile">Aktivitäten aus Garmin, Befinden nach dem Lauf, Export als Text.</p>
     <div class="kopfzahlen" id="kopfzahlen" hidden></div>
     <nav class="reiter" role="tablist" aria-label="Bereiche">
-      <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf">Verlauf</button>
+      <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf">Verlauf<span class="reiter-zahl" id="reiter-zahl" hidden></span></button>
       <button type="button" role="tab" id="reiter-import" aria-selected="false" data-tab="import">Import</button>
       <button type="button" role="tab" id="reiter-export" aria-selected="false" data-tab="export">Export</button>
       <button type="button" role="tab" id="reiter-sicherung" aria-selected="false" data-tab="sicherung">Sicherung</button>
@@ -959,7 +970,15 @@ pre.ausgabe{
       aktivitaeten.sort(sortiereAbsteigend);
       speichereAktivitaeten();
     }
-    return { neu: neu, uebersprungen: uebersprungen, ohneDatum: ohneDatum };
+    var neueLaeufe = 0;
+    zugefuegt.forEach(function (a) { if (istLauf(a)) neueLaeufe++; });
+
+    return {
+      neu: neu,
+      uebersprungen: uebersprungen,
+      ohneDatum: ohneDatum,
+      neueLaeufe: neueLaeufe
+    };
   }
 
   function sucheFeld(felder, namen) {
@@ -1032,7 +1051,7 @@ pre.ausgabe{
 
   function befindenExport(b) {
     if (!b) return 'nicht erfasst';
-    if (b.art === 'keine') return 'Keine Beschwerden';
+    if (b.art === 'keine') return 'Keine Beschwerden' + (b.notiz ? ', Notiz: ' + b.notiz : '');
     var teile = ['Schmerz ' + (b.staerke || '?') + '/5'];
     if (b.ort) teile.push(b.ort);
     if (b.seite && b.seite !== 'keine Angabe') teile.push(b.seite);
@@ -1071,12 +1090,23 @@ pre.ausgabe{
 
   var aktiverTab = 'verlauf';
   var filter = 'alle';
+  var verlaufsMeldung = '';
+  var verlaufsMeldungTimer = null;
   var entwuerfe = {};
+  var notizEntwuerfe = {};
   var offeneDetails = {};
   var exportSichtbar = false;
 
+  function oeffneNotiz(id) {
+    var b = befindenFuer(id);
+    delete entwuerfe[id];
+    notizEntwuerfe[id] = { notiz: b && b.notiz ? b.notiz : '' };
+    zeichne();
+  }
+
   function oeffneFormular(id) {
     var b = befindenFuer(id);
+    delete notizEntwuerfe[id];
     if (b && b.art === 'schmerz') {
       entwuerfe[id] = { ort: b.ort || '', seite: b.seite || 'keine Angabe', staerke: b.staerke, notiz: b.notiz || '', fehlt: false };
     } else {
@@ -1216,21 +1246,76 @@ pre.ausgabe{
     return box;
   }
 
+  /*
+   * Notiz getrennt vom Schmerzformular: „Keine Beschwerden“ bleibt ein Klick,
+   * die Notiz ist ein freiwilliger Zusatz danach.
+   */
+  function notizFormular(akt) {
+    var entwurf = notizEntwuerfe[akt.id];
+    var box = el('div', { class: 'formular formular--notiz' });
+
+    var gruppe = el('div', { class: 'feld-gruppe', style: 'margin-top:0' });
+    gruppe.appendChild(el('span', { class: 'feld-titel', text: 'Notiz zum Lauf' }));
+    var feld = el('input', { type: 'text', maxlength: '300', 'aria-label': 'Notiz zum Lauf' });
+    feld.value = entwurf.notiz || '';
+    feld.addEventListener('input', function () { entwurf.notiz = feld.value; });
+    gruppe.appendChild(feld);
+    box.appendChild(gruppe);
+
+    var fuss = el('div', { class: 'formular-fuss' });
+    var speichern = el('button', { type: 'button', class: 'knopf knopf--primaer' }, 'Speichern');
+    speichern.addEventListener('click', function () {
+      var bestehend = befindenFuer(akt.id);
+      if (!bestehend) { delete notizEntwuerfe[akt.id]; zeichne(); return; }
+      setzeBefinden(akt.id, {
+        art: bestehend.art,
+        ort: bestehend.ort,
+        seite: bestehend.seite,
+        staerke: bestehend.staerke,
+        notiz: String(entwurf.notiz || '').trim()
+      });
+      delete notizEntwuerfe[akt.id];
+      quittiere('Gespeichert');
+      zeichne();
+    });
+    fuss.appendChild(speichern);
+
+    var abbrechen = el('button', { type: 'button', class: 'link link--still' }, 'Abbrechen');
+    abbrechen.addEventListener('click', function () {
+      delete notizEntwuerfe[akt.id];
+      zeichne();
+    });
+    fuss.appendChild(abbrechen);
+    box.appendChild(fuss);
+    return box;
+  }
+
   function befindenBereich(akt, kompakt) {
     var vorhanden = befindenFuer(akt.id);
     var offen = Object.prototype.hasOwnProperty.call(entwuerfe, akt.id);
     var box = el('div', { class: kompakt ? 'befinden-kompakt' : 'befinden' });
 
+    var notizOffen = Object.prototype.hasOwnProperty.call(notizEntwuerfe, akt.id);
+
     if (vorhanden && !offen) {
       var fazit = el('div', { class: 'bef-fazit ' + (vorhanden.art === 'keine' ? 'ist-ok' : 'ist-schmerz') });
       fazit.appendChild(el('span', null, befindenText(vorhanden)));
-      if (vorhanden.art === 'schmerz' && vorhanden.notiz) {
+      if (vorhanden.notiz) {
         fazit.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
       }
       var aendern = el('button', { type: 'button', class: 'link' }, 'ändern');
       aendern.addEventListener('click', function () { oeffneFormular(akt.id); });
       fazit.appendChild(aendern);
       box.appendChild(fazit);
+
+      /* Bei „Keine Beschwerden“ steckt die Notiz in keinem Formular – hier nachtragbar */
+      if (vorhanden.art === 'keine' && !notizOffen) {
+        var notizLink = el('button', { type: 'button', class: 'link link--still bef-notiz-link' },
+          vorhanden.notiz ? 'Notiz ändern' : 'Notiz hinzufügen');
+        notizLink.addEventListener('click', function () { oeffneNotiz(akt.id); });
+        box.appendChild(notizLink);
+      }
+      if (notizOffen) box.appendChild(notizFormular(akt));
       return box;
     }
 
@@ -1241,7 +1326,12 @@ pre.ausgabe{
     var keine = el('button', { type: 'button', class: 'knopf knopf--ok' }, 'Keine Beschwerden');
     keine.addEventListener('click', function () {
       delete entwuerfe[akt.id];
-      setzeBefinden(akt.id, { art: 'keine' });
+      /* Eine bereits erfasste Notiz zu einem beschwerdefreien Lauf bleibt erhalten */
+      var bestehend = befindenFuer(akt.id);
+      setzeBefinden(akt.id, {
+        art: 'keine',
+        notiz: bestehend && bestehend.art === 'keine' ? bestehend.notiz : ''
+      });
       quittiere('Gespeichert');
       zeichne();
     });
@@ -2055,6 +2145,27 @@ pre.ausgabe{
 
   /* ---------- Zeichnen ---------- */
 
+  /* Kurzlebige Zeile über der Offen-Karte, damit die Import-Rückmeldung nicht verloren geht */
+  function setzeVerlaufsMeldung(text) {
+    verlaufsMeldung = text || '';
+    if (verlaufsMeldungTimer) { window.clearTimeout(verlaufsMeldungTimer); verlaufsMeldungTimer = null; }
+    if (!verlaufsMeldung) return;
+    verlaufsMeldungTimer = window.setTimeout(function () {
+      verlaufsMeldungTimer = null;
+      verlaufsMeldung = '';
+      zeichneVerlauf();
+    }, 12000);
+  }
+
+  function zeichneReiterZahl() {
+    var zahl = document.getElementById('reiter-zahl');
+    var offen = offeneLaeufe().length;
+    if (!offen) { zahl.setAttribute('hidden', ''); zahl.textContent = ''; return; }
+    zahl.removeAttribute('hidden');
+    zahl.textContent = String(offen);
+    zahl.setAttribute('aria-label', offen === 1 ? '1 Lauf ohne Befinden' : offen + ' Läufe ohne Befinden');
+  }
+
   function zeichneSicherung() {
     var ziel = document.getElementById('sicherung-stand');
     var stand = ladeSicherungsStand();
@@ -2127,6 +2238,10 @@ pre.ausgabe{
       return;
     }
 
+    if (verlaufsMeldung) {
+      ziel.appendChild(el('div', { class: 'ergebnis verlaufs-meldung', role: 'status', text: verlaufsMeldung }));
+    }
+
     var offen = offeneLaeufe();
     if (offen.length) ziel.appendChild(offeneKarte(offen));
     ziel.appendChild(leiste());
@@ -2188,6 +2303,7 @@ pre.ausgabe{
 
   function zeichne() {
     zeichneKopfzahlen();
+    zeichneReiterZahl();
     zeichneVerlauf();
     zeichneImport();
     zeichneExport();
@@ -2281,10 +2397,17 @@ pre.ausgabe{
     if (ergebnis.fehler) {
       box.textContent = ergebnis.fehler;
     } else {
-      box.textContent = ergebnis.neu + ' neu · ' + ergebnis.uebersprungen + ' bereits vorhanden · ' +
-        ergebnis.ohneDatum + ' ohne lesbares Datum';
+      box.textContent = importMeldung(ergebnis);
     }
     ziel.appendChild(box);
+  }
+
+  function importMeldung(ergebnis) {
+    var text = ergebnis.neu + ' neu · ' + ergebnis.uebersprungen + ' bereits vorhanden · ' +
+      ergebnis.ohneDatum + ' ohne lesbares Datum';
+    /* Wenn nichts zu bewerten dazukam, sagen wie viele der neuen Einträge Läufe waren */
+    if (ergebnis.neu > 0 && !ergebnis.neueLaeufe) text += ' · davon 0 Läufe';
+    return text;
   }
 
   function starteImport(text) {
@@ -2292,10 +2415,33 @@ pre.ausgabe{
       zeigeImportErgebnis({ fehler: 'Kein Inhalt zum Importieren.' });
       return;
     }
+    var offenVorher = offeneLaeufe().length;
     var ergebnis = importiere(text);
+    var offenNachher = offeneLaeufe().length;
+    var neuOffen = offenNachher - offenVorher;
+
     zeigeImportErgebnis(ergebnis);
     zeichne();
-    if (!ergebnis.fehler) quittiere(ergebnis.neu + ' neue Aktivitäten');
+    if (ergebnis.fehler) return;
+
+    quittiere(ergebnis.neu + ' neue Aktivitäten');
+
+    /* Nur weiterleiten, wenn es auch etwas zu bewerten gibt */
+    if (ergebnis.neu > 0 && neuOffen > 0) {
+      setzeVerlaufsMeldung(importMeldung(ergebnis) + ' · ' + neuOffen +
+        (neuOffen === 1 ? ' Lauf wartet auf das Befinden' : ' Läufe warten auf das Befinden'));
+      zeichneVerlauf();
+      zeigeTab('verlauf');
+      zeigeOffeneLaeufe();
+    }
+  }
+
+  function zeigeOffeneLaeufe() {
+    var karte = document.querySelector('.offen-karte');
+    if (!karte || !karte.scrollIntoView) return;
+    window.requestAnimationFrame(function () {
+      karte.scrollIntoView({ behavior: bewegungReduziert() ? 'auto' : 'smooth', block: 'start' });
+    });
   }
 
   document.querySelectorAll('.reiter button').forEach(function (knopf) {
