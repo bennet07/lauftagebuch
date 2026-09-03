@@ -239,14 +239,14 @@ button{font:inherit;color:inherit}
 .fehlt .feld-titel{color:var(--kritisch)}
 .fehlt .chip-reihe{outline:1px dashed var(--kritisch-rand);outline-offset:6px;border-radius:12px}
 
-input[type="text"],input[type="date"],textarea,select{
+input[type="text"],input[type="password"],input[type="date"],textarea,select{
   font:inherit;color:var(--text);background:var(--flaeche-sanft);
   border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
   padding:10px 12px;width:100%;max-width:100%;
   transition:border-color .16s var(--weich),background .16s var(--weich);
 }
-input[type="text"]:hover,input[type="date"]:hover,textarea:hover,select:hover{border-color:var(--text-4)}
-input[type="text"]:focus,input[type="date"]:focus,textarea:focus,select:focus{
+input[type="text"]:hover,input[type="password"]:hover,input[type="date"]:hover,textarea:hover,select:hover{border-color:var(--text-4)}
+input[type="text"]:focus,input[type="password"]:focus,input[type="date"]:focus,textarea:focus,select:focus{
   outline:none;border-color:var(--akzent);background:var(--flaeche-hoch);
   box-shadow:0 0 0 3px var(--akzent-sanft);
 }
@@ -407,6 +407,11 @@ details.alle > summary:hover{color:var(--text)}
 .ergebnis--fehler{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch)}
 .sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-3);line-height:1.6}
 .sicherung-stand:empty{display:none}
+.sicherung-stand.ist-fehler{color:var(--kritisch)}
+.anleitung{margin:10px 0 0;padding-left:20px;font-size:.88rem;color:var(--text-2);line-height:1.65}
+.anleitung li{margin-bottom:6px}
+.anleitung strong{color:var(--text);font-weight:620}
+#gist-ablage:empty{display:none}
 .trenn{height:1px;background:var(--rand);margin:22px 0}
 pre.ausgabe{
   background:var(--flaeche-sanft);border:1px solid var(--rand);border-radius:var(--radius-klein);
@@ -535,6 +540,40 @@ pre.ausgabe{
       </div>
 
       <div class="karte">
+        <h2>Automatische Sicherung</h2>
+        <p class="hinweis-text">Damit legt die App jede Änderung von selbst in einer privaten Ablage („Gist“) in deinem GitHub-Konto ab — ohne Knopfdruck, auf allen Geräten. Von dort lässt sich der Stand auch auf ein anderes Gerät holen.</p>
+
+        <div id="gist-aus">
+          <p class="hinweis-text">Einrichten in drei Schritten:</p>
+          <ol class="anleitung">
+            <li>Auf <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Lauftagebuch" target="_blank" rel="noopener noreferrer" class="link">dieser GitHub-Seite</a> einen Zugriffsschlüssel erzeugen. Die Berechtigung <strong>gist</strong> ist dort schon angehakt, sonst nichts ankreuzen.</li>
+            <li>Unten auf „Generate token“ tippen und den angezeigten Schlüssel kopieren.</li>
+            <li>Ihn hier einfügen und auf „Verbinden“ tippen.</li>
+          </ol>
+          <p class="hinweis-text">Der Schlüssel wird nur in diesem Browser gespeichert und ausschließlich an api.github.com gesendet. Er kommt nicht in die heruntergeladene Sicherungsdatei. Auf github.com kannst du ihn jederzeit widerrufen.</p>
+          <div style="margin-top:16px">
+            <label class="feld" for="gist-token">Zugriffsschlüssel</label>
+            <input type="password" id="gist-token" autocomplete="off" spellcheck="false" placeholder="ghp_…">
+          </div>
+          <div style="margin-top:12px">
+            <button type="button" class="knopf knopf--primaer" id="gist-verbinden">Verbinden</button>
+          </div>
+        </div>
+
+        <div id="gist-an" hidden>
+          <p class="hinweis-text" id="gist-konto"></p>
+          <p class="sicherung-stand" id="gist-status"></p>
+          <p style="margin-top:6px" id="gist-ablage"></p>
+          <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="knopf" id="gist-jetzt">Jetzt sichern</button>
+            <button type="button" class="knopf" id="gist-holen">Von GitHub laden</button>
+            <button type="button" class="knopf" id="gist-trennen">Verbindung trennen</button>
+          </div>
+        </div>
+        <div id="gist-ergebnis"></div>
+      </div>
+
+      <div class="karte">
         <h2>Sicherung einlesen</h2>
         <p class="hinweis-text">Zuerst wird die Datei geprüft. Danach kannst du wählen, ob der vorhandene Bestand ersetzt oder um die Einträge aus der Sicherung ergänzt wird. Vor dieser Entscheidung wird nichts verändert.</p>
         <div style="margin-top:16px">
@@ -564,7 +603,10 @@ pre.ausgabe{
   var SCHLUESSEL_AKT = 'lauftagebuch.aktivitaeten.v2';
   var SCHLUESSEL_BEF = 'lauftagebuch.befinden.v2';
   var SCHLUESSEL_SIC = 'lauftagebuch.sicherung.v1';
+  var SCHLUESSEL_GIST = 'lauftagebuch.gist.v1';
   var FORMAT_VERSION = 1;
+  var GIST_API = 'https://api.github.com';
+  var GIST_DATEI = 'lauftagebuch.json';
 
   var ORTE = ['Knie', 'Schienbein', 'Ferse', 'Hüfte', 'Achillessehne', 'Wade', 'Fuß', 'Rücken'];
   var SEITEN = ['links', 'rechts', 'beidseitig', 'keine Angabe'];
@@ -719,8 +761,18 @@ pre.ausgabe{
     }
   }
 
-  function speichereAktivitaeten() { return speichere(SCHLUESSEL_AKT, aktivitaeten); }
-  function speichereBefinden() { return speichere(SCHLUESSEL_BEF, befinden); }
+  /* Jede Datenänderung läuft durch diese beiden Funktionen – hier hängt die automatische Sicherung. */
+  function speichereAktivitaeten() {
+    var ergebnis = speichere(SCHLUESSEL_AKT, aktivitaeten);
+    planeGistSicherung();
+    return ergebnis;
+  }
+
+  function speichereBefinden() {
+    var ergebnis = speichere(SCHLUESSEL_BEF, befinden);
+    planeGistSicherung();
+    return ergebnis;
+  }
 
   /* ---------- CSV ---------- */
 
@@ -1581,19 +1633,24 @@ pre.ausgabe{
     return jetzt.getFullYear() + '-' + pad2(jetzt.getMonth() + 1) + '-' + pad2(jetzt.getDate());
   }
 
-  function erstelleSicherung() {
-    var inhalt = JSON.stringify({
+  /*
+   * Inhalt einer Sicherung. Enthält bewusst nur die beiden Datenschlüssel –
+   * der Zugriffsschlüssel für die automatische Sicherung gehört nicht hinein.
+   */
+  function sicherungsInhalt() {
+    var daten = {};
+    daten[SCHLUESSEL_AKT] = aktivitaeten;
+    daten[SCHLUESSEL_BEF] = befinden;
+    return JSON.stringify({
       formatVersion: FORMAT_VERSION,
       anwendung: 'Lauftagebuch',
       erstelltAm: new Date().toISOString(),
-      daten: (function () {
-        var daten = {};
-        daten[SCHLUESSEL_AKT] = aktivitaeten;
-        daten[SCHLUESSEL_BEF] = befinden;
-        return daten;
-      })()
+      daten: daten
     }, null, 2);
+  }
 
+  function erstelleSicherung() {
+    var inhalt = sicherungsInhalt();
     var dateiname = 'lauftagebuch-sicherung-' + heuteIso() + '.json';
     try {
       var blob = new Blob([inhalt], { type: 'application/json' });
@@ -1756,6 +1813,234 @@ pre.ausgabe{
     zeichne();
   }
 
+  /* ---------- Automatische Sicherung bei GitHub ---------- */
+
+  var gistStatus = 'aus';       /* aus | wartet | laeuft | bereit | fehler */
+  var gistFehlertext = '';
+  var gistTimer = null;
+  var gistZuletztGesendet = null;
+
+  function ladeGistEinstellung() {
+    var daten = ladeRoh(SCHLUESSEL_GIST);
+    if (!daten || typeof daten !== 'object' || Array.isArray(daten)) return null;
+    if (typeof daten.token !== 'string' || !daten.token) return null;
+    return {
+      token: daten.token,
+      gistId: typeof daten.gistId === 'string' ? daten.gistId : '',
+      konto: typeof daten.konto === 'string' ? daten.konto : '',
+      zuletzt: typeof daten.zuletzt === 'string' ? daten.zuletzt : ''
+    };
+  }
+
+  function gistFehlerText(status) {
+    if (status === 401) return 'GitHub hat den Zugriffsschlüssel nicht akzeptiert (401). Ist er noch gültig?';
+    if (status === 403) return 'GitHub hat den Zugriff abgelehnt (403). Fehlt dem Schlüssel die Gist-Berechtigung?';
+    if (status === 404) return 'Die Ablage wurde bei GitHub nicht gefunden (404).';
+    if (status === 422) return 'GitHub konnte die Daten nicht annehmen (422).';
+    return 'GitHub meldet Fehler ' + status + '.';
+  }
+
+  /* Spricht ausschließlich mit api.github.com; der Schlüssel verlässt das Gerät nur dorthin. */
+  function gistAnfrage(token, weg, verfahren, koerper) {
+    return window.fetch(GIST_API + weg, {
+      method: verfahren || 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: koerper ? JSON.stringify(koerper) : undefined
+    }).then(function (antwort) {
+      if (!antwort.ok) throw new Error(gistFehlerText(antwort.status));
+      return antwort.json();
+    }, function () {
+      throw new Error('Keine Verbindung zu GitHub.');
+    });
+  }
+
+  function setzeGistStatus(status, text) {
+    gistStatus = status;
+    gistFehlertext = text || '';
+    zeichneGist();
+    /* Die Erinnerung an die Datei hängt am Zustand der Automatik */
+    zeichneSicherung();
+  }
+
+  function datenFingerabdruck() {
+    return JSON.stringify({ a: aktivitaeten, b: befinden });
+  }
+
+  function gistHochladen(erzwingen) {
+    var einstellung = ladeGistEinstellung();
+    if (!einstellung) return Promise.resolve();
+
+    var fingerabdruck = datenFingerabdruck();
+    if (!erzwingen && fingerabdruck === gistZuletztGesendet) {
+      /* Nichts Neues – dann auch nicht als „vorgemerkt“ stehen bleiben */
+      if (gistStatus === 'wartet') setzeGistStatus('bereit', '');
+      return Promise.resolve();
+    }
+
+    var dateien = {};
+    dateien[GIST_DATEI] = { content: sicherungsInhalt() };
+    setzeGistStatus('laeuft', '');
+
+    var anfrage = einstellung.gistId
+      ? gistAnfrage(einstellung.token, '/gists/' + einstellung.gistId, 'PATCH', { files: dateien })
+      : gistAnfrage(einstellung.token, '/gists', 'POST', {
+          description: 'Lauftagebuch – automatische Sicherung',
+          public: false,
+          files: dateien
+        });
+
+    return anfrage.then(function (gist) {
+      einstellung.gistId = gist && gist.id ? gist.id : einstellung.gistId;
+      einstellung.zuletzt = new Date().toISOString();
+      speichere(SCHLUESSEL_GIST, einstellung);
+      gistZuletztGesendet = fingerabdruck;
+      setzeGistStatus('bereit', '');
+    }, function (fehler) {
+      setzeGistStatus('fehler', String(fehler && fehler.message ? fehler.message : fehler));
+    });
+  }
+
+  /* Wird nach jeder Datenänderung aufgerufen und fasst schnelle Folgeänderungen zusammen. */
+  function planeGistSicherung() {
+    if (!ladeGistEinstellung()) return;
+    if (gistTimer) window.clearTimeout(gistTimer);
+    setzeGistStatus('wartet', '');
+    gistTimer = window.setTimeout(function () {
+      gistTimer = null;
+      gistHochladen(false);
+    }, 2500);
+  }
+
+  function gistLaden() {
+    var einstellung = ladeGistEinstellung();
+    if (!einstellung || !einstellung.gistId) {
+      zeigeGistErgebnis('Bei GitHub liegt noch keine Ablage. Zuerst sichern.', true);
+      return;
+    }
+    zeigeGistErgebnis('Wird von GitHub geladen …', false);
+    gistAnfrage(einstellung.token, '/gists/' + einstellung.gistId).then(function (gist) {
+      var datei = gist && gist.files ? gist.files[GIST_DATEI] : null;
+      if (!datei) throw new Error('In der Ablage liegt keine Datei ' + GIST_DATEI + '.');
+      if (datei.truncated && datei.raw_url) {
+        return window.fetch(datei.raw_url).then(function (antwort) { return antwort.text(); });
+      }
+      return datei.content;
+    }).then(function (text) {
+      var pruefung = pruefeSicherung(String(text || ''));
+      if (pruefung.fehler) { zeigeGistErgebnis(pruefung.fehler, true); return; }
+      zeigeGistErgebnis('', false);
+      frageWiederherstellung(pruefung);
+    }).catch(function (fehler) {
+      zeigeGistErgebnis(String(fehler && fehler.message ? fehler.message : fehler), true);
+    });
+  }
+
+  function zeigeGistErgebnis(text, istFehler) {
+    var ziel = document.getElementById('gist-ergebnis');
+    leeren(ziel);
+    if (!text) return;
+    ziel.appendChild(el('div', { class: 'ergebnis' + (istFehler ? ' ergebnis--fehler' : ''), text: text }));
+  }
+
+  function gistVerbinden() {
+    var feld = document.getElementById('gist-token');
+    var token = String(feld.value || '').trim();
+    if (!token) { zeigeGistErgebnis('Bitte den Zugriffsschlüssel einfügen.', true); return; }
+
+    zeigeGistErgebnis('Der Schlüssel wird geprüft …', false);
+    gistAnfrage(token, '/user').then(function (nutzer) {
+      return nutzer && nutzer.login ? nutzer.login : '';
+    }, function (fehler) {
+      /* Manche Schlüssel dürfen das Konto nicht lesen – dann über die Gist-Liste prüfen */
+      return gistAnfrage(token, '/gists').then(function () { return ''; }, function () { throw fehler; });
+    }).then(function (konto) {
+      speichere(SCHLUESSEL_GIST, { token: token, gistId: '', konto: konto, zuletzt: '' });
+      feld.value = '';
+      gistZuletztGesendet = null;
+      zeigeGistErgebnis('Verbunden. Die erste Sicherung wird angelegt …', false);
+      zeichneGist();
+      return gistHochladen(true).then(function () {
+        var jetzt = ladeGistEinstellung();
+        if (jetzt && jetzt.gistId) {
+          zeigeGistErgebnis('Verbunden. Ab jetzt wird jede Änderung automatisch gesichert.', false);
+          quittiere('Automatische Sicherung aktiv');
+        }
+      });
+    }).catch(function (fehler) {
+      zeigeGistErgebnis(String(fehler && fehler.message ? fehler.message : fehler), true);
+    });
+  }
+
+  function gistTrennen() {
+    frageNach('Verbindung trennen?',
+      'Der Zugriffsschlüssel wird aus diesem Browser entfernt. Die Ablage bei GitHub und die Daten auf diesem Gerät bleiben bestehen.',
+      'Trennen', function () {
+        try { window.localStorage.removeItem(SCHLUESSEL_GIST); } catch (e) { /* Speicher nicht verfügbar */ }
+        if (gistTimer) { window.clearTimeout(gistTimer); gistTimer = null; }
+        gistZuletztGesendet = null;
+        setzeGistStatus('aus', '');
+        zeigeGistErgebnis('Verbindung getrennt.', false);
+        quittiere('Verbindung getrennt');
+      });
+  }
+
+  function zeichneGist() {
+    var einstellung = ladeGistEinstellung();
+    var aus = document.getElementById('gist-aus');
+    var an = document.getElementById('gist-an');
+
+    if (!einstellung) {
+      aus.removeAttribute('hidden');
+      an.setAttribute('hidden', '');
+      return;
+    }
+    aus.setAttribute('hidden', '');
+    an.removeAttribute('hidden');
+
+    document.getElementById('gist-konto').textContent = einstellung.konto
+      ? 'Verbunden als ' + einstellung.konto + '.'
+      : 'Verbunden.';
+
+    var ablage = document.getElementById('gist-ablage');
+    leeren(ablage);
+    if (einstellung.gistId) {
+      ablage.appendChild(el('a', {
+        href: 'https://gist.github.com/' + einstellung.gistId,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        class: 'link'
+      }, 'Ablage bei GitHub ansehen'));
+    }
+
+    var zeile = document.getElementById('gist-status');
+    zeile.classList.toggle('ist-fehler', gistStatus === 'fehler');
+    if (gistStatus === 'laeuft') {
+      zeile.textContent = 'Wird gesichert …';
+    } else if (gistStatus === 'wartet') {
+      zeile.textContent = 'Änderung vorgemerkt, wird gleich gesichert …';
+    } else if (gistStatus === 'fehler') {
+      zeile.textContent = gistFehlertext + ' Die Daten auf diesem Gerät sind unverändert.';
+    } else if (einstellung.zuletzt) {
+      var zeitpunkt = new Date(einstellung.zuletzt);
+      zeile.textContent = 'Zuletzt automatisch gesichert: ' + datumLang(einstellung.zuletzt.slice(0, 10)) +
+        ', ' + pad2(zeitpunkt.getHours()) + ':' + pad2(zeitpunkt.getMinutes()) + ' Uhr.';
+    } else {
+      zeile.textContent = 'Noch nichts gesichert.';
+    }
+  }
+
+  function gistIstAktuell() {
+    var einstellung = ladeGistEinstellung();
+    if (!einstellung || !einstellung.zuletzt) return false;
+    var tage = tageSeit(einstellung.zuletzt);
+    return tage !== null && tage <= 14 && gistStatus !== 'fehler';
+  }
+
   function frageWiederherstellung(pruefung) {
     var jetzt = aktuellerUmfang();
     var quelle = pruefung.erstelltAm ? (' vom ' + datumLang(pruefung.erstelltAm.slice(0, 10))) : '';
@@ -1776,6 +2061,8 @@ pre.ausgabe{
     var umfang = umfangGesamt(aktuellerUmfang());
 
     if (!umfang) { ziel.textContent = ''; return; }
+    /* Läuft die automatische Sicherung, ist eine Erinnerung an die Datei überflüssig */
+    if (gistIstAktuell()) { ziel.textContent = ''; return; }
     if (!stand || !stand.zuletzt) { ziel.textContent = 'Noch keine Sicherung erstellt.'; return; }
 
     var tage = tageSeit(stand.zuletzt);
@@ -1905,6 +2192,7 @@ pre.ausgabe{
     zeichneImport();
     zeichneExport();
     zeichneSicherung();
+    zeichneGist();
   }
 
   function zeigeTab(name) {
@@ -2048,6 +2336,13 @@ pre.ausgabe{
   });
 
   document.getElementById('sicherung-erstellen').addEventListener('click', erstelleSicherung);
+  document.getElementById('gist-verbinden').addEventListener('click', gistVerbinden);
+  document.getElementById('gist-jetzt').addEventListener('click', function () { gistHochladen(true); });
+  document.getElementById('gist-holen').addEventListener('click', gistLaden);
+  document.getElementById('gist-trennen').addEventListener('click', gistTrennen);
+  document.getElementById('gist-token').addEventListener('keydown', function (ereignis) {
+    if (ereignis.key === 'Enter') { ereignis.preventDefault(); gistVerbinden(); }
+  });
 
   document.getElementById('sicherung-datei').addEventListener('change', function (ereignis) {
     var datei = ereignis.target.files && ereignis.target.files[0];
