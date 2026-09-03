@@ -165,6 +165,11 @@ button{font:inherit;color:inherit}
   background:var(--flaeche-hoch);color:var(--text);
   box-shadow:0 1px 2px rgba(0,0,0,.4);
 }
+/* Vier Reiter müssen auch auf schmalen Bildschirmen nebeneinander passen */
+@media (max-width:480px){
+  .reiter{gap:2px;padding:4px}
+  .reiter button{padding:9px 4px;font-size:.82rem;letter-spacing:-.015em}
+}
 
 /* ---------- Karten ---------- */
 
@@ -399,6 +404,9 @@ details.alle > summary:hover{color:var(--text)}
   margin-top:16px;font-size:.88rem;padding:13px 16px;border-radius:var(--radius-klein);
   background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--akzent);font-weight:560;
 }
+.ergebnis--fehler{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch)}
+.sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-3);line-height:1.6}
+.sicherung-stand:empty{display:none}
 .trenn{height:1px;background:var(--rand);margin:22px 0}
 pre.ausgabe{
   background:var(--flaeche-sanft);border:1px solid var(--rand);border-radius:var(--radius-klein);
@@ -468,6 +476,7 @@ pre.ausgabe{
       <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf">Verlauf</button>
       <button type="button" role="tab" id="reiter-import" aria-selected="false" data-tab="import">Import</button>
       <button type="button" role="tab" id="reiter-export" aria-selected="false" data-tab="export">Export</button>
+      <button type="button" role="tab" id="reiter-sicherung" aria-selected="false" data-tab="sicherung">Sicherung</button>
     </nav>
   </header>
 
@@ -513,6 +522,28 @@ pre.ausgabe{
         <div id="export-bereich"></div>
       </div>
     </section>
+
+    <section id="tab-sicherung" role="tabpanel" aria-labelledby="reiter-sicherung" hidden>
+      <div class="karte">
+        <h2>Sicherung herunterladen</h2>
+        <p class="hinweis-text">Alle Aktivitäten und Befinden-Einträge liegen ausschließlich in diesem Browser auf diesem Gerät. Wird der Browser-Speicher geleert oder das Gerät gewechselt, sind sie weg. Die Sicherung schreibt den gesamten Bestand in eine JSON-Datei. Mit derselben Datei lassen sich die Daten auch auf ein anderes Gerät übertragen.</p>
+        <p class="hinweis-text">Die Datei enthält deine Trainings- und Befinden-Einträge. Leg sie dort ab, wo du auch andere persönliche Unterlagen aufbewahrst.</p>
+        <div style="margin-top:16px">
+          <button type="button" class="knopf knopf--primaer" id="sicherung-erstellen">Sicherung herunterladen</button>
+        </div>
+        <p class="sicherung-stand" id="sicherung-stand"></p>
+      </div>
+
+      <div class="karte">
+        <h2>Sicherung einlesen</h2>
+        <p class="hinweis-text">Zuerst wird die Datei geprüft. Danach kannst du wählen, ob der vorhandene Bestand ersetzt oder um die Einträge aus der Sicherung ergänzt wird. Vor dieser Entscheidung wird nichts verändert.</p>
+        <div style="margin-top:16px">
+          <label class="feld" for="sicherung-datei">Datei</label>
+          <input type="file" id="sicherung-datei" accept=".json,application/json">
+        </div>
+        <div id="sicherung-ergebnis" role="status" aria-live="polite"></div>
+      </div>
+    </section>
   </main>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -522,10 +553,7 @@ pre.ausgabe{
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-titel" aria-describedby="dialog-text">
     <h2 id="dialog-titel">Löschen?</h2>
     <p id="dialog-text"></p>
-    <div class="dialog-fuss">
-      <button type="button" class="knopf" id="dialog-abbrechen">Abbrechen</button>
-      <button type="button" class="knopf knopf--kritisch" id="dialog-bestaetigen">Löschen</button>
-    </div>
+    <div class="dialog-fuss" id="dialog-fuss"></div>
   </div>
 </div>
 
@@ -535,6 +563,8 @@ pre.ausgabe{
 
   var SCHLUESSEL_AKT = 'lauftagebuch.aktivitaeten.v2';
   var SCHLUESSEL_BEF = 'lauftagebuch.befinden.v2';
+  var SCHLUESSEL_SIC = 'lauftagebuch.sicherung.v1';
+  var FORMAT_VERSION = 1;
 
   var ORTE = ['Knie', 'Schienbein', 'Ferse', 'Hüfte', 'Achillessehne', 'Wade', 'Fuß', 'Rücken'];
   var SEITEN = ['links', 'rechts', 'beidseitig', 'keine Angabe'];
@@ -616,7 +646,10 @@ pre.ausgabe{
   }
 
   function ladeAktivitaeten() {
-    var daten = ladeRoh(SCHLUESSEL_AKT);
+    return normalisiereAktivitaeten(ladeRoh(SCHLUESSEL_AKT));
+  }
+
+  function normalisiereAktivitaeten(daten) {
     if (!Array.isArray(daten)) return [];
     var sauber = [];
     for (var i = 0; i < daten.length; i++) {
@@ -636,7 +669,10 @@ pre.ausgabe{
   }
 
   function ladeBefinden() {
-    var daten = ladeRoh(SCHLUESSEL_BEF);
+    return normalisiereBefinden(ladeRoh(SCHLUESSEL_BEF));
+  }
+
+  function normalisiereBefinden(daten) {
     var ergebnis = { eintraege: [], zusatztage: [] };
     if (!daten) return ergebnis;
     var eintraege = Array.isArray(daten) ? daten : (Array.isArray(daten.eintraege) ? daten.eintraege : []);
@@ -1390,7 +1426,6 @@ pre.ausgabe{
 
   /* ---------- Bestätigungsdialog ---------- */
 
-  var dialogJa = null;
   var dialogVorherigerFokus = null;
   var dialogTimer = null;
 
@@ -1398,25 +1433,51 @@ pre.ausgabe{
     return !document.getElementById('dialog-huelle').hasAttribute('hidden');
   }
 
-  function frageNach(titel, text, knopfText, beiJa) {
+  function dialogKnoepfe() {
+    return document.getElementById('dialog-fuss').querySelectorAll('button');
+  }
+
+  /*
+   * aktionen: Liste von { text, klasse, beiKlick }. „Abbrechen“ kommt immer
+   * als erster Knopf davor und bekommt den Fokus, damit Enter nichts auslöst.
+   */
+  function zeigeDialog(titel, text, aktionen) {
     var huelle = document.getElementById('dialog-huelle');
     document.getElementById('dialog-titel').textContent = titel;
     document.getElementById('dialog-text').textContent = text;
-    document.getElementById('dialog-bestaetigen').textContent = knopfText;
-    dialogJa = beiJa;
+
+    var fuss = document.getElementById('dialog-fuss');
+    leeren(fuss);
+    var abbrechen = el('button', { type: 'button', class: 'knopf' }, 'Abbrechen');
+    abbrechen.addEventListener('click', schliesseDialog);
+    fuss.appendChild(abbrechen);
+
+    aktionen.forEach(function (aktion) {
+      var knopf = el('button', { type: 'button', class: aktion.klasse || 'knopf' }, aktion.text);
+      knopf.addEventListener('click', function () {
+        schliesseDialog();
+        if (aktion.beiKlick) aktion.beiKlick();
+      });
+      fuss.appendChild(knopf);
+    });
+
     dialogVorherigerFokus = document.activeElement;
     if (dialogTimer) { window.clearTimeout(dialogTimer); dialogTimer = null; }
     huelle.removeAttribute('hidden');
-    /* Fokus bewusst auf „Abbrechen“, damit Enter nichts löscht */
-    document.getElementById('dialog-abbrechen').focus();
+    abbrechen.focus();
     window.requestAnimationFrame(function () { huelle.classList.add('offen'); });
+  }
+
+  function frageNach(titel, text, knopfText, beiJa) {
+    zeigeDialog(titel, text, [
+      { text: knopfText, klasse: 'knopf knopf--kritisch', beiKlick: beiJa }
+    ]);
   }
 
   function schliesseDialog() {
     var huelle = document.getElementById('dialog-huelle');
     if (huelle.hasAttribute('hidden')) return;
     huelle.classList.remove('offen');
-    dialogJa = null;
     var fertig = function () {
       dialogTimer = null;
       huelle.setAttribute('hidden', '');
@@ -1429,22 +1490,18 @@ pre.ausgabe{
     if (bewegungReduziert()) fertig(); else dialogTimer = window.setTimeout(fertig, 200);
   }
 
-  document.getElementById('dialog-abbrechen').addEventListener('click', schliesseDialog);
   document.getElementById('dialog-schirm').addEventListener('click', schliesseDialog);
-  document.getElementById('dialog-bestaetigen').addEventListener('click', function () {
-    var handlung = dialogJa;
-    schliesseDialog();
-    if (handlung) handlung();
-  });
   document.addEventListener('keydown', function (ereignis) {
     if (!dialogOffen()) return;
     if (ereignis.key === 'Escape') { ereignis.preventDefault(); schliesseDialog(); return; }
     if (ereignis.key !== 'Tab') return;
-    var erster = document.getElementById('dialog-abbrechen');
-    var letzter = document.getElementById('dialog-bestaetigen');
+    var knoepfe = dialogKnoepfe();
+    if (!knoepfe.length) return;
+    var erster = knoepfe[0];
+    var letzter = knoepfe[knoepfe.length - 1];
     if (ereignis.shiftKey && document.activeElement === erster) { ereignis.preventDefault(); letzter.focus(); }
     else if (!ereignis.shiftKey && document.activeElement === letzter) { ereignis.preventDefault(); erster.focus(); }
-    else if (document.activeElement !== erster && document.activeElement !== letzter) { ereignis.preventDefault(); erster.focus(); }
+    else if (Array.prototype.indexOf.call(knoepfe, document.activeElement) < 0) { ereignis.preventDefault(); erster.focus(); }
   });
 
   /* ---------- Einblenden beim Scrollen ---------- */
@@ -1485,7 +1542,252 @@ pre.ausgabe{
     return knoten;
   }
 
+  /* ---------- Sicherung ---------- */
+
+  function aktuellerUmfang() {
+    return {
+      aktivitaeten: aktivitaeten.length,
+      eintraege: befinden.eintraege.length,
+      zusatztage: befinden.zusatztage.length
+    };
+  }
+
+  function umfangGesamt(u) { return u.aktivitaeten + u.eintraege + u.zusatztage; }
+
+  function ladeSicherungsStand() {
+    var daten = ladeRoh(SCHLUESSEL_SIC);
+    if (!daten || typeof daten !== 'object' || Array.isArray(daten)) return null;
+    return {
+      zuletzt: typeof daten.zuletzt === 'string' ? daten.zuletzt : '',
+      umfang: typeof daten.umfang === 'number' ? daten.umfang : 0
+    };
+  }
+
+  function merkeSicherung() {
+    speichere(SCHLUESSEL_SIC, {
+      zuletzt: new Date().toISOString(),
+      umfang: umfangGesamt(aktuellerUmfang())
+    });
+  }
+
+  function tageSeit(isoZeit) {
+    var zeitpunkt = Date.parse(isoZeit);
+    if (isNaN(zeitpunkt)) return null;
+    return Math.floor((Date.now() - zeitpunkt) / 86400000);
+  }
+
+  function heuteIso() {
+    var jetzt = new Date();
+    return jetzt.getFullYear() + '-' + pad2(jetzt.getMonth() + 1) + '-' + pad2(jetzt.getDate());
+  }
+
+  function erstelleSicherung() {
+    var inhalt = JSON.stringify({
+      formatVersion: FORMAT_VERSION,
+      anwendung: 'Lauftagebuch',
+      erstelltAm: new Date().toISOString(),
+      daten: (function () {
+        var daten = {};
+        daten[SCHLUESSEL_AKT] = aktivitaeten;
+        daten[SCHLUESSEL_BEF] = befinden;
+        return daten;
+      })()
+    }, null, 2);
+
+    var dateiname = 'lauftagebuch-sicherung-' + heuteIso() + '.json';
+    try {
+      var blob = new Blob([inhalt], { type: 'application/json' });
+      var adresse = URL.createObjectURL(blob);
+      var verweis = el('a', { href: adresse, download: dateiname, style: 'display:none' });
+      document.body.appendChild(verweis);
+      verweis.click();
+      window.setTimeout(function () {
+        if (verweis.parentNode) verweis.parentNode.removeChild(verweis);
+        URL.revokeObjectURL(adresse);
+      }, 2000);
+    } catch (fehler) {
+      zeigeSicherungsErgebnis('Die Datei konnte nicht erzeugt werden.', true);
+      return;
+    }
+
+    merkeSicherung();
+    var umfang = aktuellerUmfang();
+    zeigeSicherungsErgebnis(dateiname + ' enthält ' + umfang.aktivitaeten + ' Aktivitäten und ' +
+      umfang.eintraege + ' Befinden-Einträge.', false);
+    quittiere('Sicherung heruntergeladen');
+    zeichneSicherung();
+  }
+
+  /* Prüft eine Sicherungsdatei vollständig, bevor irgendetwas verändert wird. */
+  function pruefeSicherung(text) {
+    var roh;
+    try {
+      roh = JSON.parse(text);
+    } catch (fehler) {
+      return { fehler: 'Die Datei ist kein lesbares JSON. Es wurde nichts verändert.' };
+    }
+    if (!roh || typeof roh !== 'object' || Array.isArray(roh)) {
+      return { fehler: 'Die Datei hat nicht den Aufbau einer Sicherung. Es wurde nichts verändert.' };
+    }
+    if (typeof roh.formatVersion !== 'number') {
+      return { fehler: 'In der Datei fehlt die Angabe „formatVersion“. Sie stammt vermutlich nicht aus diesem Lauftagebuch. Es wurde nichts verändert.' };
+    }
+    if (roh.formatVersion > FORMAT_VERSION) {
+      return { fehler: 'Die Sicherung hat Formatversion ' + roh.formatVersion + ' und stammt aus einer neueren Fassung der App. Es wurde nichts verändert.' };
+    }
+    if (!roh.daten || typeof roh.daten !== 'object' || Array.isArray(roh.daten)) {
+      return { fehler: 'In der Datei fehlt der Abschnitt „daten“. Es wurde nichts verändert.' };
+    }
+
+    var rohAkt = roh.daten[SCHLUESSEL_AKT];
+    var rohBef = roh.daten[SCHLUESSEL_BEF];
+    if (!Array.isArray(rohAkt)) {
+      return { fehler: 'Die Liste der Aktivitäten fehlt oder hat das falsche Format. Es wurde nichts verändert.' };
+    }
+    if (!rohBef || typeof rohBef !== 'object') {
+      return { fehler: 'Der Abschnitt mit den Befinden-Einträgen fehlt oder hat das falsche Format. Es wurde nichts verändert.' };
+    }
+
+    var akt = normalisiereAktivitaeten(rohAkt);
+    var bef = normalisiereBefinden(rohBef);
+    if (rohAkt.length > 0 && akt.length === 0) {
+      return { fehler: 'Die Aktivitäten in der Datei haben nicht den erwarteten Aufbau. Es wurde nichts verändert.' };
+    }
+
+    return {
+      akt: akt,
+      bef: bef,
+      erstelltAm: typeof roh.erstelltAm === 'string' ? roh.erstelltAm : ''
+    };
+  }
+
+  function zeigeSicherungsErgebnis(text, istFehler) {
+    var ziel = document.getElementById('sicherung-ergebnis');
+    leeren(ziel);
+    ziel.appendChild(el('div', { class: 'ergebnis' + (istFehler ? ' ergebnis--fehler' : ''), text: text }));
+  }
+
+  function sicherungErsetzen(pruefung) {
+    aktivitaeten = pruefung.akt.slice();
+    aktivitaeten.sort(sortiereAbsteigend);
+    befinden = { eintraege: pruefung.bef.eintraege.slice(), zusatztage: pruefung.bef.zusatztage.slice() };
+    entwuerfe = {};
+    speichereAktivitaeten();
+    speichereBefinden();
+    zeigeSicherungsErgebnis(pruefung.akt.length + ' Aktivitäten und ' + pruefung.bef.eintraege.length +
+      ' Befinden-Einträge eingelesen. Der vorherige Bestand wurde ersetzt.', false);
+    quittiere('Sicherung eingelesen');
+    zeichne();
+  }
+
+  function sicherungZusammenfuehren(pruefung) {
+    var signaturen = {};
+    var belegteIds = {};
+    aktivitaeten.forEach(function (a) {
+      signaturen[signatur(a.felder)] = a.id;
+      belegteIds[a.id] = true;
+    });
+
+    /* Ordnet Ids aus der Sicherung den Ids im aktuellen Bestand zu */
+    var abbildung = {};
+    var neueAkt = 0, dublettenAkt = 0;
+
+    pruefung.akt.forEach(function (a) {
+      var sig = signatur(a.felder);
+      if (Object.prototype.hasOwnProperty.call(signaturen, sig)) {
+        abbildung[a.id] = signaturen[sig];
+        dublettenAkt++;
+        return;
+      }
+      var kopie = {
+        id: belegteIds[a.id] ? neueId() : a.id,
+        datum: a.datum,
+        datumOriginal: a.datumOriginal,
+        felder: a.felder,
+        istLaufAuto: a.istLaufAuto,
+        istLaufManuell: a.istLaufManuell
+      };
+      belegteIds[kopie.id] = true;
+      signaturen[sig] = kopie.id;
+      abbildung[a.id] = kopie.id;
+      aktivitaeten.push(kopie);
+      neueAkt++;
+    });
+
+    var neueBef = 0, dublettenBef = 0, ohneAktivitaet = 0;
+    pruefung.bef.eintraege.forEach(function (e) {
+      var zielId = abbildung[e.aktivitaetId] || (belegteIds[e.aktivitaetId] ? e.aktivitaetId : null);
+      if (!zielId) { ohneAktivitaet++; return; }
+      if (befindenFuer(zielId)) { dublettenBef++; return; }
+      befinden.eintraege.push({
+        aktivitaetId: zielId,
+        art: e.art,
+        ort: e.ort,
+        seite: e.seite,
+        staerke: e.staerke,
+        notiz: e.notiz,
+        erfasstAm: e.erfasstAm
+      });
+      neueBef++;
+    });
+
+    var neueTage = 0, dublettenTage = 0;
+    pruefung.bef.zusatztage.forEach(function (z) {
+      var vorhanden = befinden.zusatztage.some(function (v) { return v.datum === z.datum; });
+      if (vorhanden) { dublettenTage++; return; }
+      befinden.zusatztage.push({ datum: z.datum, art: z.art });
+      neueTage++;
+    });
+
+    aktivitaeten.sort(sortiereAbsteigend);
+    speichereAktivitaeten();
+    speichereBefinden();
+
+    var meldung = neueAkt + ' Aktivitäten und ' + neueBef + ' Befinden-Einträge übernommen. ' +
+      dublettenAkt + ' Aktivitäten und ' + dublettenBef + ' Befinden-Einträge waren bereits vorhanden.';
+    if (neueTage || dublettenTage) {
+      meldung += ' Tage ohne Aufzeichnung: ' + neueTage + ' übernommen, ' + dublettenTage + ' bereits vorhanden.';
+    }
+    if (ohneAktivitaet) {
+      meldung += ' ' + ohneAktivitaet + ' Befinden-Einträge ohne zugehörige Aktivität blieben unberücksichtigt.';
+    }
+    zeigeSicherungsErgebnis(meldung, false);
+    quittiere('Sicherung zusammengeführt');
+    zeichne();
+  }
+
+  function frageWiederherstellung(pruefung) {
+    var jetzt = aktuellerUmfang();
+    var quelle = pruefung.erstelltAm ? (' vom ' + datumLang(pruefung.erstelltAm.slice(0, 10))) : '';
+    var text = 'Diese Sicherung enthält ' + pruefung.akt.length + ' Aktivitäten und ' +
+      pruefung.bef.eintraege.length + ' Befinden-Einträge' + quelle + '. Aktuell sind ' +
+      jetzt.aktivitaeten + ' Aktivitäten und ' + jetzt.eintraege + ' Befinden-Einträge gespeichert.';
+    zeigeDialog('Sicherung einlesen', text, [
+      { text: 'Zusammenführen', klasse: 'knopf', beiKlick: function () { sicherungZusammenfuehren(pruefung); } },
+      { text: 'Ersetzen', klasse: 'knopf knopf--kritisch', beiKlick: function () { sicherungErsetzen(pruefung); } }
+    ]);
+  }
+
   /* ---------- Zeichnen ---------- */
+
+  function zeichneSicherung() {
+    var ziel = document.getElementById('sicherung-stand');
+    var stand = ladeSicherungsStand();
+    var umfang = umfangGesamt(aktuellerUmfang());
+
+    if (!umfang) { ziel.textContent = ''; return; }
+    if (!stand || !stand.zuletzt) { ziel.textContent = 'Noch keine Sicherung erstellt.'; return; }
+
+    var tage = tageSeit(stand.zuletzt);
+    if (tage === null) { ziel.textContent = ''; return; }
+
+    if (tage > 14 && umfang > stand.umfang) {
+      ziel.textContent = 'Letzte Sicherung vor ' + tage + ' Tagen. Seitdem sind Einträge dazugekommen.';
+      return;
+    }
+    var wann = tage === 0 ? 'heute' : (tage === 1 ? 'gestern' : 'vor ' + tage + ' Tagen');
+    ziel.textContent = 'Letzte Sicherung: ' + datumLang(stand.zuletzt.slice(0, 10)) + ' (' + wann + ').';
+  }
 
   function zeichneKopfzahlen() {
     var ziel = document.getElementById('kopfzahlen');
@@ -1602,11 +1904,12 @@ pre.ausgabe{
     zeichneVerlauf();
     zeichneImport();
     zeichneExport();
+    zeichneSicherung();
   }
 
   function zeigeTab(name) {
     aktiverTab = name;
-    ['verlauf', 'import', 'export'].forEach(function (n) {
+    ['verlauf', 'import', 'export', 'sicherung'].forEach(function (n) {
       var panel = document.getElementById('tab-' + n);
       var reiter = document.getElementById('reiter-' + n);
       if (n === name) { panel.removeAttribute('hidden'); reiter.setAttribute('aria-selected', 'true'); }
@@ -1742,6 +2045,25 @@ pre.ausgabe{
     speichereAktivitaeten();
     quittiere('Alle Aktivitäten automatisch eingestuft');
     zeichne();
+  });
+
+  document.getElementById('sicherung-erstellen').addEventListener('click', erstelleSicherung);
+
+  document.getElementById('sicherung-datei').addEventListener('change', function (ereignis) {
+    var datei = ereignis.target.files && ereignis.target.files[0];
+    if (!datei) return;
+    var leser = new FileReader();
+    leser.onload = function () {
+      var pruefung = pruefeSicherung(String(leser.result || ''));
+      ereignis.target.value = '';
+      if (pruefung.fehler) { zeigeSicherungsErgebnis(pruefung.fehler, true); return; }
+      frageWiederherstellung(pruefung);
+    };
+    leser.onerror = function () {
+      zeigeSicherungsErgebnis('Die Datei konnte nicht gelesen werden. Es wurde nichts verändert.', true);
+      ereignis.target.value = '';
+    };
+    leser.readAsText(datei, 'utf-8');
   });
 
   document.getElementById('kopieren').addEventListener('click', function () {
