@@ -200,8 +200,10 @@ button{font:inherit;color:inherit}
 .diagramm .streifen{fill:var(--text-4);opacity:.75}
 .diagramm .punkt:focus-visible,.diagramm .balken-flaeche:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
 .diagramm .punkt--neutral{fill:var(--akzent);stroke:var(--flaeche);stroke-width:1.5}
-.diagramm .linie--anteil{stroke:var(--text-4);stroke-width:1.5;stroke-dasharray:5 4;opacity:.8}
-.stat-legende .legende-anteil{color:var(--text-3)}
+.diagramm .linie--frequenz{stroke:var(--akzent)}
+.diagramm .linie--laenge{stroke:var(--text-3);stroke-width:1.5;stroke-dasharray:5 4;opacity:.9}
+.stat-legende .legende-neutral{color:var(--akzent)}
+.stat-legende .legende-laenge{color:var(--text-3)}
 .stat-warnung{
   margin-top:12px;font-size:.83rem;color:var(--text-2);line-height:1.6;
   border-left:2px solid var(--rand-stark);padding:2px 0 2px 12px;
@@ -210,6 +212,27 @@ button{font:inherit;color:inherit}
 /* ---------- Aktivitätskalender ---------- */
 .kalender{display:flex;flex-wrap:wrap;gap:22px;margin-top:18px}
 .kal-monat{flex:1 1 240px;min-width:220px;max-width:320px}
+.kal-monat--einzeln{flex:1 1 100%;max-width:420px;margin:0 auto}
+.kal-monat--einzeln .kal-tag{font-size:.74rem}
+/* Der Monatsname steht in der Einzelansicht schon in der Steuerung */
+.kal-monat--einzeln .kal-titel{display:none}
+.kal-monat--einzeln .kal-kopf{justify-content:flex-end}
+.kal-steuerung{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
+.kal-monat-name{font-size:1rem;font-weight:640;letter-spacing:-.015em;min-width:9.5em;text-align:center}
+.kal-pfeil{
+  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);color:var(--text-2);
+  width:34px;height:34px;border-radius:50%;font-size:1.15rem;line-height:1;cursor:pointer;
+  transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich);
+}
+.kal-pfeil:hover:not([disabled]){background:#272d38;color:var(--text);border-color:var(--text-4)}
+.kal-pfeil:active:not([disabled]){transform:translateY(1px)}
+.kal-pfeil[disabled]{opacity:.35;cursor:default}
+.kal-legende{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.75rem;color:var(--text-4);font-weight:600}
+.kal-legende-teil{display:inline-flex;align-items:center;gap:6px}
+.kal-fuss{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:18px}
+.kal-tag--dunkel{color:var(--akzent-text)}
+.dialog.dialog--breit{max-width:780px;max-height:84vh;overflow-y:auto}
+.dialog-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
 .kal-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
 .kal-titel{font-size:.9rem;font-weight:620;letter-spacing:-.01em}
 .kal-summe{font-size:.72rem;color:var(--text-4);font-weight:600}
@@ -224,11 +247,6 @@ button{font:inherit;color:inherit}
   font-size:.66rem;color:var(--text-4);font-variant-numeric:tabular-nums;
 }
 .kal-tag--leer{background:transparent;border-color:transparent}
-.kal-tag--stufe1{background:rgba(91,156,248,.20);border-color:rgba(91,156,248,.28);color:var(--text-2)}
-.kal-tag--stufe2{background:rgba(91,156,248,.38);border-color:rgba(91,156,248,.46);color:var(--text)}
-.kal-tag--stufe3{background:rgba(91,156,248,.60);border-color:rgba(91,156,248,.68);color:var(--akzent-text)}
-.kal-tag--stufe4{background:rgba(91,156,248,.88);border-color:var(--akzent);color:var(--akzent-text);font-weight:640}
-.kal-skala{display:flex;align-items:center;gap:6px;margin-top:18px}
 .kal-skala-text{font-size:.72rem;color:var(--text-4);font-weight:600}
 .kal-probe{width:16px;height:16px;aspect-ratio:auto;flex:0 0 auto}
 @media (max-width:560px){
@@ -674,6 +692,17 @@ pre.ausgabe{
     <h2 id="dialog-titel">Löschen?</h2>
     <p id="dialog-text"></p>
     <div class="dialog-fuss" id="dialog-fuss"></div>
+  </div>
+</div>
+
+<div class="dialog-huelle" id="uebersicht-huelle" hidden>
+  <div class="dialog-schirm" id="uebersicht-schirm"></div>
+  <div class="dialog dialog--breit" role="dialog" aria-modal="true" aria-labelledby="uebersicht-titel">
+    <div class="dialog-kopf">
+      <h2 id="uebersicht-titel">Alle Monate</h2>
+      <button type="button" class="weg" id="uebersicht-schliessen" aria-label="Übersicht schließen">×</button>
+    </div>
+    <div id="uebersicht-inhalt"></div>
   </div>
 </div>
 
@@ -1704,7 +1733,14 @@ pre.ausgabe{
   }
 
   document.getElementById('dialog-schirm').addEventListener('click', schliesseDialog);
+  document.getElementById('uebersicht-schirm').addEventListener('click', schliesseUebersicht);
+  document.getElementById('uebersicht-schliessen').addEventListener('click', schliesseUebersicht);
   document.addEventListener('keydown', function (ereignis) {
+    if (ereignis.key === 'Escape' && !document.getElementById('uebersicht-huelle').hasAttribute('hidden')) {
+      ereignis.preventDefault();
+      schliesseUebersicht();
+      return;
+    }
     if (!dialogOffen()) return;
     if (ereignis.key === 'Escape') { ereignis.preventDefault(); schliesseDialog(); return; }
     if (ereignis.key !== 'Tab') return;
@@ -2227,6 +2263,9 @@ pre.ausgabe{
   var statZeitraum = 'gesamt';
   var statNurLaeufe = true;
   var statResizeTimer = null;
+  var statKalenderMonat = null;
+  var uebersichtVorherigerFokus = null;
+  var uebersichtTimer = null;
 
   function svg(tag, attrs) {
     var knoten = document.createElementNS(SVG_RAUM, tag);
@@ -2695,77 +2734,119 @@ pre.ausgabe{
     return karte;
   }
 
-  /* ---------- Statistik: Puls und Pace ---------- */
+  /* ---------- Statistik: Herzfrequenz je Tempo ---------- */
 
-  function pulsPaceDiagramm() {
-    var karte = diagrammKarte('Puls und Pace',
-      'Ein Punkt je Lauf, ohne Einteilung in Lauf-Arten – die steht nicht im Garmin-Export. Bezieht sich immer auf Läufe.');
+  /* Geschwindigkeit in km/h, bevorzugt aus Distanz und Zeit in Bewegung */
+  function geschwindigkeitVon(akt) {
+    var km = kmVon(akt);
+    var bewegung = zeitSekunden(wertVon(akt, 'Zeit in Bewegung'));
+    if (km > 0 && bewegung !== null && bewegung > 0) return km / (bewegung / 3600);
+    var pace = zeitSekunden(wertVon(akt, 'Ø Pace'));
+    if (pace !== null && pace > 0) return 3600 / pace;
+    var zeit = zeitSekunden(wertVon(akt, 'Zeit'));
+    if (km > 0 && zeit !== null && zeit > 0) return km / (zeit / 3600);
+    return null;
+  }
+
+  function hfJeTempo(akt) {
+    var hf = zahlAus(wertVon(akt, 'Ø Herzfrequenz'));
+    var tempo = geschwindigkeitVon(akt);
+    if (hf === null || hf <= 0 || tempo === null || tempo <= 0) return null;
+    return hf / tempo;
+  }
+
+  function hfTempoDiagramm() {
+    var karte = diagrammKarte('Herzfrequenz je Tempo',
+      'Wie viele Herzschläge pro Minute ein Tempo von einem Kilometer pro Stunde kostet. ' +
+      'Ein niedrigerer Wert bedeutet, dass dasselbe Tempo mit weniger Puls gelaufen wurde. ' +
+      'Läufe ohne Herzfrequenz oder ohne verwertbare Zeit erscheinen als Lücke.');
     var laeufe = statAktivitaeten(true);
 
-    var punkte = [];
-    laeufe.forEach(function (a) {
-      var pace = zeitSekunden(wertVon(a, 'Ø Pace'));
-      var hf = zahlAus(wertVon(a, 'Ø Herzfrequenz'));
-      if (pace === null || hf === null) return;
-      var b = befindenFuer(a.id);
-      punkte.push({ akt: a, pace: pace, hf: hf, befinden: b, schmerz: !!(b && b.art === 'schmerz') });
-    });
+    if (!laeufe.length) {
+      karte.appendChild(statHinweis('Für diesen Zeitraum sind keine Läufe erfasst.'));
+      return karte;
+    }
 
-    if (punkte.length < 2) {
-      karte.appendChild(statHinweis('Ab zwei Läufen mit Pace und Herzfrequenz entsteht hier eine Punktwolke. ' +
-        'Zurzeit ' + (punkte.length === 1 ? 'trägt einer' : 'trägt keiner') + ' von ' + laeufe.length +
+    var punkte = laeufe.map(function (a) {
+      var b = befindenFuer(a.id);
+      return {
+        akt: a,
+        zeit: tagAus(a.datum),
+        wert: hfJeTempo(a),
+        hf: zahlAus(wertVon(a, 'Ø Herzfrequenz')),
+        tempo: geschwindigkeitVon(a),
+        befinden: b,
+        schmerz: !!(b && b.art === 'schmerz')
+      };
+    });
+    var messbare = punkte.filter(function (p) { return p.wert !== null; });
+
+    if (messbare.length < 2) {
+      karte.appendChild(statHinweis('Ab zwei Läufen mit Herzfrequenz und verwertbarer Zeit entsteht hier ein Verlauf. ' +
+        'Zurzeit ' + (messbare.length === 1 ? 'trägt einer' : 'trägt keiner') + ' von ' + laeufe.length +
         (laeufe.length === 1 ? ' Lauf' : ' Läufen') + ' beide Werte.'));
       return karte;
     }
 
     var breite = diagrammBreite();
-    var hoehe = 260;
-    var links = 34, rechts = 12, oben = 14, unten = 42;
+    var hoehe = 240;
+    var links = 32, rechts = 12, oben = 14, unten = 40;
     var flaecheBreite = breite - links - rechts;
     var flaecheHoehe = hoehe - oben - unten;
 
-    var paceMin = punkte[0].pace, paceMax = punkte[0].pace;
-    var hfMin = punkte[0].hf, hfMax = punkte[0].hf;
-    punkte.forEach(function (p) {
-      if (p.pace < paceMin) paceMin = p.pace;
-      if (p.pace > paceMax) paceMax = p.pace;
-      if (p.hf < hfMin) hfMin = p.hf;
-      if (p.hf > hfMax) hfMax = p.hf;
+    var min = messbare[0].wert, max = messbare[0].wert;
+    messbare.forEach(function (p) {
+      if (p.wert < min) min = p.wert;
+      if (p.wert > max) max = p.wert;
     });
-    var paceLuft = Math.max((paceMax - paceMin) * 0.12, 15);
-    var hfLuft = Math.max((hfMax - hfMin) * 0.12, 4);
-    paceMin -= paceLuft; paceMax += paceLuft;
-    hfMin -= hfLuft; hfMax += hfLuft;
+    var luft = Math.max((max - min) * 0.15, 0.4);
+    min -= luft; max += luft;
 
-    function xVon(pace) { return links + ((pace - paceMin) / (paceMax - paceMin)) * flaecheBreite; }
-    function yVon(hf) { return oben + (1 - (hf - hfMin) / (hfMax - hfMin)) * flaecheHoehe; }
+    var vonZeit = punkte[0].zeit, bisZeit = punkte[punkte.length - 1].zeit;
+    function xVon(zeit) {
+      if (bisZeit === vonZeit) return links + flaecheBreite / 2;
+      return links + ((zeit - vonZeit) / (bisZeit - vonZeit)) * flaecheBreite;
+    }
+    function yVon(wert) { return oben + (1 - (wert - min) / (max - min)) * flaecheHoehe; }
 
     var bild = svg('svg', {
       viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe, role: 'img',
-      'aria-label': 'Durchschnittliche Herzfrequenz im Verhältnis zur Pace, ein Punkt je Lauf'
+      'aria-label': 'Herzschläge je Kilometer pro Stunde, ein Wert je Lauf über die Zeit'
     });
 
-    achsenStufen(hfMin, hfMax, 3).forEach(function (wert) {
+    achsenStufen(min, max, 3).forEach(function (wert) {
       bild.appendChild(svg('line', {
         x1: links, x2: links + flaecheBreite, y1: yVon(wert), y2: yVon(wert), class: 'gitter'
       }));
-      bild.appendChild(svgText(links - 6, yVon(wert) + 4, String(Math.round(wert)), 'ax', 'end'));
+      bild.appendChild(svgText(links - 6, yVon(wert) + 4, zahlText(wert, 1), 'ax', 'end'));
     });
-    bild.appendChild(svg('line', {
-      x1: links, x2: links + flaecheBreite, y1: oben + flaecheHoehe, y2: oben + flaecheHoehe, class: 'achse'
-    }));
 
-    achsenStufen(paceMin, paceMax, 3).forEach(function (wert) {
-      bild.appendChild(svgText(xVon(wert), oben + flaecheHoehe + 17, paceText(wert), 'ax'));
+    /* Läufe ohne Messwert unterbrechen die Linie */
+    var stueck = [];
+    punkte.forEach(function (p) {
+      if (p.wert === null) {
+        if (stueck.length > 1) bild.appendChild(svg('polyline', { points: stueck.join(' '), class: 'linie' }));
+        stueck = [];
+        return;
+      }
+      stueck.push(xVon(p.zeit) + ',' + yVon(p.wert));
     });
+    if (stueck.length > 1) bild.appendChild(svg('polyline', { points: stueck.join(' '), class: 'linie' }));
 
     var detail = statDetailZeile('Punkt antippen für Einzelheiten.');
 
     punkte.forEach(function (p) {
+      if (p.wert === null) return;
+      /* Fehlt die Pace-Spalte, ergibt sie sich aus der Geschwindigkeit */
+      var pace = zeitSekunden(wertVon(p.akt, 'Ø Pace'));
+      if (pace === null && p.tempo > 0) pace = 3600 / p.tempo;
       var beschreibung = datumLang(p.akt.datum) + ' · ' + titelVon(p.akt) +
-        ' · Pace ' + paceText(p.pace) + ' min/km · Ø ' + Math.round(p.hf) + ' bpm · ' +
+        (kmVon(p.akt) ? ' · ' + zahlText(kmVon(p.akt), 2) + ' km' : '') +
+        ' · Ø ' + Math.round(p.hf) + ' bpm' +
+        (pace !== null ? ' · Pace ' + paceText(pace) + ' min/km' : '') +
+        ' · ' + zahlText(p.wert, 1) + ' bpm je km/h · ' +
         (p.befinden ? befindenText(p.befinden) : 'Befinden nicht erfasst');
-      var x = xVon(p.pace), y = yVon(p.hf);
+      var x = xVon(p.zeit), y = yVon(p.wert);
       var knoten;
       if (p.schmerz) {
         /* Andere Form, nicht nur andere Farbe */
@@ -2786,8 +2867,11 @@ pre.ausgabe{
       bild.appendChild(knoten);
     });
 
-    bild.appendChild(svgText(links, 12, 'bpm', 'ax', 'start'));
-    bild.appendChild(svgText(links + flaecheBreite, hoehe - 6, 'Ø Pace (min/km)', 'ax', 'end'));
+    bild.appendChild(svgText(links, 12, 'bpm je km/h', 'ax', 'start'));
+    bild.appendChild(svgText(links, hoehe - 8, datumLang(isoAusZeit(vonZeit)).slice(0, 6), 'ax', 'start'));
+    if (bisZeit !== vonZeit) {
+      bild.appendChild(svgText(links + flaecheBreite, hoehe - 8, datumLang(isoAusZeit(bisZeit)), 'ax', 'end'));
+    }
 
     karte.appendChild(bild);
     var legende = el('div', { class: 'stat-legende' });
@@ -2799,13 +2883,15 @@ pre.ausgabe{
     return karte;
   }
 
-  /* ---------- Statistik: Schrittfrequenz ---------- */
+  /* ---------- Statistik: Schrittfrequenz und Schrittlänge ---------- */
 
   function schrittfrequenzDiagramm() {
-    var karte = diagrammKarte('Schrittfrequenz über die Zeit',
-      'Durchschnittliche Schrittfrequenz je Lauf. Bezieht sich immer auf Läufe.');
+    var karte = diagrammKarte('Schrittfrequenz und Schrittlänge', null);
     karte.appendChild(el('p', { class: 'stat-warnung' },
-      'Der Wert steigt auch dann, wenn schlicht mehr gelaufen und weniger gegangen wurde.'));
+      'Die Schrittfrequenz sagt, wie viele Schritte pro Minute gemacht wurden. Bei Einheiten mit Gehpausen ' +
+      'fließt das Gehen in den Durchschnitt ein und senkt den Wert. Ein Anstieg kann deshalb auch nur bedeuten, ' +
+      'dass mehr gelaufen und weniger gegangen wurde. Die Schrittlänge daneben hilft einzuordnen: ' +
+      'Steigen beide, wurde meist schneller gelaufen.'));
 
     var laeufe = statAktivitaeten(true);
     var punkte = [];
@@ -2813,7 +2899,13 @@ pre.ausgabe{
       var frequenz = zahlAus(sucheFeld(a.felder, ['ø schrittfrequenz (laufen)', 'ø schrittfrequenz',
         'durchschnittliche schrittfrequenz', 'avg run cadence']));
       if (frequenz === null || frequenz <= 0) return;
-      punkte.push({ akt: a, zeit: tagAus(a.datum), wert: frequenz, anteil: laufAnteil(a) });
+      punkte.push({
+        akt: a,
+        zeit: tagAus(a.datum),
+        wert: frequenz,
+        laenge: zahlAus(sucheFeld(a.felder, ['ø schrittlänge', 'ø schrittlaenge', 'avg stride length'])),
+        anteil: laufAnteil(a)
+      });
     });
 
     if (punkte.length < 2) {
@@ -2823,11 +2915,11 @@ pre.ausgabe{
       return karte;
     }
 
-    var mitAnteil = punkte.filter(function (p) { return p.anteil !== null; });
+    var mitLaenge = punkte.filter(function (p) { return p.laenge !== null && p.laenge > 0; });
 
     var breite = diagrammBreite();
-    var hoehe = 230;
-    var links = 32, rechts = mitAnteil.length ? 34 : 12, oben = 14, unten = 40;
+    var hoehe = 240;
+    var links = 32, rechts = mitLaenge.length > 1 ? 38 : 12, oben = 14, unten = 40;
     var flaecheBreite = breite - links - rechts;
     var flaecheHoehe = hoehe - oben - unten;
 
@@ -2839,17 +2931,28 @@ pre.ausgabe{
     var luft = Math.max((max - min) * 0.15, 3);
     min -= luft; max += luft;
 
+    var laengeMin = 0, laengeMax = 1;
+    if (mitLaenge.length) {
+      laengeMin = mitLaenge[0].laenge; laengeMax = mitLaenge[0].laenge;
+      mitLaenge.forEach(function (p) {
+        if (p.laenge < laengeMin) laengeMin = p.laenge;
+        if (p.laenge > laengeMax) laengeMax = p.laenge;
+      });
+      var luftL = Math.max((laengeMax - laengeMin) * 0.2, 0.04);
+      laengeMin -= luftL; laengeMax += luftL;
+    }
+
     var vonZeit = punkte[0].zeit, bisZeit = punkte[punkte.length - 1].zeit;
     function xVon(zeit) {
       if (bisZeit === vonZeit) return links + flaecheBreite / 2;
       return links + ((zeit - vonZeit) / (bisZeit - vonZeit)) * flaecheBreite;
     }
     function yVon(wert) { return oben + (1 - (wert - min) / (max - min)) * flaecheHoehe; }
-    function yAnteil(anteil) { return oben + (1 - anteil) * flaecheHoehe; }
+    function yLaenge(wert) { return oben + (1 - (wert - laengeMin) / (laengeMax - laengeMin)) * flaecheHoehe; }
 
     var bild = svg('svg', {
       viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe, role: 'img',
-      'aria-label': 'Durchschnittliche Schrittfrequenz je Lauf über die Zeit'
+      'aria-label': 'Durchschnittliche Schrittfrequenz und Schrittlänge je Lauf über die Zeit'
     });
 
     achsenStufen(min, max, 3).forEach(function (wert) {
@@ -2859,20 +2962,29 @@ pre.ausgabe{
       bild.appendChild(svgText(links - 6, yVon(wert) + 4, String(Math.round(wert)), 'ax', 'end'));
     });
 
-    if (mitAnteil.length) {
-      var anteilPunkte = mitAnteil.map(function (p) { return xVon(p.zeit) + ',' + yAnteil(p.anteil); });
-      if (anteilPunkte.length > 1) {
-        bild.appendChild(svg('polyline', { points: anteilPunkte.join(' '), class: 'linie linie--anteil' }));
-      }
-      [0, 0.5, 1].forEach(function (anteil) {
-        bild.appendChild(svgText(links + flaecheBreite + 6, yAnteil(anteil) + 4,
-          Math.round(anteil * 100) + '%', 'ax', 'start'));
+    if (mitLaenge.length > 1) {
+      achsenStufen(laengeMin, laengeMax, 3).forEach(function (wert) {
+        bild.appendChild(svgText(links + flaecheBreite + 6, yLaenge(wert) + 4, zahlText(wert, 2), 'ax', 'start'));
       });
+      var laengenStueck = [];
+      punkte.forEach(function (p) {
+        if (p.laenge === null || p.laenge <= 0) {
+          if (laengenStueck.length > 1) {
+            bild.appendChild(svg('polyline', { points: laengenStueck.join(' '), class: 'linie linie--laenge' }));
+          }
+          laengenStueck = [];
+          return;
+        }
+        laengenStueck.push(xVon(p.zeit) + ',' + yLaenge(p.laenge));
+      });
+      if (laengenStueck.length > 1) {
+        bild.appendChild(svg('polyline', { points: laengenStueck.join(' '), class: 'linie linie--laenge' }));
+      }
     }
 
     bild.appendChild(svg('polyline', {
       points: punkte.map(function (p) { return xVon(p.zeit) + ',' + yVon(p.wert); }).join(' '),
-      class: 'linie'
+      class: 'linie linie--frequenz'
     }));
 
     var detail = statDetailZeile('Punkt antippen für Einzelheiten.');
@@ -2880,6 +2992,7 @@ pre.ausgabe{
     punkte.forEach(function (p) {
       var beschreibung = datumLang(p.akt.datum) + ' · ' + titelVon(p.akt) + ' · ' +
         Math.round(p.wert) + ' Schritte/min' +
+        (p.laenge !== null && p.laenge > 0 ? ' · Schrittlänge ' + zahlText(p.laenge, 2) + ' m' : '') +
         (p.anteil !== null ? ' · Laufanteil ' + Math.round(p.anteil * 100) + ' %' : '') +
         (kmVon(p.akt) ? ' · ' + zahlText(kmVon(p.akt), 2) + ' km' : '');
       var knoten = svg('circle', {
@@ -2900,14 +3013,20 @@ pre.ausgabe{
 
     karte.appendChild(bild);
 
-    if (mitAnteil.length) {
-      var legende = el('div', { class: 'stat-legende' });
-      legende.appendChild(el('span', null, '— Schrittfrequenz (Schritte/min)'));
-      legende.appendChild(el('span', { class: 'legende-anteil' }, '— Laufanteil (Prozent, rechte Achse)'));
-      karte.appendChild(legende);
-    } else {
+    var legende = el('div', { class: 'stat-legende' });
+    legende.appendChild(el('span', { class: 'legende-neutral' }, '— Schrittfrequenz in Schritten je Minute (linke Achse)'));
+    if (mitLaenge.length > 1) {
+      legende.appendChild(el('span', { class: 'legende-laenge' }, '— Schrittlänge in Metern (rechte Achse)'));
+    }
+    karte.appendChild(legende);
+
+    if (mitLaenge.length <= 1) {
       karte.appendChild(el('p', { class: 'stat-hinweis' },
-        'Getrennte Lauf- und Gehzeiten stehen nicht in dieser CSV. Der Laufanteil lässt sich daraus nicht bestimmen und wird deshalb nicht gezeichnet.'));
+        'Die Spalte „Ø Schrittlänge“ fehlt in diesen Daten, deshalb bleibt die zweite Linie aus.'));
+    }
+    if (!punkte.some(function (p) { return p.anteil !== null; })) {
+      karte.appendChild(el('p', { class: 'stat-hinweis' },
+        'Getrennte Lauf- und Gehzeiten enthält diese CSV nicht.'));
     }
     karte.appendChild(detail);
     return karte;
@@ -2915,110 +3034,251 @@ pre.ausgabe{
 
   /* ---------- Statistik: Aktivitätskalender ---------- */
 
-  function kalenderDiagramm() {
-    var karte = diagrammKarte('Aktivitätskalender',
-      statNurLaeufe
-        ? 'Ein Feld je Tag, eingefärbt nach dem Umfang. Zeigt zurzeit nur Läufe.'
-        : 'Ein Feld je Tag, eingefärbt nach dem Umfang. Zeigt alle Aktivitäten.');
-    var akt = statAktivitaeten(statNurLaeufe);
+  var LAUF_STUFEN = [0.20, 0.38, 0.60, 0.88];
+  var ANDERE_STUFEN = [0.16, 0.30, 0.46, 0.64];
 
-    if (!akt.length) {
-      karte.appendChild(statHinweis('Für diesen Zeitraum sind keine ' +
-        (statNurLaeufe ? 'Läufe' : 'Aktivitäten') + ' erfasst.'));
-      return karte;
-    }
+  function farbeLauf(stufe) { return 'rgba(91,156,248,' + LAUF_STUFEN[stufe - 1] + ')'; }
+  function farbeAndere(stufe) { return 'rgba(176,168,150,' + ANDERE_STUFEN[stufe - 1] + ')'; }
 
+  function stufeAus(wert, groesste) {
+    if (!groesste || !wert) return 1;
+    return Math.min(4, Math.max(1, Math.ceil((wert / groesste) * 4)));
+  }
+
+  function kalenderTage() {
     var tage = {};
-    akt.forEach(function (a) {
-      if (!tage[a.datum]) tage[a.datum] = { km: 0, dauer: 0, anzahl: 0, hatLauf: false, titel: [] };
+    statAktivitaeten(false).forEach(function (a) {
+      if (!tage[a.datum]) {
+        tage[a.datum] = { km: 0, dauer: 0, anzahl: 0, hatLauf: false, hatAndere: false, titel: [] };
+      }
       var tag = tage[a.datum];
       tag.anzahl++;
       tag.titel.push(titelVon(a));
-      var dauer = zeitSekunden(wertVon(a, 'Zeit'));
-      if (dauer !== null) tag.dauer += dauer;
-      if (istLauf(a)) { tag.hatLauf = true; tag.km += kmVon(a); }
+      if (istLauf(a)) {
+        tag.hatLauf = true;
+        tag.km += kmVon(a);
+      } else {
+        tag.hatAndere = true;
+        var dauer = zeitSekunden(wertVon(a, 'Zeit'));
+        if (dauer !== null) tag.dauer += dauer;
+      }
     });
+    return tage;
+  }
 
-    var maxKm = 0, maxDauer = 0;
-    Object.keys(tage).forEach(function (datum) {
-      var tag = tage[datum];
-      if (tag.hatLauf) { if (tag.km > maxKm) maxKm = tag.km; }
-      else if (tag.dauer > maxDauer) maxDauer = tag.dauer;
-    });
-
-    function stufeVon(tag) {
-      var basis = tag.hatLauf ? tag.km : tag.dauer;
-      var groesste = tag.hatLauf ? maxKm : maxDauer;
-      if (!groesste || !basis) return 1;
-      return Math.min(4, Math.max(1, Math.ceil((basis / groesste) * 4)));
-    }
-
-    var ersterTag = akt[0].datum, letzterTag = akt[akt.length - 1].datum;
-    var jahr = Number(ersterTag.slice(0, 4)), monat = Number(ersterTag.slice(5, 7));
-    var endJahr = Number(letzterTag.slice(0, 4)), endMonat = Number(letzterTag.slice(5, 7));
-    var raster = el('div', { class: 'kalender' });
-
+  function monatsListe(tage) {
+    var daten = Object.keys(tage).sort();
+    if (!daten.length) return [];
+    var liste = [];
+    var jahr = Number(daten[0].slice(0, 4)), monat = Number(daten[0].slice(5, 7));
+    var endJahr = Number(daten[daten.length - 1].slice(0, 4));
+    var endMonat = Number(daten[daten.length - 1].slice(5, 7));
     while (jahr < endJahr || (jahr === endJahr && monat <= endMonat)) {
-      var block = el('div', { class: 'kal-monat' });
-      var anzahlTage = new Date(Date.UTC(jahr, monat, 0)).getUTCDate();
-      var aktiveTage = 0;
-      var d;
-      for (d = 1; d <= anzahlTage; d++) {
-        if (tage[jahr + '-' + pad2(monat) + '-' + pad2(d)]) aktiveTage++;
-      }
-
-      var kopf = el('div', { class: 'kal-kopf' });
-      kopf.appendChild(el('span', { class: 'kal-titel', text: MONATE[monat - 1] + ' ' + jahr }));
-      kopf.appendChild(el('span', {
-        class: 'kal-summe',
-        text: 'an ' + aktiveTage + ' von ' + anzahlTage + ' Tagen'
-      }));
-      block.appendChild(kopf);
-
-      var gitter = el('div', { class: 'kal-gitter' });
-      ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].forEach(function (name) {
-        gitter.appendChild(el('span', { class: 'kal-wochentag', text: name }));
-      });
-
-      var ersterWochentag = (new Date(Date.UTC(jahr, monat - 1, 1)).getUTCDay() || 7) - 1;
-      for (d = 0; d < ersterWochentag; d++) gitter.appendChild(el('span', { class: 'kal-tag kal-tag--leer' }));
-
-      for (d = 1; d <= anzahlTage; d++) {
-        var datum = jahr + '-' + pad2(monat) + '-' + pad2(d);
-        var tag = tage[datum];
-        var zelle = el('span', {
-          class: 'kal-tag' + (tag ? ' kal-tag--stufe' + stufeVon(tag) : ''),
-          text: String(d)
-        });
-        if (tag) {
-          zelle.setAttribute('title', datumLang(datum) + ': ' + tag.anzahl +
-            (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
-            (tag.hatLauf && tag.km ? ', ' + zahlText(tag.km, 2) + ' km' : '') +
-            (tag.dauer ? ', ' + dauerText(tag.dauer) : '') + ' · ' + tag.titel.join(', '));
-        } else {
-          zelle.setAttribute('title', datumLang(datum) + ': nichts erfasst');
-        }
-        gitter.appendChild(zelle);
-      }
-      block.appendChild(gitter);
-      raster.appendChild(block);
-
+      liste.push({ jahr: jahr, monat: monat });
       monat++;
       if (monat > 12) { monat = 1; jahr++; }
     }
+    return liste;
+  }
 
-    karte.appendChild(raster);
+  function monatsBlock(eintrag, tage, maxKm, maxDauer) {
+    var block = el('div', { class: 'kal-monat' });
+    var anzahlTage = new Date(Date.UTC(eintrag.jahr, eintrag.monat, 0)).getUTCDate();
+    var aktiveTage = 0, d;
+    for (d = 1; d <= anzahlTage; d++) {
+      if (tage[eintrag.jahr + '-' + pad2(eintrag.monat) + '-' + pad2(d)]) aktiveTage++;
+    }
 
-    var skala = el('div', { class: 'kal-skala' });
+    var kopf = el('div', { class: 'kal-kopf' });
+    kopf.appendChild(el('span', { class: 'kal-titel', text: MONATE[eintrag.monat - 1] + ' ' + eintrag.jahr }));
+    kopf.appendChild(el('span', { class: 'kal-summe', text: 'an ' + aktiveTage + ' von ' + anzahlTage + ' Tagen' }));
+    block.appendChild(kopf);
+
+    var gitter = el('div', { class: 'kal-gitter' });
+    ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].forEach(function (name) {
+      gitter.appendChild(el('span', { class: 'kal-wochentag', text: name }));
+    });
+
+    var ersterWochentag = (new Date(Date.UTC(eintrag.jahr, eintrag.monat - 1, 1)).getUTCDay() || 7) - 1;
+    for (d = 0; d < ersterWochentag; d++) gitter.appendChild(el('span', { class: 'kal-tag kal-tag--leer' }));
+
+    for (d = 1; d <= anzahlTage; d++) {
+      var datum = eintrag.jahr + '-' + pad2(eintrag.monat) + '-' + pad2(d);
+      var tag = tage[datum];
+      var klasse = 'kal-tag';
+      if (tag) {
+        if (tag.hatLauf && tag.hatAndere) klasse += ' kal-tag--beides';
+        else if (tag.hatLauf) klasse += ' kal-tag--lauf';
+        else klasse += ' kal-tag--andere';
+      }
+      var zelle = el('span', { class: klasse, text: String(d) });
+
+      if (tag) {
+        var stufeL = tag.hatLauf ? stufeAus(tag.km, maxKm) : 0;
+        var stufeA = tag.hatAndere ? stufeAus(tag.dauer, maxDauer) : 0;
+        if (tag.hatLauf && tag.hatAndere) {
+          zelle.style.background = 'linear-gradient(135deg,' + farbeLauf(stufeL) + ' 0 50%,' +
+            farbeAndere(stufeA) + ' 50% 100%)';
+        } else if (tag.hatLauf) {
+          zelle.style.background = farbeLauf(stufeL);
+        } else {
+          zelle.style.background = farbeAndere(stufeA);
+        }
+        if (stufeL >= 3) zelle.classList.add('kal-tag--dunkel');
+        zelle.setAttribute('title', datumLang(datum) + ': ' + tag.anzahl +
+          (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
+          (tag.hatLauf && tag.km ? ', ' + zahlText(tag.km, 2) + ' km' : '') +
+          (tag.hatAndere && tag.dauer ? ', ' + dauerText(tag.dauer) + ' übrige' : '') +
+          ' · ' + tag.titel.join(', '));
+      } else {
+        zelle.setAttribute('title', datumLang(datum) + ': nichts erfasst');
+      }
+      gitter.appendChild(zelle);
+    }
+    block.appendChild(gitter);
+    return block;
+  }
+
+  function kalenderLegende() {
+    var legende = el('div', { class: 'kal-legende' });
+    [
+      { text: 'Lauf, Farbtiefe nach Distanz', farbe: farbeLauf(3) },
+      { text: 'Andere Aktivität, Farbtiefe nach Dauer', farbe: farbeAndere(3) }
+    ].forEach(function (eintrag) {
+      var zeile = el('span', { class: 'kal-legende-teil' });
+      var probe = el('span', { class: 'kal-probe' });
+      probe.style.background = eintrag.farbe;
+      zeile.appendChild(probe);
+      zeile.appendChild(el('span', { text: eintrag.text }));
+      legende.appendChild(zeile);
+    });
+
+    var skala = el('span', { class: 'kal-legende-teil' });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'weniger' }));
     [1, 2, 3, 4].forEach(function (stufe) {
-      skala.appendChild(el('span', { class: 'kal-tag kal-tag--stufe' + stufe + ' kal-probe' }));
+      var probe = el('span', { class: 'kal-probe' });
+      probe.style.background = farbeLauf(stufe);
+      skala.appendChild(probe);
     });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'mehr' }));
-    karte.appendChild(skala);
-    karte.appendChild(el('p', { class: 'stat-hinweis' },
-      'Die Farbtiefe folgt dem Umfang des Tages: bei Läufen der Distanz, bei den übrigen Aktivitäten der Dauer.'));
+    legende.appendChild(skala);
+    return legende;
+  }
+
+  function kalenderDiagramm() {
+    var karte = diagrammKarte('Aktivitätskalender',
+      'Ein Feld je Tag. Läufe und andere Aktivitäten sind getrennt eingefärbt, unabhängig vom Umschalter oben.');
+    var tage = kalenderTage();
+    var monate = monatsListe(tage);
+
+    if (!monate.length) {
+      karte.appendChild(statHinweis('Für diesen Zeitraum sind keine Aktivitäten erfasst.'));
+      return karte;
+    }
+
+    var maxKm = 0, maxDauer = 0;
+    Object.keys(tage).forEach(function (datum) {
+      if (tage[datum].km > maxKm) maxKm = tage[datum].km;
+      if (tage[datum].dauer > maxDauer) maxDauer = tage[datum].dauer;
+    });
+
+    /* Standardmäßig der jüngste Monat mit Daten */
+    var index = -1;
+    if (statKalenderMonat) {
+      monate.forEach(function (m, i) {
+        if (m.jahr === statKalenderMonat.jahr && m.monat === statKalenderMonat.monat) index = i;
+      });
+    }
+    if (index < 0) index = monate.length - 1;
+    statKalenderMonat = monate[index];
+
+    var steuerung = el('div', { class: 'kal-steuerung' });
+    var zurueck = el('button', {
+      type: 'button', class: 'kal-pfeil', 'aria-label': 'Vorheriger Monat',
+      disabled: index === 0 ? true : null
+    }, '‹');
+    var vor = el('button', {
+      type: 'button', class: 'kal-pfeil', 'aria-label': 'Nächster Monat',
+      disabled: index === monate.length - 1 ? true : null
+    }, '›');
+    function wechsle(schritt) {
+      var neu = index + schritt;
+      if (neu < 0 || neu >= monate.length) return;
+      statKalenderMonat = monate[neu];
+      zeichneStatistik();
+    }
+    zurueck.addEventListener('click', function () { wechsle(-1); });
+    vor.addEventListener('click', function () { wechsle(1); });
+
+    steuerung.appendChild(zurueck);
+    steuerung.appendChild(el('span', {
+      class: 'kal-monat-name',
+      text: MONATE[monate[index].monat - 1] + ' ' + monate[index].jahr
+    }));
+    steuerung.appendChild(vor);
+    karte.appendChild(steuerung);
+
+    var block = monatsBlock(monate[index], tage, maxKm, maxDauer);
+    block.classList.add('kal-monat--einzeln');
+    /* Auf Berührungsgeräten zusätzlich wischen */
+    var startX = null;
+    block.addEventListener('touchstart', function (ereignis) {
+      startX = ereignis.touches && ereignis.touches[0] ? ereignis.touches[0].clientX : null;
+    }, { passive: true });
+    block.addEventListener('touchend', function (ereignis) {
+      if (startX === null) return;
+      var ende = ereignis.changedTouches && ereignis.changedTouches[0] ? ereignis.changedTouches[0].clientX : null;
+      if (ende === null) return;
+      var abstand = ende - startX;
+      startX = null;
+      if (Math.abs(abstand) < 45) return;
+      wechsle(abstand < 0 ? 1 : -1);
+    }, { passive: true });
+    karte.appendChild(block);
+
+    karte.appendChild(kalenderLegende());
+
+    var fuss = el('div', { class: 'kal-fuss' });
+    var alle = el('button', { type: 'button', class: 'knopf knopf--klein' }, 'Alle Monate');
+    alle.addEventListener('click', function () { zeigeMonatsUebersicht(monate, tage, maxKm, maxDauer); });
+    fuss.appendChild(alle);
+    fuss.appendChild(el('span', { class: 'kal-skala-text', text: monate.length + (monate.length === 1 ? ' Monat mit Daten' : ' Monate mit Daten') }));
+    karte.appendChild(fuss);
     return karte;
+  }
+
+  function zeigeMonatsUebersicht(monate, tage, maxKm, maxDauer) {
+    var inhalt = document.getElementById('uebersicht-inhalt');
+    leeren(inhalt);
+    var raster = el('div', { class: 'kalender' });
+    monate.forEach(function (eintrag) {
+      raster.appendChild(monatsBlock(eintrag, tage, maxKm, maxDauer));
+    });
+    inhalt.appendChild(raster);
+    inhalt.appendChild(kalenderLegende());
+
+    var huelle = document.getElementById('uebersicht-huelle');
+    uebersichtVorherigerFokus = document.activeElement;
+    if (uebersichtTimer) { window.clearTimeout(uebersichtTimer); uebersichtTimer = null; }
+    huelle.removeAttribute('hidden');
+    document.getElementById('uebersicht-schliessen').focus();
+    window.requestAnimationFrame(function () { huelle.classList.add('offen'); });
+  }
+
+  function schliesseUebersicht() {
+    var huelle = document.getElementById('uebersicht-huelle');
+    if (huelle.hasAttribute('hidden')) return;
+    huelle.classList.remove('offen');
+    var fertig = function () {
+      uebersichtTimer = null;
+      huelle.setAttribute('hidden', '');
+      if (uebersichtVorherigerFokus && document.contains(uebersichtVorherigerFokus)) {
+        try { uebersichtVorherigerFokus.focus(); } catch (e) { /* Element ist weg */ }
+      }
+      uebersichtVorherigerFokus = null;
+    };
+    if (uebersichtTimer) { window.clearTimeout(uebersichtTimer); uebersichtTimer = null; }
+    if (bewegungReduziert()) fertig(); else uebersichtTimer = window.setTimeout(fertig, 200);
   }
 
   /* ---------- Statistik: Aufbau ---------- */
@@ -3044,7 +3304,7 @@ pre.ausgabe{
     reihe.appendChild(auswahl);
     karte.appendChild(reihe);
     karte.appendChild(el('p', { class: 'hinweis-text' },
-      'Der Umschalter wirkt auf die Kennzahlen und den Kalender. Schmerzverlauf, Wochenkilometer, Puls und Pace sowie Schrittfrequenz beziehen sich immer auf Läufe, weil nur dort Befinden, Distanz und Pace erfasst werden.'));
+      'Der Umschalter wirkt auf die Kennzahlen. Die Diagramme beziehen sich immer auf Läufe, weil nur dort Befinden, Distanz und Pace erfasst werden. Der Kalender zeigt immer alle Aktivitäten.'));
     return karte;
   }
 
@@ -3076,7 +3336,7 @@ pre.ausgabe{
 
     ziel.appendChild(schmerzDiagramm());
     ziel.appendChild(wochenDiagramm());
-    ziel.appendChild(pulsPaceDiagramm());
+    ziel.appendChild(hfTempoDiagramm());
     ziel.appendChild(schrittfrequenzDiagramm());
     ziel.appendChild(kalenderDiagramm());
   }
@@ -3240,6 +3500,8 @@ pre.ausgabe{
   }
 
   function zeichne() {
+    /* Nach einer Datenänderung wieder beim jüngsten Monat beginnen */
+    statKalenderMonat = null;
     zeichneKopfzahlen();
     zeichneReiterZahl();
     zeichneVerlauf();
