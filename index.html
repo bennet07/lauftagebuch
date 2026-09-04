@@ -232,19 +232,21 @@ button{font:inherit;color:inherit}
   color:var(--text-4);font-weight:640;text-align:center;padding-bottom:2px;
 }
 .kal-tag{
-  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  position:relative;overflow:hidden;
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
   border-radius:6px;background:var(--flaeche-sanft);border:1px solid var(--rand);
-  font-variant-numeric:tabular-nums;
+  font-variant-numeric:tabular-nums;color:var(--text-3);
 }
 .kal-tag--leer{background:transparent;border-color:transparent}
-.kal-zahl{font-size:.72rem;color:var(--text-2);line-height:1}
-.kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{color:var(--text);font-weight:600}
-.kal-punkte{display:flex;gap:3px;height:7px;align-items:center}
-.kal-punkt{display:inline-block;width:7px;height:7px;border-radius:50%;flex:0 0 auto}
-.kal-tag--heute{border-color:var(--akzent);box-shadow:inset 0 0 0 1px var(--akzent)}
-.kal-probe--heute{background:transparent;border:1px solid var(--akzent);box-shadow:inset 0 0 0 1px var(--akzent)}
+.kal-zahl{font-size:.74rem;line-height:1;position:relative;z-index:1}
+.kal-tag--lauf,.kal-tag--andere,.kal-tag--beides{border-color:transparent}
+.kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:640}
+/* Die weitere Einheit als schmaler Balken am unteren Rand */
+.kal-balken{position:absolute;left:0;right:0;bottom:0;height:5px}
+.kal-tag--heute{box-shadow:0 0 0 2px var(--akzent);border-color:var(--akzent)}
+.kal-probe--heute{background:transparent;box-shadow:inset 0 0 0 2px var(--akzent)}
 .kal-skala-text{font-size:.72rem;color:var(--text-4);font-weight:600}
-.kal-probe{width:16px;height:16px;aspect-ratio:auto;flex:0 0 auto}
+.kal-probe{position:relative;overflow:hidden;width:18px;height:18px;border-radius:4px;flex:0 0 auto;display:inline-block}
 @media (max-width:560px){
   .kalender{gap:20px}
   .kal-monat{min-width:0;max-width:none;flex-basis:100%}
@@ -2900,12 +2902,49 @@ pre.ausgabe{
 
   /* ---------- Statistik: Aktivitätskalender ---------- */
 
-  /* Kräftige Stufen: die Punkte überlagern keinen Text mehr */
-  var LAUF_STUFEN = [0.45, 0.62, 0.80, 1];
-  var ANDERE_STUFEN = [0.45, 0.62, 0.80, 1];
+  /*
+   * Vier deckende Stufen je Farbfamilie, bewusst weit auseinander: die beiden
+   * unteren tragen hellen Text, die beiden oberen dunklen. Blau und Bernstein
+   * bleiben auch bei Rot-Grün-Schwäche auseinanderzuhalten.
+   */
+  var LAUF_FARBEN = ['rgb(56,104,185)', 'rgb(75,140,235)', 'rgb(130,180,250)', 'rgb(185,214,252)'];
+  var ANDERE_FARBEN = ['rgb(158,97,17)', 'rgb(200,130,30)', 'rgb(230,170,70)', 'rgb(246,210,140)'];
+  var TEXT_DUNKEL = 'rgb(16,20,26)';
+  var TEXT_HELL = 'rgb(244,247,251)';
 
-  function farbeLauf(stufe) { return 'rgba(91,156,248,' + LAUF_STUFEN[stufe - 1] + ')'; }
-  function farbeAndere(stufe) { return 'rgba(176,132,224,' + ANDERE_STUFEN[stufe - 1] + ')'; }
+  function farbeLauf(stufe) { return LAUF_FARBEN[stufe - 1]; }
+  function farbeAndere(stufe) { return ANDERE_FARBEN[stufe - 1]; }
+
+  function relativeHelligkeit(r, g, b) {
+    var teile = [r, g, b].map(function (wert) {
+      var anteil = wert / 255;
+      return anteil <= 0.03928 ? anteil / 12.92 : Math.pow((anteil + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * teile[0] + 0.7152 * teile[1] + 0.0722 * teile[2];
+  }
+
+  function kontrastVerhaeltnis(a, b) {
+    var hell = Math.max(a, b), dunkel = Math.min(a, b);
+    return (hell + 0.05) / (dunkel + 0.05);
+  }
+
+  function helligkeitAus(farbe) {
+    var teile = String(farbe).match(/\d+/g);
+    if (!teile || teile.length < 3) return null;
+    return relativeHelligkeit(Number(teile[0]), Number(teile[1]), Number(teile[2]));
+  }
+
+  /*
+   * Textfarbe aus der tatsächlich gesetzten Füllfarbe: es gewinnt die Variante
+   * mit dem höheren Kontrast, nicht eine fest gesetzte Schwelle.
+   */
+  function textFarbeFuer(farbe) {
+    var grund = helligkeitAus(farbe);
+    if (grund === null) return TEXT_HELL;
+    var mitHell = kontrastVerhaeltnis(grund, helligkeitAus(TEXT_HELL));
+    var mitDunkel = kontrastVerhaeltnis(grund, helligkeitAus(TEXT_DUNKEL));
+    return mitDunkel >= mitHell ? TEXT_DUNKEL : TEXT_HELL;
+  }
 
   function stufeAus(wert, groesste) {
     if (!groesste || !wert) return 1;
@@ -2980,23 +3019,19 @@ pre.ausgabe{
       }
       if (datum === heuteIso()) klasse += ' kal-tag--heute';
       var zelle = el('span', { class: klasse });
-      /* Die Zahl steht immer auf neutralem Grund, die Aktivität als Punkt darunter */
       zelle.appendChild(el('span', { class: 'kal-zahl', text: String(d) }));
-      var punkte = el('span', { class: 'kal-punkte' });
-      zelle.appendChild(punkte);
 
       if (tag) {
         var stufeL = tag.hatLauf ? stufeAus(tag.km, maxKm) : 0;
         var stufeA = tag.hatAndere ? stufeAus(tag.dauer, maxDauer) : 0;
-        if (tag.hatLauf) {
-          var punktL = el('span', { class: 'kal-punkt kal-punkt--lauf' });
-          punktL.style.background = farbeLauf(stufeL);
-          punkte.appendChild(punktL);
-        }
-        if (tag.hatAndere) {
-          var punktA = el('span', { class: 'kal-punkt kal-punkt--andere' });
-          punktA.style.background = farbeAndere(stufeA);
-          punkte.appendChild(punktA);
+        /* Der Lauf färbt die ganze Fläche, die weitere Einheit steht als Balken unten */
+        var fuellung = tag.hatLauf ? farbeLauf(stufeL) : farbeAndere(stufeA);
+        zelle.style.background = fuellung;
+        zelle.style.color = textFarbeFuer(fuellung);
+        if (tag.hatLauf && tag.hatAndere) {
+          var balken = el('span', { class: 'kal-balken' });
+          balken.style.background = farbeAndere(stufeA);
+          zelle.appendChild(balken);
         }
         zelle.setAttribute('title', datumLang(datum) + ': ' + tag.anzahl +
           (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
@@ -3014,31 +3049,39 @@ pre.ausgabe{
 
   function kalenderLegende() {
     var legende = el('div', { class: 'kal-legende' });
+
+    function probeZelle(farbe, mitBalken) {
+      var probe = el('span', { class: 'kal-probe' });
+      probe.style.background = farbe;
+      if (mitBalken) {
+        var balken = el('span', { class: 'kal-balken' });
+        balken.style.background = farbeAndere(3);
+        probe.appendChild(balken);
+      }
+      return probe;
+    }
+
     [
-      { text: 'Lauf, Punktfarbe nach Distanz', farbe: farbeLauf(4) },
-      { text: 'Andere Aktivität, Punktfarbe nach Dauer', farbe: farbeAndere(4) }
+      { text: 'Lauf', farbe: farbeLauf(3), balken: false },
+      { text: 'Andere Aktivität', farbe: farbeAndere(3), balken: false },
+      { text: 'Lauf und weitere Einheit: Balken unten', farbe: farbeLauf(3), balken: true }
     ].forEach(function (eintrag) {
       var zeile = el('span', { class: 'kal-legende-teil' });
-      var probe = el('span', { class: 'kal-punkt' });
-      probe.style.background = eintrag.farbe;
-      zeile.appendChild(probe);
+      zeile.appendChild(probeZelle(eintrag.farbe, eintrag.balken));
       zeile.appendChild(el('span', { text: eintrag.text }));
       legende.appendChild(zeile);
     });
 
     var skala = el('span', { class: 'kal-legende-teil' });
-    skala.appendChild(el('span', { class: 'kal-skala-text', text: 'weniger' }));
+    skala.appendChild(el('span', { class: 'kal-skala-text', text: 'weniger Umfang' }));
     [1, 2, 3, 4].forEach(function (stufe) {
-      var probe = el('span', { class: 'kal-punkt' });
-      probe.style.background = farbeLauf(stufe);
-      skala.appendChild(probe);
+      skala.appendChild(probeZelle(farbeLauf(stufe), false));
     });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'mehr' }));
     legende.appendChild(skala);
 
     var heute = el('span', { class: 'kal-legende-teil' });
-    var rahmen = el('span', { class: 'kal-probe kal-probe--heute' });
-    heute.appendChild(rahmen);
+    heute.appendChild(el('span', { class: 'kal-probe kal-probe--heute' }));
     heute.appendChild(el('span', { text: 'heute' }));
     legende.appendChild(heute);
     return legende;
@@ -3046,7 +3089,7 @@ pre.ausgabe{
 
   function kalenderDiagramm() {
     var karte = diagrammKarte('Aktivitätskalender',
-      'Ein Feld je Tag. Punkte unter der Zahl zeigen Läufe und andere Aktivitäten getrennt, unabhängig vom Umschalter oben.');
+      'Ein Feld je Tag, eingefärbt nach dem Umfang. Läufe und andere Aktivitäten haben eigene Farben, unabhängig vom Umschalter oben.');
     var tage = kalenderTage();
     var monate = monatsListe(tage);
 
