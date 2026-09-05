@@ -289,6 +289,8 @@ button{font:inherit;color:inherit}
 }
 .faktor-wahl select:hover{border-color:var(--text-4)}
 .faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-hoch);color:var(--text)}
+/* Gleiche Anmutung wie der Untertitel der übrigen Diagramme */
+.faktor-erklaerung{margin-top:14px;font-size:.88rem;color:var(--text-2);line-height:1.6}
 .faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-4);line-height:1.55}
 .faktor-fuss span{display:block}
 .faktor-fuss span + span{margin-top:5px}
@@ -2521,7 +2523,7 @@ pre.ausgabe{
 
   function schmerzDiagramm() {
     var karte = diagrammKarte('Schmerzverlauf',
-      'Ein Punkt je Lauf, 0 steht für „Keine Beschwerden“. Bezieht sich immer auf Läufe.');
+      'Erfasstes Befinden je Lauf, 0 steht für keine Beschwerden. Unbewertete Läufe erzeugen eine Lücke.');
     var laeufe = statAktivitaeten(true);
 
     if (!laeufe.length) {
@@ -2635,7 +2637,7 @@ pre.ausgabe{
 
   function wochenDiagramm() {
     var karte = diagrammKarte('Kilometer pro Woche',
-      'Eine Säule je Kalenderwoche, Wochen ohne Lauf als Null. Der Streifen darunter zählt die übrigen Aktivitäten.');
+      'Summe der gelaufenen Kilometer je Kalenderwoche. Wochen ohne Lauf bleiben als Null sichtbar.');
     var alle = statAktivitaeten(false);
 
     if (!alle.length) {
@@ -2913,7 +2915,7 @@ pre.ausgabe{
   function tempoDiagramm() {
     return zeitreiheDiagramm({
       titel: 'Tempo',
-      unterTitel: 'Minuten pro Kilometer je Lauf',
+      unterTitel: 'Minuten pro Kilometer je Lauf. Weiter oben bedeutet schneller.',
       beschreibung: 'Pace je Lauf über die Zeit, schneller liegt oben',
       einheit: 'min/km',
       umgekehrt: true,
@@ -2927,7 +2929,7 @@ pre.ausgabe{
   function pulsDiagramm() {
     return zeitreiheDiagramm({
       titel: 'Puls',
-      unterTitel: 'Durchschnittliche Herzschläge pro Minute je Lauf',
+      unterTitel: 'Durchschnittliche Herzschläge pro Minute je Lauf. Sinkt der Wert über Wochen bei gleichem Tempo, spricht das meist für wachsende Ausdauer.',
       beschreibung: 'Durchschnittliche Herzfrequenz je Lauf über die Zeit',
       einheit: 'bpm',
       umgekehrt: false,
@@ -3131,7 +3133,7 @@ pre.ausgabe{
 
   function kalenderDiagramm() {
     var karte = diagrammKarte('Aktivitätskalender',
-      'Ein Feld je Tag, eingefärbt nach dem Umfang. Läufe und andere Aktivitäten haben eigene Farben, unabhängig vom Umschalter oben.');
+      'Trainingstage im Monat. Die Farbintensität richtet sich nach dem Umfang des Tages.');
     var tage = kalenderTage();
     var monate = monatsListe(tage);
 
@@ -3262,25 +3264,83 @@ pre.ausgabe{
   var DATUM_MUSTER = /^\d{4}-\d{1,2}-\d{1,2}|^\d{1,2}\.\d{1,2}\.\d{2,4}/;
 
   /*
-   * Beide Werte hatten in Etappe 2 ein eigenes Diagramm. Sie stehen jetzt hier,
-   * weil der Durchschnitt einer Einheit mit Gehpausen nicht sauber deutbar ist.
+   * Namen aus der CSV und aus den Tabellen unten auf eine gemeinsame Form
+   * bringen: Garmin schreibt „Maximale Leistung“, umgangssprachlich heißt das
+   * „Max. Leistung“. Beides soll denselben Eintrag treffen.
    */
-  var FAKTOR_HINWEISE = [
-    {
-      muster: /schrittfrequenz/i,
-      text: 'Der Durchschnitt einer Einheit steigt auch dann, wenn innerhalb des Laufs schlicht mehr gelaufen und weniger gegangen wurde.'
-    },
-    {
-      muster: /schrittl(ä|ae)nge/i,
-      text: 'Der Durchschnitt einer Einheit verschiebt sich auch dann, wenn innerhalb des Laufs schlicht mehr gelaufen und weniger gegangen wurde.'
-    }
+  function faktorSchluessel(name) {
+    return String(name).toLowerCase()
+      .replace(/®/g, '')
+      .replace(/\bmaximale?\b/g, 'max')
+      .replace(/\bmax\./g, 'max')
+      .replace(/\bdurchschnittliche[srn]?\b/g, 'ø')
+      .replace(/[\s.]+/g, ' ')
+      .trim();
+  }
+
+  /*
+   * Faktoren, die dauerhaft nicht zur Auswahl stehen: entweder ohne Bezug zum
+   * Laufen selbst oder doppelt zu einem anderen Eintrag. Die Liste ist bewusst
+   * an einer Stelle gebündelt, damit sie sich leicht ändern lässt.
+   */
+  var FAKTOR_AUSGESCHLOSSEN = [
+    'Kumulierte Kilometer',
+    'Veränderung zur Vorwoche',
+    'Kalorien',
+    'Durchschnittliche SAP',
+    'Normalized Power® (NP®)',
+    'Anzahl der Runden',
+    'Zeit in Bewegung',
+    'Verstrichene Zeit',
+    'Minimale Höhe',
+    'Maximale Höhe'
   ];
 
-  function faktorHinweis(name) {
-    for (var i = 0; i < FAKTOR_HINWEISE.length; i++) {
-      if (FAKTOR_HINWEISE[i].muster.test(name)) return FAKTOR_HINWEISE[i].text;
+  function faktorAusgeschlossen(name) {
+    var schluessel = faktorSchluessel(name);
+    for (var i = 0; i < FAKTOR_AUSGESCHLOSSEN.length; i++) {
+      if (faktorSchluessel(FAKTOR_AUSGESCHLOSSEN[i]) === schluessel) return true;
     }
-    return '';
+    return false;
+  }
+
+  /*
+   * Kurze Einordnung je Faktor: was der Wert misst, und nur wo es fachlich
+   * eindeutig ist auch die Richtung. Nie eine Aussage über die eigenen Werte.
+   * Nicht aufgeführte Spalten bleiben ohne Text, statt einen zu erfinden.
+   */
+  var FAKTOR_TEXTE = {
+    'Tage seit dem letzten Lauf': 'Abstand zum vorherigen Lauf. Weder mehr noch weniger ist grundsätzlich besser.',
+    'Wochenumfang': 'Summe der Kilometer in der Kalenderwoche. Mehr ist nicht automatisch besser.',
+    'Distanz': 'Länge des einzelnen Laufs in Kilometern.',
+    'Ø Herzfrequenz': 'Durchschnittlicher Puls während des Laufs. Sinkt er über Wochen bei gleichem Tempo, spricht das meist für wachsende Ausdauer.',
+    'Maximale Herzfrequenz': 'Höchster Puls während des Laufs. Steigt vor allem bei schnellen Abschnitten und an Anstiegen.',
+    'Aerober TE': 'Garmins Einschätzung, wie stark der Lauf die Ausdauer beansprucht hat, auf einer Skala von 0 bis 5. Höher heißt fordernder, nicht besser.',
+    'Ø Schrittfrequenz (Laufen)': 'Schritte pro Minute. Bei Einheiten mit Gehpausen senkt das Gehen den Durchschnitt – ein Anstieg kann deshalb auch nur bedeuten, dass mehr gelaufen wurde.',
+    'Max. Schrittfrequenz (Laufen)': 'Höchste Schrittfrequenz im Lauf, meist in der schnellsten Passage erreicht.',
+    'Anstieg gesamt': 'Summe der bergauf zurückgelegten Höhenmeter.',
+    'Abstieg gesamt': 'Summe der bergab zurückgelegten Höhenmeter. Bergab belastet die Gelenke anders als bergauf.',
+    'Ø Schrittlänge': 'Durchschnittliche Länge eines Schritts. Länger ist nicht besser – sehr lange Schritte gehen oft mit härterem Aufsetzen einher.',
+    'Durchschnittliches vertikales Verhältnis': 'Auf-und-ab-Bewegung im Verhältnis zur Schrittlänge, in Prozent. Ein kleinerer Wert bedeutet, dass weniger Energie in die Höhe statt nach vorn geht.',
+    'Ø vertikale Bewegung': 'Wie stark der Körper pro Schritt auf und ab wippt, in Zentimetern. Weniger gilt allgemein als ökonomischer.',
+    'Ø Bodenkontaktzeit': 'Wie lange ein Fuß pro Schritt den Boden berührt, in Millisekunden. Kürzere Zeiten treten meist bei höherem Tempo auf.',
+    'Ø Leistung': 'Geschätzte Laufleistung in Watt. Höher heißt mehr Krafteinsatz, nicht besser.',
+    'Max. Leistung': 'Höchste Laufleistung in Watt während des Laufs.',
+    'Schritte': 'Gesamtzahl der Schritte in der Einheit. Hängt vor allem von Distanz und Schrittlänge ab.',
+    'Body Battery Abnahme': 'Wie stark Garmins Energiewert durch die Einheit gesunken ist. Ein größerer Rückgang steht für eine anstrengendere Belastung.'
+  };
+
+  var FAKTOR_TEXT_KARTE = (function () {
+    var karte = {};
+    Object.keys(FAKTOR_TEXTE).forEach(function (name) {
+      karte[faktorSchluessel(name)] = FAKTOR_TEXTE[name];
+    });
+    return karte;
+  }());
+
+  function faktorText(name) {
+    var text = FAKTOR_TEXT_KARTE[faktorSchluessel(name)];
+    return text || '';
   }
 
   /* „5:42“ oder „1:23:45“, je nach Größe */
@@ -3398,7 +3458,6 @@ pre.ausgabe{
         name: sp,
         gruppe: 'Aus der CSV',
         einheit: alsZeit ? 'min:s' : '',
-        hinweis: faktorHinweis(sp),
         wertVon: lies,
         achsenText: schreibe,
         detailText: schreibe
@@ -3466,35 +3525,39 @@ pre.ausgabe{
     return [
       {
         id: 'berechnet:tage', name: 'Tage seit dem letzten Lauf', gruppe: 'Berechnete Werte',
-        einheit: 'Tage', hinweis: 'Abstand zum vorherigen erfassten Lauf. Der erste Lauf überhaupt hat keinen Vorgänger.',
+        einheit: 'Tage',
         wertVon: lies('tageSeit'),
         achsenText: function (wert) { return achsenZahl(wert, 0); },
         detailText: function (wert) { return zahlText(wert, 0) + (wert === 1 ? ' Tag' : ' Tage'); }
       },
       {
         id: 'berechnet:wocheKm', name: 'Wochenumfang', gruppe: 'Berechnete Werte',
-        einheit: 'km', hinweis: 'Kilometer aller Läufe in der Kalenderwoche des jeweiligen Laufs.',
+        einheit: 'km',
         wertVon: lies('wocheKm'),
         achsenText: function (wert) { return achsenZahl(wert, wert >= 10 ? 0 : 1); },
         detailText: km
       },
       {
         id: 'berechnet:wocheDelta', name: 'Veränderung zur Vorwoche', gruppe: 'Berechnete Werte',
-        einheit: 'km', hinweis: 'Wochenumfang minus Umfang der vorangehenden Kalenderwoche. Eine Woche ohne Lauf zählt als null Kilometer.',
+        einheit: 'km',
+        erklaerung: 'Wochenumfang minus Umfang der vorangehenden Kalenderwoche. Eine Woche ohne Lauf zählt als null Kilometer.',
         wertVon: lies('wocheDelta'),
         achsenText: function (wert) { return achsenZahl(wert, 1); },
         detailText: function (wert) { return (wert > 0 ? '+' : '') + km(wert) + ' gegenüber der Vorwoche'; }
       },
       {
         id: 'berechnet:kumuliert', name: 'Kumulierte Kilometer', gruppe: 'Berechnete Werte',
-        einheit: 'km', hinweis: 'Summe aller Laufkilometer bis einschließlich dieses Laufs, gezählt ab dem ersten erfassten Lauf.',
+        einheit: 'km',
+        erklaerung: 'Summe aller Laufkilometer bis einschließlich dieses Laufs, gezählt ab dem ersten erfassten Lauf.',
         wertVon: lies('kumuliert'),
         achsenText: function (wert) { return achsenZahl(wert, wert >= 100 ? 0 : 1); },
         detailText: km
       },
       {
         id: 'berechnet:andere', name: 'Nicht-Lauf-Einheiten in derselben Woche', gruppe: 'Berechnete Werte',
-        einheit: 'Einheiten', hinweis: 'Anzahl der Aktivitäten in der Kalenderwoche, die nicht als Lauf eingestuft sind.',
+        einheit: 'Einheiten',
+        /* Ohne Vorgabe in FAKTOR_TEXTE, aber ohne Definition nicht lesbar */
+        erklaerung: 'Anzahl der Aktivitäten in der Kalenderwoche, die nicht als Lauf eingestuft sind.',
         wertVon: lies('andereWoche'),
         achsenText: function (wert) { return achsenZahl(wert, 0); },
         detailText: function (wert) { return zahlText(wert, 0) + (wert === 1 ? ' andere Einheit' : ' andere Einheiten'); }
@@ -3502,7 +3565,7 @@ pre.ausgabe{
       {
         id: 'berechnet:verhaeltnis', name: 'Verhältnis Laufzeit zu Gehzeit', gruppe: 'Berechnete Werte',
         einheit: '× Gehzeit',
-        hinweis: 'Dauer aller Läufe der Kalenderwoche geteilt durch die Dauer der Geh-Einheiten derselben Woche. Wochen ohne Geh-Einheit bleiben leer.',
+        erklaerung: 'Dauer aller Läufe der Kalenderwoche geteilt durch die Dauer der Geh-Einheiten derselben Woche. Wochen ohne Geh-Einheit bleiben leer.',
         wertVon: lies('verhaeltnis'),
         achsenText: function (wert) { return achsenZahl(wert, 1); },
         detailText: function (wert) { return zahlText(wert, 2) + ' mal so viel Laufzeit wie Gehzeit'; }
@@ -3510,8 +3573,20 @@ pre.ausgabe{
     ];
   }
 
+  /*
+   * Eine Stelle für beides: die Ausschlussliste greift auf berechnete Werte und
+   * CSV-Spalten gleichermaßen, und jeder verbleibende Faktor bekommt seinen Text.
+   */
   function faktorListe() {
-    return berechneteFaktoren().concat(faktorSpalten(alleLaeufe()));
+    var liste = berechneteFaktoren().concat(faktorSpalten(alleLaeufe()));
+    var raus = [];
+    liste.forEach(function (f) {
+      if (faktorAusgeschlossen(f.name)) return;
+      /* Der vorgegebene Text schlägt eine eigene Kurzdefinition */
+      f.erklaerung = faktorText(f.name) || f.erklaerung || '';
+      raus.push(f);
+    });
+    return raus;
   }
 
   function faktorNach(liste, id) {
@@ -3521,6 +3596,9 @@ pre.ausgabe{
 
   /* Ein Wert je Lauf, darunter die Schmerzwerte auf eigener Achse */
   function zeichneFaktor(ziel, faktor) {
+    /* Die Einordnung steht vor dem Diagramm, nicht als Fußnote darunter */
+    if (faktor.erklaerung) ziel.appendChild(el('p', { class: 'faktor-erklaerung' }, faktor.erklaerung));
+
     var laeufe = statAktivitaeten(true);
     if (!laeufe.length) {
       ziel.appendChild(statHinweis('Für diesen Zeitraum sind keine Läufe erfasst.'));
@@ -3679,7 +3757,6 @@ pre.ausgabe{
       ' Läufen im Zeitraum tragen diesen Wert.' +
       (mitSchmerzEbene ? ' Für ' + bewertete.length + ' der ' + laeufe.length + ' Läufe ist ein Befinden erfasst.'
         : ' Ab zwei bewerteten Läufen kommt die Schmerz-Ebene dazu.')));
-    if (faktor.hinweis) fuss.appendChild(el('span', null, faktor.hinweis));
     ziel.appendChild(fuss);
   }
 
