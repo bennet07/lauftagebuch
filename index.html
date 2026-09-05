@@ -265,6 +265,46 @@ button{font:inherit;color:inherit}
   .diagramm .ax{font-size:10px}
 }
 
+/* ---------- Freie Faktor-Auswahl ---------- */
+/* Der Hinweis zu Scheinzusammenhängen steht bewusst offen über der Auswahl */
+.stat-warnung{
+  margin-top:14px;padding:11px 13px;
+  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
+  background:var(--flaeche-sanft);
+  font-size:.82rem;line-height:1.55;color:var(--text-2);
+}
+.faktor-wahl{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-4);font-weight:640}
+.faktor-wahl select{
+  width:100%;max-width:100%;box-sizing:border-box;
+  appearance:none;-webkit-appearance:none;
+  padding:10px 34px 10px 12px;
+  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
+  background-color:var(--flaeche-hoch);color:var(--text);
+  font-family:inherit;font-size:.9rem;font-weight:560;line-height:1.3;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-position:calc(100% - 17px) calc(50% + 1px),calc(100% - 12px) calc(50% + 1px);
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+  transition:border-color .16s var(--weich);
+}
+.faktor-wahl select:hover{border-color:var(--text-4)}
+.faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-hoch);color:var(--text)}
+.faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-4);line-height:1.55}
+.faktor-fuss span{display:block}
+.faktor-fuss span + span{margin-top:5px}
+.diagramm .faktor-linie{fill:none;stroke:var(--akzent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.diagramm .faktor-punkt{fill:var(--akzent);stroke:var(--flaeche);stroke-width:1.5;cursor:pointer}
+.diagramm .faktor-punkt:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
+/* Die Schmerz-Ebene liegt dahinter und nimmt keine Klicks entgegen */
+.diagramm .schmerz-ebene{pointer-events:none}
+.diagramm .schmerz-linie{fill:none;stroke:var(--schmerz);stroke-width:1.35;stroke-dasharray:4 3;opacity:.45}
+.diagramm .schmerz-marke{fill:var(--schmerz);opacity:.58}
+.diagramm .ax-schmerz{fill:var(--schmerz);opacity:.8;font-size:11px;font-weight:600}
+.stat-legende .legende-faktor{color:var(--akzent)}
+@media (max-width:560px){
+  .diagramm .ax-schmerz{font-size:10px}
+}
+
 /* ---------- Karten ---------- */
 
 .karte{
@@ -2294,6 +2334,8 @@ pre.ausgabe{
   function zahlAus(wert) {
     if (istLeer(wert)) return null;
     var s = String(wert).trim().replace(/\s/g, '');
+    /* Garmin stellt manchen Zahlen ein Apostroph voran, damit sie Text bleiben: '-13 */
+    s = s.replace(/^'+/, '');
     if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
     else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
     else if (/^-?\d+,\d+$/.test(s)) s = s.replace(',', '.');
@@ -3203,6 +3245,500 @@ pre.ausgabe{
     if (bewegungReduziert()) fertig(); else uebersichtTimer = window.setTimeout(fertig, 200);
   }
 
+  /* ---------- Statistik: freie Faktor-Auswahl ---------- */
+
+  /*
+   * Erkundungsbereich: jede numerische Spalte der CSV und einige daraus
+   * abgeleitete Werte lassen sich über die Zeit ansehen. Die Auswahl entsteht
+   * aus den vorhandenen Daten, damit sie auch trägt, wenn Garmin künftig
+   * andere Spalten liefert.
+   */
+
+  var statFaktor = null;
+
+  /* Zeitspalten kommen als „00:35:51“ oder „5:42“ */
+  var ZEIT_MUSTER = /^\d{1,3}:[0-5]\d(:[0-5]\d)?$/;
+  /* Datums- und Zeitstempelspalten sehen für parseFloat wie Zahlen aus */
+  var DATUM_MUSTER = /^\d{4}-\d{1,2}-\d{1,2}|^\d{1,2}\.\d{1,2}\.\d{2,4}/;
+
+  /*
+   * Beide Werte hatten in Etappe 2 ein eigenes Diagramm. Sie stehen jetzt hier,
+   * weil der Durchschnitt einer Einheit mit Gehpausen nicht sauber deutbar ist.
+   */
+  var FAKTOR_HINWEISE = [
+    {
+      muster: /schrittfrequenz/i,
+      text: 'Der Durchschnitt einer Einheit steigt auch dann, wenn innerhalb des Laufs schlicht mehr gelaufen und weniger gegangen wurde.'
+    },
+    {
+      muster: /schrittl(ä|ae)nge/i,
+      text: 'Der Durchschnitt einer Einheit verschiebt sich auch dann, wenn innerhalb des Laufs schlicht mehr gelaufen und weniger gegangen wurde.'
+    }
+  ];
+
+  function faktorHinweis(name) {
+    for (var i = 0; i < FAKTOR_HINWEISE.length; i++) {
+      if (FAKTOR_HINWEISE[i].muster.test(name)) return FAKTOR_HINWEISE[i].text;
+    }
+    return '';
+  }
+
+  /* „5:42“ oder „1:23:45“, je nach Größe */
+  function zeitFormat(sekunden) {
+    var negativ = sekunden < 0;
+    var ganz = Math.round(Math.abs(sekunden));
+    var text;
+    if (ganz >= 3600) {
+      var stunden = Math.floor(ganz / 3600);
+      var rest = ganz - stunden * 3600;
+      text = stunden + ':' + pad2(Math.floor(rest / 60)) + ':' + pad2(rest % 60);
+    } else {
+      text = paceText(ganz);
+    }
+    return (negativ ? '−' : '') + text;
+  }
+
+  /* Alle Läufe, aufsteigend, ohne Zeitraum-Filter: die Auswahlliste soll beim Umschalten stehen bleiben */
+  function alleLaeufe() {
+    var raus = [];
+    aktivitaeten.forEach(function (a) { if (a.datum && istLauf(a)) raus.push(a); });
+    raus.sort(function (x, y) { return -sortiereAbsteigend(x, y); });
+    return raus;
+  }
+
+  function istGehen(akt) {
+    if (istLauf(akt)) return false;
+    var s = ((typVon(akt) || '') + ' ' + (titelVon(akt) || '')).toLowerCase();
+    return /gehen|geh-|spazier|wander|walk|hike|nordic/.test(s);
+  }
+
+  /* Dauer einer Einheit in Sekunden, bevorzugt die Zeit in Bewegung */
+  function dauerVon(akt) {
+    var bewegung = zeitSekunden(wertVon(akt, 'Zeit in Bewegung'));
+    if (bewegung !== null && bewegung > 0) return bewegung;
+    var zeit = zeitSekunden(wertVon(akt, 'Zeit'));
+    return zeit !== null && zeit > 0 ? zeit : null;
+  }
+
+  /* Gerundete Achsenwerte dicht an der Null sollen nicht als „-0“ erscheinen */
+  function achsenZahl(wert, stellen) {
+    var text = zahlText(wert, stellen);
+    return /^-0(,0*)?$/.test(text) ? text.slice(1) : text;
+  }
+
+  /* Anzahl Nachkommastellen, die eine Spalte tatsächlich nutzt (höchstens zwei) */
+  function stellenAus(zahl) {
+    var s = String(zahl);
+    var punkt = s.indexOf('.');
+    if (punkt < 0 || s.indexOf('e') >= 0) return 0;
+    return Math.min(2, s.length - punkt - 1);
+  }
+
+  /*
+   * Spaltensuche: eine Spalte kommt in die Auswahl, wenn mindestens die Hälfte
+   * der Läufe einen auswertbaren Zahlenwert trägt und nicht alle Läufe denselben
+   * Wert haben. Letzteres wirft zum Beispiel „Training Stress Score®“ heraus,
+   * der durchgehend auf 0.0 steht.
+   */
+  function faktorSpalten(laeufe) {
+    if (!laeufe.length) return [];
+
+    var gesehen = {}, namen = [];
+    laeufe.forEach(function (a) {
+      Object.keys(a.felder).forEach(function (sp) {
+        if (gesehen[sp]) return;
+        gesehen[sp] = true;
+        namen.push(sp);
+      });
+    });
+
+    var mindestens = Math.ceil(laeufe.length / 2);
+    var raus = [];
+
+    namen.forEach(function (sp) {
+      var zahlen = 0, zeiten = 0, datumsWerte = 0;
+      laeufe.forEach(function (a) {
+        var roh = a.felder[sp];
+        if (istLeer(roh)) return;
+        var text = String(roh).trim().replace(/^'+/, '');
+        if (DATUM_MUSTER.test(text)) { datumsWerte++; return; }
+        if (ZEIT_MUSTER.test(text)) { zeiten++; return; }
+        if (zahlAus(roh) !== null) zahlen++;
+      });
+      if (datumsWerte) return;
+
+      /* Bei Gleichstand gewinnt die Zeitlesart: „6:14“ als Zahl ergäbe sonst 6 */
+      var alsZeit = zeiten > 0 && zeiten >= zahlen;
+      if ((alsZeit ? zeiten : zahlen) < mindestens) return;
+
+      var lies = function (akt) {
+        var roh = wertVon(akt, sp);
+        if (istLeer(roh)) return null;
+        var wert = alsZeit ? zeitSekunden(roh) : zahlAus(roh);
+        return wert === null || !isFinite(wert) ? null : wert;
+      };
+
+      var erster = null, verschieden = false, stellen = 0;
+      laeufe.forEach(function (a) {
+        var wert = lies(a);
+        if (wert === null) return;
+        if (erster === null) erster = wert;
+        else if (wert !== erster) verschieden = true;
+        if (!alsZeit) stellen = Math.max(stellen, stellenAus(wert));
+      });
+      /* Eine Spalte ohne jede Abweichung zeigt nichts */
+      if (!verschieden) return;
+
+      var schreibe = alsZeit
+        ? zeitFormat
+        : function (wert) { return achsenZahl(wert, stellen); };
+
+      raus.push({
+        id: 'spalte:' + sp,
+        name: sp,
+        gruppe: 'Aus der CSV',
+        einheit: alsZeit ? 'min:s' : '',
+        hinweis: faktorHinweis(sp),
+        wertVon: lies,
+        achsenText: schreibe,
+        detailText: schreibe
+      });
+    });
+
+    return raus;
+  }
+
+  /*
+   * Werte, die in keiner Spalte stehen. Sie entstehen immer aus allen erfassten
+   * Läufen, nicht nur aus dem gewählten Zeitraum: sonst hinge „Tage seit dem
+   * letzten Lauf“ am Rand des Zeitfensters statt an den Daten.
+   */
+  function faktorZusatzWerte() {
+    var wochen = {}, ersteWoche = null;
+    aktivitaeten.forEach(function (a) {
+      if (!a.datum) return;
+      var start = wochenStart(a.datum);
+      if (ersteWoche === null || start < ersteWoche) ersteWoche = start;
+      var w = wochen[start];
+      if (!w) w = wochen[start] = { km: 0, laufSekunden: 0, gehSekunden: 0, andere: 0 };
+      var dauer = dauerVon(a);
+      if (istLauf(a)) {
+        w.km += kmVon(a);
+        if (dauer !== null) w.laufSekunden += dauer;
+      } else {
+        w.andere++;
+        if (istGehen(a) && dauer !== null) w.gehSekunden += dauer;
+      }
+    });
+
+    var karte = {}, summe = 0, vorheriges = null;
+    alleLaeufe().forEach(function (a) {
+      summe += kmVon(a);
+      var start = wochenStart(a.datum);
+      var woche = wochen[start] || { km: 0, laufSekunden: 0, gehSekunden: 0, andere: 0 };
+      var vorwoche = wochen[start - 7 * 86400000];
+      karte[a.id] = {
+        tageSeit: vorheriges === null ? null : Math.round((tagAus(a.datum) - tagAus(vorheriges)) / 86400000),
+        wocheKm: woche.km,
+        /* In der ersten erfassten Woche ist die Vorwoche unbekannt, keine Null */
+        wocheDelta: start > ersteWoche ? woche.km - (vorwoche ? vorwoche.km : 0) : null,
+        kumuliert: summe,
+        andereWoche: woche.andere,
+        verhaeltnis: woche.gehSekunden > 0 ? woche.laufSekunden / woche.gehSekunden : null
+      };
+      vorheriges = a.datum;
+    });
+    return karte;
+  }
+
+  function berechneteFaktoren() {
+    var werte = faktorZusatzWerte();
+    function lies(feld) {
+      return function (akt) {
+        var e = werte[akt.id];
+        if (!e) return null;
+        var wert = e[feld];
+        return wert === null || wert === undefined || !isFinite(wert) ? null : wert;
+      };
+    }
+    function km(wert) { return zahlText(wert, 1) + ' km'; }
+
+    return [
+      {
+        id: 'berechnet:tage', name: 'Tage seit dem letzten Lauf', gruppe: 'Berechnete Werte',
+        einheit: 'Tage', hinweis: 'Abstand zum vorherigen erfassten Lauf. Der erste Lauf überhaupt hat keinen Vorgänger.',
+        wertVon: lies('tageSeit'),
+        achsenText: function (wert) { return achsenZahl(wert, 0); },
+        detailText: function (wert) { return zahlText(wert, 0) + (wert === 1 ? ' Tag' : ' Tage'); }
+      },
+      {
+        id: 'berechnet:wocheKm', name: 'Wochenumfang', gruppe: 'Berechnete Werte',
+        einheit: 'km', hinweis: 'Kilometer aller Läufe in der Kalenderwoche des jeweiligen Laufs.',
+        wertVon: lies('wocheKm'),
+        achsenText: function (wert) { return achsenZahl(wert, wert >= 10 ? 0 : 1); },
+        detailText: km
+      },
+      {
+        id: 'berechnet:wocheDelta', name: 'Veränderung zur Vorwoche', gruppe: 'Berechnete Werte',
+        einheit: 'km', hinweis: 'Wochenumfang minus Umfang der vorangehenden Kalenderwoche. Eine Woche ohne Lauf zählt als null Kilometer.',
+        wertVon: lies('wocheDelta'),
+        achsenText: function (wert) { return achsenZahl(wert, 1); },
+        detailText: function (wert) { return (wert > 0 ? '+' : '') + km(wert) + ' gegenüber der Vorwoche'; }
+      },
+      {
+        id: 'berechnet:kumuliert', name: 'Kumulierte Kilometer', gruppe: 'Berechnete Werte',
+        einheit: 'km', hinweis: 'Summe aller Laufkilometer bis einschließlich dieses Laufs, gezählt ab dem ersten erfassten Lauf.',
+        wertVon: lies('kumuliert'),
+        achsenText: function (wert) { return achsenZahl(wert, wert >= 100 ? 0 : 1); },
+        detailText: km
+      },
+      {
+        id: 'berechnet:andere', name: 'Nicht-Lauf-Einheiten in derselben Woche', gruppe: 'Berechnete Werte',
+        einheit: 'Einheiten', hinweis: 'Anzahl der Aktivitäten in der Kalenderwoche, die nicht als Lauf eingestuft sind.',
+        wertVon: lies('andereWoche'),
+        achsenText: function (wert) { return achsenZahl(wert, 0); },
+        detailText: function (wert) { return zahlText(wert, 0) + (wert === 1 ? ' andere Einheit' : ' andere Einheiten'); }
+      },
+      {
+        id: 'berechnet:verhaeltnis', name: 'Verhältnis Laufzeit zu Gehzeit', gruppe: 'Berechnete Werte',
+        einheit: '× Gehzeit',
+        hinweis: 'Dauer aller Läufe der Kalenderwoche geteilt durch die Dauer der Geh-Einheiten derselben Woche. Wochen ohne Geh-Einheit bleiben leer.',
+        wertVon: lies('verhaeltnis'),
+        achsenText: function (wert) { return achsenZahl(wert, 1); },
+        detailText: function (wert) { return zahlText(wert, 2) + ' mal so viel Laufzeit wie Gehzeit'; }
+      }
+    ];
+  }
+
+  function faktorListe() {
+    return berechneteFaktoren().concat(faktorSpalten(alleLaeufe()));
+  }
+
+  function faktorNach(liste, id) {
+    for (var i = 0; i < liste.length; i++) if (liste[i].id === id) return liste[i];
+    return null;
+  }
+
+  /* Ein Wert je Lauf, darunter die Schmerzwerte auf eigener Achse */
+  function zeichneFaktor(ziel, faktor) {
+    var laeufe = statAktivitaeten(true);
+    if (!laeufe.length) {
+      ziel.appendChild(statHinweis('Für diesen Zeitraum sind keine Läufe erfasst.'));
+      return;
+    }
+
+    var punkte = laeufe.map(function (a) {
+      var b = befindenFuer(a.id);
+      return {
+        akt: a,
+        zeit: tagAus(a.datum),
+        wert: faktor.wertVon(a),
+        befinden: b,
+        schmerz: b ? (b.art === 'schmerz' ? (b.staerke || 0) : 0) : null
+      };
+    });
+    var messbare = punkte.filter(function (p) { return p.wert !== null; });
+
+    if (messbare.length < 2) {
+      var anfang = 'Ab zwei Läufen mit einem Wert für „' + faktor.name + '“ entsteht hier ein Verlauf. ';
+      ziel.appendChild(statHinweis(laeufe.length === 1
+        ? anfang + 'Im Zeitraum liegt bisher nur ein Lauf.'
+        : anfang + 'Zurzeit trägt ' + (messbare.length === 1 ? 'einer' : 'keiner') +
+          ' von ' + laeufe.length + ' Läufen diesen Wert.'));
+      return;
+    }
+
+    var bewertete = punkte.filter(function (p) { return p.schmerz !== null; });
+    var mitSchmerzEbene = bewertete.length >= 2;
+
+    var breite = diagrammBreite();
+    var hoehe = 240;
+    /* Mit Schmerz-Ebene braucht die Kopfzeile Luft über der oberen 5 */
+    var links = 46, rechts = mitSchmerzEbene ? 26 : 12, oben = mitSchmerzEbene ? 28 : 20, unten = 42;
+    var flaecheBreite = breite - links - rechts;
+    var flaecheHoehe = hoehe - oben - unten;
+
+    var min = messbare[0].wert, max = messbare[0].wert, negativ = false;
+    messbare.forEach(function (p) {
+      if (p.wert < min) min = p.wert;
+      if (p.wert > max) max = p.wert;
+      if (p.wert < 0) negativ = true;
+    });
+    /* Luft aus der Spannweite, damit auch enge Wertebereiche nicht am Rand kleben */
+    var luft = max > min ? (max - min) * 0.12 : Math.max(Math.abs(max) * 0.1, 0.5);
+    min -= luft; max += luft;
+    /* Kilometer und Anzahlen laufen nicht ins Minus, die Achse soll das nicht behaupten */
+    if (!negativ && min < 0) min = 0;
+
+    var vonZeit = punkte[0].zeit, bisZeit = punkte[punkte.length - 1].zeit;
+    function xVon(zeit) {
+      if (bisZeit === vonZeit) return links + flaecheBreite / 2;
+      return links + ((zeit - vonZeit) / (bisZeit - vonZeit)) * flaecheBreite;
+    }
+    function yVon(wert) { return oben + (1 - (wert - min) / (max - min)) * flaecheHoehe; }
+    function ySchmerz(wert) { return oben + (1 - wert / 5) * flaecheHoehe; }
+
+    var bild = svg('svg', {
+      viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe, role: 'img',
+      'aria-label': faktor.name + ' je Lauf über die Zeit' +
+        (mitSchmerzEbene ? ', dazu die erfassten Schmerzwerte auf der rechten Achse' : '')
+    });
+
+    /* Bei ganzzahligen Spalten mit kleiner Spannweite fallen Stufen textgleich aus */
+    var letzteBeschriftung = null;
+    achsenStufen(min, max, 3).forEach(function (wert) {
+      bild.appendChild(svg('line', {
+        x1: links, x2: links + flaecheBreite, y1: yVon(wert), y2: yVon(wert), class: 'gitter'
+      }));
+      var text = faktor.achsenText(wert);
+      if (text === letzteBeschriftung) return;
+      letzteBeschriftung = text;
+      bild.appendChild(svgText(links - 6, yVon(wert) + 4, text, 'ax', 'end'));
+    });
+
+    /* Schmerz-Ebene zuerst, damit sie hinter dem gewählten Faktor liegt */
+    if (mitSchmerzEbene) {
+      var ebene = svg('g', { class: 'schmerz-ebene' });
+      [0, 5].forEach(function (wert) {
+        ebene.appendChild(svgText(links + flaecheBreite + 6, ySchmerz(wert) + 4, String(wert), 'ax-schmerz', 'start'));
+      });
+      var schmerzStueck = [];
+      punkte.forEach(function (p) {
+        if (p.schmerz === null) {
+          if (schmerzStueck.length > 1) {
+            ebene.appendChild(svg('polyline', { points: schmerzStueck.join(' '), class: 'schmerz-linie' }));
+          }
+          schmerzStueck = [];
+          return;
+        }
+        schmerzStueck.push(xVon(p.zeit) + ',' + ySchmerz(p.schmerz));
+      });
+      if (schmerzStueck.length > 1) {
+        ebene.appendChild(svg('polyline', { points: schmerzStueck.join(' '), class: 'schmerz-linie' }));
+      }
+      punkte.forEach(function (p) {
+        if (p.schmerz === null) return;
+        ebene.appendChild(svg('rect', {
+          x: xVon(p.zeit) - 3, y: ySchmerz(p.schmerz) - 3, width: 6, height: 6, class: 'schmerz-marke'
+        }));
+      });
+      bild.appendChild(ebene);
+    }
+
+    /* Fehlende Werte unterbrechen die Linie, statt eine Null zu behaupten */
+    var stueck = [];
+    punkte.forEach(function (p) {
+      if (p.wert === null) {
+        if (stueck.length > 1) bild.appendChild(svg('polyline', { points: stueck.join(' '), class: 'faktor-linie' }));
+        stueck = [];
+        return;
+      }
+      stueck.push(xVon(p.zeit) + ',' + yVon(p.wert));
+    });
+    if (stueck.length > 1) bild.appendChild(svg('polyline', { points: stueck.join(' '), class: 'faktor-linie' }));
+
+    var detail = statDetailZeile('Punkt antippen für Einzelheiten.');
+
+    punkte.forEach(function (p) {
+      if (p.wert === null) return;
+      var beschreibung = datumLang(p.akt.datum) + ' · ' + titelVon(p.akt) +
+        (kmVon(p.akt) ? ' · ' + zahlText(kmVon(p.akt), 2) + ' km' : '') +
+        ' · ' + faktor.name + ': ' + faktor.detailText(p.wert) + ' · ' +
+        (p.befinden ? befindenText(p.befinden) : 'Befinden nicht erfasst');
+      var knoten = svg('circle', {
+        cx: xVon(p.zeit), cy: yVon(p.wert), r: 5, class: 'faktor-punkt', tabindex: '0'
+      });
+      svgTitel(knoten, beschreibung);
+      var zeigen = function () { detail.textContent = beschreibung; };
+      knoten.addEventListener('click', zeigen);
+      knoten.addEventListener('mouseenter', zeigen);
+      knoten.addEventListener('focus', zeigen);
+      bild.appendChild(knoten);
+    });
+
+    if (faktor.einheit) bild.appendChild(svgText(links, 12, faktor.einheit, 'ax', 'start'));
+    if (mitSchmerzEbene) {
+      bild.appendChild(svgText(links + flaecheBreite, 12, 'Schmerz', 'ax-schmerz', 'end'));
+    }
+    bild.appendChild(svgText(links, hoehe - 6, datumLang(isoAusZeit(vonZeit)).slice(0, 6), 'ax', 'start'));
+    if (bisZeit !== vonZeit) {
+      bild.appendChild(svgText(links + flaecheBreite, hoehe - 6, datumLang(isoAusZeit(bisZeit)), 'ax', 'end'));
+    }
+    ziel.appendChild(bild);
+
+    var legende = el('div', { class: 'stat-legende' });
+    legende.appendChild(el('span', { class: 'legende-faktor' }, '● ' + faktor.name));
+    if (mitSchmerzEbene) {
+      legende.appendChild(el('span', { class: 'legende-schmerz' }, '▪ Schmerz 0 bis 5, rechte Achse'));
+    }
+    ziel.appendChild(legende);
+    ziel.appendChild(detail);
+
+    var fuss = el('div', { class: 'faktor-fuss' });
+    fuss.appendChild(el('span', null, messbare.length + ' von ' + laeufe.length +
+      ' Läufen im Zeitraum tragen diesen Wert.' +
+      (mitSchmerzEbene ? ' Für ' + bewertete.length + ' der ' + laeufe.length + ' Läufe ist ein Befinden erfasst.'
+        : ' Ab zwei bewerteten Läufen kommt die Schmerz-Ebene dazu.')));
+    if (faktor.hinweis) fuss.appendChild(el('span', null, faktor.hinweis));
+    ziel.appendChild(fuss);
+  }
+
+  function faktorBereich() {
+    var karte = diagrammKarte('Faktoren erkunden',
+      'Ein frei wählbarer Wert je Lauf über die Zeit, dahinter die erfassten Schmerzwerte.');
+
+    karte.appendChild(el('p', { class: 'stat-warnung' },
+      'Je mehr Faktoren verglichen werden, desto eher entstehen zufällige Übereinstimmungen. ' +
+      'Was hier auffällt, ist ein Anhaltspunkt, kein Beleg.'));
+
+    /* Die Faktoren beziehen sich auf Läufe, ohne Läufe gibt es nichts zu wählen */
+    if (!alleLaeufe().length) {
+      karte.appendChild(statHinweis('Sobald Läufe erfasst sind, entsteht hier die Auswahl.'));
+      return karte;
+    }
+
+    var liste = faktorListe();
+    var gewaehlt = faktorNach(liste, statFaktor) || liste[0];
+    statFaktor = gewaehlt.id;
+
+    var wahl = el('div', { class: 'faktor-wahl' });
+    wahl.appendChild(el('label', { for: 'faktor-feld' }, 'Faktor'));
+    var feld = el('select', { id: 'faktor-feld' });
+
+    var gruppen = [];
+    liste.forEach(function (f) {
+      var treffer = null;
+      gruppen.forEach(function (g) { if (g.name === f.gruppe) treffer = g; });
+      if (!treffer) { treffer = { name: f.gruppe, eintraege: [] }; gruppen.push(treffer); }
+      treffer.eintraege.push(f);
+    });
+    gruppen.forEach(function (g) {
+      var block = el('optgroup', { label: g.name });
+      g.eintraege.forEach(function (f) {
+        block.appendChild(el('option', { value: f.id, selected: f.id === gewaehlt.id }, f.name));
+      });
+      feld.appendChild(block);
+    });
+    feld.value = gewaehlt.id;
+    wahl.appendChild(feld);
+    karte.appendChild(wahl);
+
+    var behaelter = el('div', { class: 'faktor-bild' });
+    karte.appendChild(behaelter);
+    zeichneFaktor(behaelter, gewaehlt);
+
+    /* Nur den Diagrammteil neu aufbauen, damit die Seite nicht springt */
+    feld.addEventListener('change', function () {
+      var neuer = faktorNach(liste, feld.value);
+      if (!neuer) return;
+      statFaktor = neuer.id;
+      leeren(behaelter);
+      zeichneFaktor(behaelter, neuer);
+    });
+
+    return karte;
+  }
+
   /* ---------- Statistik: Aufbau ---------- */
 
   function statFilter() {
@@ -3261,6 +3797,7 @@ pre.ausgabe{
     ziel.appendChild(tempoDiagramm());
     ziel.appendChild(pulsDiagramm());
     ziel.appendChild(kalenderDiagramm());
+    ziel.appendChild(faktorBereich());
   }
 
   /* ---------- Zeichnen ---------- */
