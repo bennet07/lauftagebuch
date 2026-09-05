@@ -1024,13 +1024,111 @@ pre.ausgabe{
 
   function pad2(n) { n = String(parseInt(n, 10)); return n.length < 2 ? '0' + n : n; }
 
+  /*
+   * Kennzeichen einer Aktivität. Bewusst nur Felder, die eine Aktivität
+   * eindeutig benennen und sich nachträglich nicht ändern: Garmin liefert je
+   * nach enthaltenen Aktivitätstypen unterschiedliche Spalten und rechnet
+   * einzelne Werte später neu. Eine Signatur über alle Felder hielte dieselbe
+   * Aktivität dann für neu und legte sie ein zweites Mal an.
+   *
+   * Beim Datum zählt der Originalwert samt Uhrzeit, nicht das normalisierte
+   * Tagesdatum – sonst fielen zwei Läufe am selben Tag zusammen.
+   */
+  var SIGNATUR_FELDER = [
+    ['datum', 'date'],
+    ['aktivitätstyp', 'aktivitaetstyp', 'activity type', 'typ'],
+    ['distanz', 'distance'],
+    ['zeit', 'time']
+  ];
+
   function signatur(felder) {
+    var teile = [], gefunden = 0;
+    for (var i = 0; i < SIGNATUR_FELDER.length; i++) {
+      var wert = String(sucheFeld(felder, SIGNATUR_FELDER[i]) || '').trim();
+      if (wert) gefunden++;
+      teile.push(wert);
+    }
+    /* Fehlt eines der Felder, tragen die übrigen. Fehlen alle, gäbe es kein
+       Kennzeichen mehr – dann lieber jede Zeile einzeln als alle gleich. */
+    if (!gefunden) return 'alle:' + signaturAlleFelder(felder);
+    /* Als Liste serialisiert, damit die Feldgrenzen eindeutig bleiben */
+    return 'kern:' + JSON.stringify(teile);
+  }
+
+  function signaturAlleFelder(felder) {
     var schluessel = Object.keys(felder).sort();
     var paare = [];
     for (var i = 0; i < schluessel.length; i++) {
-      paare.push([schluessel[i], felder[schluessel[i]]]);
+      paare.push([schluessel[i], String(felder[schluessel[i]]).trim()]);
     }
     return JSON.stringify(paare);
+  }
+
+  /*
+   * Räumt Aktivitäten weg, die durch die frühere Signatur mehrfach angelegt
+   * wurden. Läuft beim Start und findet danach nichts mehr, meldet sich also
+   * nur das eine Mal. Gibt die Zahl der entfernten Einträge zurück.
+   */
+  function entferneDubletten() {
+    var gruppen = {}, reihenfolge = [];
+    aktivitaeten.forEach(function (a) {
+      var sig = signatur(a.felder);
+      if (!gruppen[sig]) { gruppen[sig] = []; reihenfolge.push(sig); }
+      gruppen[sig].push(a);
+    });
+
+    var behalten = [], entfernt = 0;
+    var umhaengen = {}, wegfallende = {};
+
+    reihenfolge.forEach(function (sig) {
+      var gruppe = gruppen[sig];
+      if (gruppe.length === 1) { behalten.push(gruppe[0]); return; }
+
+      /* Vorrang hat ein Eintrag mit Befinden; hängt an keinem oder an mehreren
+         eines, bleibt der älteste, also der zuerst gespeicherte der Gruppe. */
+      var mitBefinden = gruppe.filter(function (a) { return !!befindenFuer(a.id); });
+      var sieger = (mitBefinden.length ? mitBefinden : gruppe)[0];
+
+      gruppe.forEach(function (a) {
+        if (a === sieger) return;
+        if (befindenFuer(a.id)) {
+          if (befindenFuer(sieger.id)) {
+            /* Beide Einträge sind bewertet: es ist dieselbe Einheit, und die
+               Bewertung des behaltenen Eintrags gilt. */
+            wegfallende[a.id] = true;
+          } else {
+            /* Sicherheitsnetz, falls der Vorrang oben je anders ausfällt */
+            umhaengen[a.id] = sieger.id;
+          }
+        }
+        /* Eine von Hand gesetzte Einstufung übernehmen, wenn dort keine steht */
+        if (sieger.istLaufManuell === null && a.istLaufManuell !== null) {
+          sieger.istLaufManuell = a.istLaufManuell;
+        }
+        entfernt++;
+      });
+      behalten.push(sieger);
+    });
+
+    if (!entfernt) return 0;
+
+    aktivitaeten = behalten;
+
+    var bleibende = [];
+    befinden.eintraege.forEach(function (e) {
+      if (Object.prototype.hasOwnProperty.call(umhaengen, e.aktivitaetId)) {
+        e.aktivitaetId = umhaengen[e.aktivitaetId];
+        bleibende.push(e);
+        return;
+      }
+      if (wegfallende[e.aktivitaetId]) return;
+      bleibende.push(e);
+    });
+    befinden.eintraege = bleibende;
+
+    speichereAktivitaeten();
+    speichereBefinden();
+    return entfernt;
   }
 
   function wertVon(akt, spalte) {
@@ -4273,7 +4371,18 @@ pre.ausgabe{
   aktivitaeten = ladeAktivitaeten();
   aktivitaeten.sort(sortiereAbsteigend);
   befinden = ladeBefinden();
+
+  /* Altlast aus der früheren Duplikat-Erkennung, einmalig beim Start */
+  var bereinigt = entferneDubletten();
+  if (bereinigt) {
+    setzeVerlaufsMeldung(bereinigt + (bereinigt === 1
+      ? ' doppelter Eintrag wurde entfernt.'
+      : ' doppelte Einträge wurden entfernt.') +
+      ' Erfasstes Befinden ist erhalten geblieben.');
+  }
+
   zeichne();
+  if (bereinigt) quittiere(bereinigt === 1 ? '1 Dublette entfernt' : bereinigt + ' Dubletten entfernt');
 })();
 </script>
 </body>
