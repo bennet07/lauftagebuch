@@ -243,6 +243,23 @@ button{font:inherit;color:inherit}
 .kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:640}
 /* Die weitere Einheit als schmaler Balken am unteren Rand */
 .kal-balken{position:absolute;left:0;right:0;bottom:0;height:5px}
+/*
+ * Dritte Ebene: das Befinden. Ein Punkt statt einer Farbfläche, damit er sich
+ * nicht mit Aktivitätsart und Umfang vermischt. Der fein gestrichelte Rahmen
+ * zeigt Tage ohne Eintrag – „nicht erfasst“ soll nicht wie „keine
+ * Beschwerden“ aussehen.
+ */
+.kal-punkt{
+  position:absolute;left:50%;bottom:3px;transform:translateX(-50%);
+  width:6px;height:6px;border-radius:50%;z-index:1;pointer-events:none;
+}
+.kal-tag--beides .kal-punkt{bottom:8px}
+.kal-tag--luecke{border-style:dashed;border-color:currentColor;opacity:.98}
+.kal-tag[role="button"]{cursor:pointer}
+.kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
+.kal-probe--punkt{background:var(--flaeche-hoch);border:1px solid var(--rand)}
+.kal-probe--punkt .kal-punkt{bottom:50%;transform:translate(-50%,50%)}
+.kal-probe--luecke{background:transparent;border:1px dashed var(--text-3)}
 .kal-tag--heute{box-shadow:0 0 0 2px var(--akzent);border-color:var(--akzent)}
 .kal-probe--heute{background:transparent;box-shadow:inset 0 0 0 2px var(--akzent)}
 .kal-skala-text{font-size:.72rem;color:var(--text-4);font-weight:600}
@@ -250,6 +267,9 @@ button{font:inherit;color:inherit}
 @media (max-width:560px){
   .kalender{gap:20px}
   .kal-monat{min-width:0;max-width:none;flex-basis:100%}
+  /* Wird es eng, weicht der Punkt – die Tageszahl hat Vorrang */
+  .kal-punkt{width:5px;height:5px;bottom:2px}
+  .kal-tag--beides .kal-punkt{bottom:7px}
 }
 .stat-detail{margin-top:14px;font-size:.83rem;color:var(--text-2);line-height:1.55;min-height:2.6em}
 .stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-3);line-height:1.6}
@@ -512,24 +532,30 @@ details.alle > summary:hover{color:var(--text)}
 
 /* ---------- Tages-Befinden ---------- */
 
-.tages-befinden{
-  background:var(--flaeche-sanft);border:1px solid var(--rand);
-  border-radius:var(--radius);padding:14px 18px;margin-top:10px;
+/* Im Verlauf nur eine Zeile, kein Kasten – die Aktivitäten bleiben die Hauptsache */
+.tag-befinden{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;
+  margin-top:10px;padding:0 4px;font-size:.86rem;
 }
-.tages-befinden .befinden{margin-top:0}
+.tag-befinden.ist-ok{color:var(--ok)}
+.tag-befinden.ist-schmerz{color:var(--schmerz)}
+.tag-befinden-marke{
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--text-4);font-weight:640;
+}
+.tag-befinden .bef-notiz{color:var(--text-3);font-style:italic}
 .bef-nachgetragen{
   font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
   font-weight:640;opacity:.7;
 }
-.tagesabfrage{margin-top:28px}
-.tagesabfrage-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.tagesabfrage-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
-.tagesabfrage-datum{
-  display:block;margin-top:4px;font-size:.82rem;color:var(--text-3);
+.tages-dialog{margin-top:16px}
+.tages-dialog .befinden{margin-top:0}
+.tages-dialog .hinweis-text{margin-top:0}
+#dialog-inhalt:empty{display:none}
+.stat-abdeckung{
+  margin-top:14px;font-size:.83rem;color:var(--text-3);
   font-variant-numeric:tabular-nums;
 }
-.tagesabfrage .befinden{margin-top:14px}
-.tagesabfrage .hinweis-text{font-size:.82rem;color:var(--text-4)}
 
 /* ---------- Leiste und Filter ---------- */
 
@@ -758,6 +784,7 @@ pre.ausgabe{
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-titel" aria-describedby="dialog-text">
     <h2 id="dialog-titel">Löschen?</h2>
     <p id="dialog-text"></p>
+    <div id="dialog-inhalt"></div>
     <div class="dialog-fuss" id="dialog-fuss"></div>
   </div>
 </div>
@@ -1856,35 +1883,50 @@ pre.ausgabe{
    * sich erst beurteilen, wenn er vorbei ist. Erfassen lässt er sich trotzdem,
    * im Verlauf steht seine Zeile.
    */
-  function offeneTage() {
-    var start = ersterTag();
-    if (!start) return [];
+  /*
+   * Ein Tages-Befinden lässt sich nur für die letzten Tage nachtragen. Weiter
+   * zurück wäre der Eintrag geraten und nicht erfasst – im Export sähe er aus
+   * wie ein gemessener Wert. Eine dauerhafte Lücke ist ehrlicher.
+   */
+  var TAGE_NACHTRAGBAR = 3;
+
+  function tagErfassbar(datum) {
     var heute = heuteIso();
+    if (datum > heute) return false;
+    return Math.round((tagAus(heute) - tagAus(datum)) / 86400000) <= TAGE_NACHTRAGBAR;
+  }
 
-    var laeufeAmTag = {}, letzter = heute;
-    aktivitaeten.forEach(function (a) {
-      if (!a.datum) return;
-      if (a.datum > letzter) letzter = a.datum;
-      if (!istLauf(a) || befindenFuer(a.id)) return;
-      if (!laeufeAmTag[a.datum]) laeufeAmTag[a.datum] = [];
-      laeufeAmTag[a.datum].push(a);
-    });
-    var tagErfasst = {};
-    befinden.tage.forEach(function (t) { tagErfasst[t.datum] = true; });
-
-    var raus = [];
-    var zeit = tagAus(start), ende = tagAus(letzter);
-    /* Sicherheitsgrenze gegen unplausible Datumsangaben in importierten Daten */
-    var schritte = 0;
-    for (; zeit <= ende && schritte < 4000; zeit += 86400000, schritte++) {
-      var datum = isoAusZeit(zeit);
-      var laeufe = laeufeAmTag[datum] || [];
-      var tagOffen = datum < heute && !tagErfasst[datum];
-      if (!laeufe.length && !tagOffen) continue;
-      raus.push({ datum: datum, laeufe: laeufe, tagOffen: tagOffen });
+  /*
+   * Offen sind alle Läufe ohne Befinden – unabhängig vom Alter, ein Lauf ist ein
+   * einzelnes Ereignis und bleibt zuzuordnen – sowie die letzten Tage ohne
+   * Tages-Befinden. Ältere Tage erscheinen nirgends als offen.
+   */
+  function offeneTage() {
+    var heute = heuteIso();
+    var karte = {}, daten = [];
+    function hole(datum) {
+      if (!karte[datum]) { karte[datum] = { datum: datum, laeufe: [], tagOffen: false }; daten.push(datum); }
+      return karte[datum];
     }
-    raus.reverse();
-    return raus;
+
+    aktivitaeten.forEach(function (a) {
+      if (!a.datum || !istLauf(a) || befindenFuer(a.id)) return;
+      hole(a.datum).laeufe.push(a);
+    });
+
+    var start = ersterTag();
+    if (start) {
+      for (var i = 1; i <= TAGE_NACHTRAGBAR; i++) {
+        var datum = isoAusZeit(tagAus(heute) - i * 86400000);
+        if (datum < start) break;
+        if (tagesBefindenFuer(datum)) continue;
+        hole(datum).tagOffen = true;
+      }
+    }
+
+    daten.sort();
+    daten.reverse();
+    return daten.map(function (d) { return karte[d]; });
   }
 
   function laeufeOhneBefinden() {
@@ -1895,12 +1937,10 @@ pre.ausgabe{
     return anzahl;
   }
 
-  /* Die letzten drei offenen Tage, deren Tages-Befinden fehlt */
-  var SAMMEL_TAGE = 3;
-
+  /* Die offenen Tage, deren Tages-Befinden fehlt – höchstens das Nachtrag-Fenster */
   function sammelbareTage(offen) {
     var raus = [];
-    for (var i = 0; i < offen.length && raus.length < SAMMEL_TAGE; i++) {
+    for (var i = 0; i < offen.length && raus.length < TAGE_NACHTRAGBAR; i++) {
       if (offen[i].tagOffen) raus.push(offen[i].datum);
     }
     return raus;
@@ -1993,10 +2033,6 @@ pre.ausgabe{
     }
     aktivitaeten.forEach(function (a) { hole(a.datum).akt.push(a); });
     befinden.zusatztage.forEach(function (z) { hole(z.datum).zusatz = z; });
-    /* Tage mit erfasstem Tages-Befinden brauchen eine Zeile, auch ohne Aktivität */
-    befinden.tage.forEach(function (t) { hole(t.datum); });
-    /* Der heutige Tag ist immer erfassbar, auch wenn noch nichts vorliegt */
-    hole(heuteIso());
     var gruppen = reihenfolge.map(function (d) { return karte[d]; });
     gruppen.sort(function (a, b) { return a.datum < b.datum ? 1 : (a.datum > b.datum ? -1 : 0); });
     gruppen.forEach(function (g) { g.akt.sort(sortiereAbsteigend); });
@@ -2051,45 +2087,81 @@ pre.ausgabe{
   }
 
   /*
-   * Beim Öffnen steht das Befinden für gestern oben – ein Tag lässt sich erst
-   * beurteilen, wenn er vorbei ist. Die Abfrage lässt sich wegklicken und kommt
-   * in derselben Sitzung nicht wieder; ein Zwang würde nur zum Durchtippen
-   * führen und Einträge erzeugen, die keine erfassten Werte sind.
+   * Erfassen und Ändern des Tages-Befindens laufen über einen Dialog: beim
+   * Öffnen der App für gestern, sonst über einen Tag im Kalender. Der Inhalt
+   * wird bei jedem zeichne() erneuert, damit das Schmerzformular darin
+   * aufgehen und ein gespeicherter Eintrag sofort erscheinen kann.
    */
-  var tagesabfrageWeg = false;
+  var tagesDialogDatum = null;
+  var tagesDialogSchliesst = false;
 
-  function tagesabfrageBereich(offen) {
-    if (tagesabfrageWeg) return null;
-    var gestern = gesternIso();
-    if (tagesBefindenFuer(gestern)) return null;
-    var start = ersterTag();
-    if (!start || gestern < start) return null;
-
-    var karte = el('div', { class: 'karte tagesabfrage' });
-    var kopf = el('div', { class: 'tagesabfrage-kopf' });
-    var titel = el('div');
-    titel.appendChild(el('h2', null, 'Befinden für gestern'));
-    titel.appendChild(el('span', { class: 'tagesabfrage-datum',
-      text: datumLang(gestern) + ' · ' + wochentag(gestern) }));
-    kopf.appendChild(titel);
-
-    var weg = el('button', { type: 'button', class: 'weg', 'aria-label': 'Abfrage ausblenden', title: 'Ausblenden' }, '×');
-    weg.addEventListener('click', function () { tagesabfrageWeg = true; zeichne(); });
-    kopf.appendChild(weg);
-    karte.appendChild(kopf);
-
-    karte.appendChild(befindenBereich(tagZiel(gestern), false));
-
-    /* Weitere offene Tage stehen darunter in der Karte „Noch offen“ */
-    var weitere = 0;
-    offen.forEach(function (t) { if (t.datum !== gestern) weitere++; });
-    if (weitere) {
-      karte.appendChild(el('p', { class: 'hinweis-text' },
-        weitere === 1
-          ? 'Ein weiterer Tag ohne vollständigen Eintrag steht unter „Noch offen“.'
-          : weitere + ' weitere Tage ohne vollständigen Eintrag stehen unter „Noch offen“.'));
+  function tagesDialogInhalt(datum) {
+    var box = el('div', { class: 'tages-dialog' });
+    if (tagErfassbar(datum) || tagesBefindenFuer(datum)) {
+      box.appendChild(befindenBereich(tagZiel(datum), false));
+    } else {
+      box.appendChild(el('p', { class: 'hinweis-text' },
+        'Für diesen Tag ist kein Befinden erfasst. Nachtragen ist auf die letzten ' +
+        TAGE_NACHTRAGBAR + ' Tage begrenzt.'));
     }
-    return karte;
+    return box;
+  }
+
+  function aktualisiereTagesDialog() {
+    if (tagesDialogDatum === null || !dialogOffen()) return;
+    var ziel = document.getElementById('dialog-inhalt');
+    leeren(ziel);
+    /* Nach dem einen Tap auf „Keine Beschwerden“ soll die Abfrage weg sein */
+    if (tagesDialogSchliesst && tagesBefindenFuer(tagesDialogDatum) &&
+        !Object.prototype.hasOwnProperty.call(entwuerfe, 'tag:' + tagesDialogDatum)) {
+      schliesseDialog();
+      return;
+    }
+    ziel.appendChild(tagesDialogInhalt(tagesDialogDatum));
+  }
+
+  function oeffneTagesDialog(datum, titel, einstellung) {
+    var e = einstellung || {};
+    tagesDialogDatum = datum;
+    tagesDialogSchliesst = !!e.schliesstNachEintrag;
+    zeigeDialog(titel, datumLang(datum) + ' · ' + wochentag(datum), [], {
+      inhalt: tagesDialogInhalt(datum),
+      abbrechenText: e.abbrechenText || 'Schließen'
+    });
+  }
+
+  function oeffneKalenderTag(datum) {
+    oeffneTagesDialog(datum, 'Befinden im Tagesverlauf');
+  }
+
+  /*
+   * Beim Öffnen der App einmalig für gestern. Kein Zwang: ein Zwang führte nur
+   * zum Durchtippen und erzeugte Einträge, die keine erfassten Werte sind.
+   */
+  var SITZUNG_ABFRAGE = 'lauftagebuch.tagesabfrage.sitzung';
+  var tagesabfrageGezeigt = false;
+
+  function abfrageSchonGezeigt() {
+    if (tagesabfrageGezeigt) return true;
+    try { return window.sessionStorage.getItem(SITZUNG_ABFRAGE) === '1'; } catch (e) { return false; }
+  }
+
+  function merkeAbfrageGezeigt() {
+    tagesabfrageGezeigt = true;
+    try { window.sessionStorage.setItem(SITZUNG_ABFRAGE, '1'); } catch (e) { /* Speicher nicht verfügbar */ }
+  }
+
+  function zeigeTagesabfrage() {
+    if (abfrageSchonGezeigt()) return;
+    var gestern = gesternIso();
+    if (tagesBefindenFuer(gestern)) return;
+    var start = ersterTag();
+    if (!start || gestern < start) return;
+    merkeAbfrageGezeigt();
+    oeffneTagesDialog(gestern, 'Befinden für gestern', {
+      schliesstNachEintrag: true,
+      abbrechenText: 'Später'
+    });
   }
 
   /* ---------- Bestätigungsdialog ---------- */
@@ -2101,22 +2173,32 @@ pre.ausgabe{
     return !document.getElementById('dialog-huelle').hasAttribute('hidden');
   }
 
+  /* Der Fokus bleibt im Dialog, auch wenn er eigenen Inhalt trägt */
   function dialogKnoepfe() {
-    return document.getElementById('dialog-fuss').querySelectorAll('button');
+    return document.querySelector('#dialog-huelle .dialog')
+      .querySelectorAll('button:not([disabled]), input, select, textarea');
   }
 
   /*
    * aktionen: Liste von { text, klasse, beiKlick }. „Abbrechen“ kommt immer
    * als erster Knopf davor und bekommt den Fokus, damit Enter nichts auslöst.
+   * optionen: { inhalt, abbrechenText } für Dialoge mit eigenem Inhalt.
    */
-  function zeigeDialog(titel, text, aktionen) {
+  function zeigeDialog(titel, text, aktionen, optionen) {
     var huelle = document.getElementById('dialog-huelle');
+    var einstellung = optionen || {};
     document.getElementById('dialog-titel').textContent = titel;
-    document.getElementById('dialog-text').textContent = text;
+    var textFeld = document.getElementById('dialog-text');
+    textFeld.textContent = text || '';
+    if (text) textFeld.removeAttribute('hidden'); else textFeld.setAttribute('hidden', '');
+
+    var inhalt = document.getElementById('dialog-inhalt');
+    leeren(inhalt);
+    if (einstellung.inhalt) inhalt.appendChild(einstellung.inhalt);
 
     var fuss = document.getElementById('dialog-fuss');
     leeren(fuss);
-    var abbrechen = el('button', { type: 'button', class: 'knopf' }, 'Abbrechen');
+    var abbrechen = el('button', { type: 'button', class: 'knopf' }, einstellung.abbrechenText || 'Abbrechen');
     abbrechen.addEventListener('click', schliesseDialog);
     fuss.appendChild(abbrechen);
 
@@ -2145,6 +2227,13 @@ pre.ausgabe{
   function schliesseDialog() {
     var huelle = document.getElementById('dialog-huelle');
     if (huelle.hasAttribute('hidden')) return;
+    if (tagesDialogDatum !== null) {
+      /* Ein offenes Schmerzformular gehört zum Dialog und geht mit ihm */
+      delete entwuerfe['tag:' + tagesDialogDatum];
+      delete notizEntwuerfe['tag:' + tagesDialogDatum];
+      tagesDialogDatum = null;
+      tagesDialogSchliesst = false;
+    }
     huelle.classList.remove('offen');
     var fertig = function () {
       dialogTimer = null;
@@ -2922,6 +3011,29 @@ pre.ausgabe{
     return leiste;
   }
 
+  /*
+   * Wie viele Tage des Zeitraums tragen ein Tages-Befinden. Reine
+   * Vollständigkeitsangabe, damit Lücken nicht erst beim Export auffallen.
+   */
+  function abdeckungsZeile() {
+    var start = statGrenze() || ersterTag();
+    if (!start) return null;
+    var heute = heuteIso();
+    if (start > heute) return null;
+
+    var gesamt = 0, erfasst = 0;
+    var zeit = tagAus(start), ende = tagAus(heute);
+    for (; zeit <= ende && gesamt < 4000; zeit += 86400000) {
+      gesamt++;
+      if (tagesBefindenFuer(isoAusZeit(zeit))) erfasst++;
+    }
+    if (!gesamt) return null;
+
+    return el('p', { class: 'stat-abdeckung' },
+      'Erfassung: ' + Math.round((erfasst / gesamt) * 100) + ' % der Tage (' +
+      erfasst + ' von ' + gesamt + ')');
+  }
+
   /* ---------- Statistik: Schmerzverlauf ---------- */
 
   function schmerzDiagramm() {
@@ -3398,6 +3510,24 @@ pre.ausgabe{
     return Math.min(4, Math.max(1, Math.ceil((wert / groesste) * 4)));
   }
 
+  /*
+   * Dritte Ebene im Kalender: das Befinden als Punkt. Bewusst ein anderes
+   * visuelles Mittel als die Fläche, damit sich Aktivitätsart und Befinden
+   * nicht vermischen. Grün für keine Beschwerden, Rot nach Stärke 1 bis 5.
+   */
+  var BEFINDEN_OK_FARBE = 'rgb(116,185,141)';
+  var BEFINDEN_SCHMERZ_FARBEN = [
+    'rgb(230,186,158)', 'rgb(223,158,120)', 'rgb(217,130,92)',
+    'rgb(214,101,80)', 'rgb(201,68,58)'
+  ];
+
+  function befindenPunktFarbe(b) {
+    if (!b) return null;
+    if (b.art === 'keine') return BEFINDEN_OK_FARBE;
+    var stufe = Math.min(5, Math.max(1, b.staerke || 1));
+    return BEFINDEN_SCHMERZ_FARBEN[stufe - 1];
+  }
+
   function kalenderTage() {
     var tage = {};
     statAktivitaeten(false).forEach(function (a) {
@@ -3455,18 +3585,31 @@ pre.ausgabe{
     var ersterWochentag = (new Date(Date.UTC(eintrag.jahr, eintrag.monat - 1, 1)).getUTCDay() || 7) - 1;
     for (d = 0; d < ersterWochentag; d++) gitter.appendChild(el('span', { class: 'kal-tag kal-tag--leer' }));
 
+    var heute = heuteIso();
+    var beginn = ersterTag();
+
     for (d = 1; d <= anzahlTage; d++) {
       var datum = eintrag.jahr + '-' + pad2(eintrag.monat) + '-' + pad2(d);
       var tag = tage[datum];
+      var befindenTag = tagesBefindenFuer(datum);
+      /* Nur Tage im erfassten Zeitraum können eine Lücke sein */
+      var istLuecke = !befindenTag && !!beginn && datum >= beginn && datum <= heute;
       var klasse = 'kal-tag';
       if (tag) {
         if (tag.hatLauf && tag.hatAndere) klasse += ' kal-tag--beides';
         else if (tag.hatLauf) klasse += ' kal-tag--lauf';
         else klasse += ' kal-tag--andere';
       }
-      if (datum === heuteIso()) klasse += ' kal-tag--heute';
-      var zelle = el('span', { class: klasse });
+      if (istLuecke) klasse += ' kal-tag--luecke';
+      if (datum === heute) klasse += ' kal-tag--heute';
+      var zelle = el('span', { class: klasse, role: 'button', tabindex: '0' });
       zelle.appendChild(el('span', { class: 'kal-zahl', text: String(d) }));
+
+      if (befindenTag) {
+        var punkt = el('span', { class: 'kal-punkt' });
+        punkt.style.background = befindenPunktFarbe(befindenTag);
+        zelle.appendChild(punkt);
+      }
 
       if (tag) {
         var stufeL = tag.hatLauf ? stufeAus(tag.km, maxKm) : 0;
@@ -3484,10 +3627,22 @@ pre.ausgabe{
           (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
           (tag.hatLauf && tag.km ? ', ' + zahlText(tag.km, 2) + ' km' : '') +
           (tag.hatAndere && tag.dauer ? ', ' + dauerText(tag.dauer) + ' übrige' : '') +
-          ' · ' + tag.titel.join(', '));
+          ' · ' + tag.titel.join(', ') +
+          ' · Tagesbefinden: ' + befindenExport(befindenTag));
       } else {
-        zelle.setAttribute('title', datumLang(datum) + ': nichts erfasst');
+        zelle.setAttribute('title', datumLang(datum) + ': keine Aktivität' +
+          ' · Tagesbefinden: ' + befindenExport(befindenTag));
       }
+
+      /* Antippen öffnet die Erfassung für genau diesen Tag */
+      (function (tagesDatum) {
+        zelle.addEventListener('click', function () { oeffneKalenderTag(tagesDatum); });
+        zelle.addEventListener('keydown', function (ereignis) {
+          if (ereignis.key !== 'Enter' && ereignis.key !== ' ') return;
+          ereignis.preventDefault();
+          oeffneKalenderTag(tagesDatum);
+        });
+      }(datum));
       gitter.appendChild(zelle);
     }
     block.appendChild(gitter);
@@ -3527,6 +3682,30 @@ pre.ausgabe{
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'mehr' }));
     legende.appendChild(skala);
 
+    /* Dritte Ebene: das Befinden des Tages */
+    function punktProbe(farbe) {
+      var probe = el('span', { class: 'kal-probe kal-probe--punkt' });
+      var punkt = el('span', { class: 'kal-punkt' });
+      punkt.style.background = farbe;
+      probe.appendChild(punkt);
+      return probe;
+    }
+
+    [
+      { text: 'Punkt: keine Beschwerden', farbe: BEFINDEN_OK_FARBE },
+      { text: 'Punkt: Beschwerden, kräftiger bei höherer Stärke', farbe: BEFINDEN_SCHMERZ_FARBEN[3] }
+    ].forEach(function (eintrag) {
+      var zeile = el('span', { class: 'kal-legende-teil' });
+      zeile.appendChild(punktProbe(eintrag.farbe));
+      zeile.appendChild(el('span', { text: eintrag.text }));
+      legende.appendChild(zeile);
+    });
+
+    var luecke = el('span', { class: 'kal-legende-teil' });
+    luecke.appendChild(el('span', { class: 'kal-probe kal-probe--luecke' }));
+    luecke.appendChild(el('span', { text: 'gestrichelt: kein Befinden erfasst' }));
+    legende.appendChild(luecke);
+
     var heute = el('span', { class: 'kal-legende-teil' });
     heute.appendChild(el('span', { class: 'kal-probe kal-probe--heute' }));
     heute.appendChild(el('span', { text: 'heute' }));
@@ -3536,7 +3715,7 @@ pre.ausgabe{
 
   function kalenderDiagramm() {
     var karte = diagrammKarte('Aktivitätskalender',
-      'Trainingstage im Monat. Die Farbintensität richtet sich nach dem Umfang des Tages.');
+      'Trainingstage im Monat. Die Farbintensität richtet sich nach dem Umfang des Tages, der Punkt zeigt das Befinden. Ein Tag lässt sich antippen.');
     var tage = kalenderTage();
     var monate = monatsListe(tage);
 
@@ -4264,6 +4443,8 @@ pre.ausgabe{
 
     ziel.appendChild(statFilter());
     ziel.appendChild(statKennzahlen());
+    var abdeckung = abdeckungsZeile();
+    if (abdeckung) ziel.appendChild(abdeckung);
 
     if (!statAktivitaeten(false).length) {
       var hinweisKarte = el('div', { class: 'karte' });
@@ -4382,8 +4563,6 @@ pre.ausgabe{
     }
 
     var offen = offeneTage();
-    var abfrage = tagesabfrageBereich(offen);
-    if (abfrage) ziel.appendChild(abfrage);
     if (offen.length) ziel.appendChild(offeneKarte(offen));
     ziel.appendChild(leiste());
 
@@ -4392,10 +4571,10 @@ pre.ausgabe{
     gruppen.forEach(function (g) {
       var liste = filter === 'laeufe' ? g.akt.filter(istLauf) : g.akt;
       var zeigeZusatz = g.zusatz && filter !== 'laeufe';
-      /* Im Lauf-Filter geht es nur um Läufe, das Tages-Befinden bleibt außen vor */
-      var zeigeTag = filter !== 'laeufe';
-      if (!liste.length && !zeigeZusatz && !zeigeTag) return;
+      if (!liste.length && !zeigeZusatz) return;
       gezeigt++;
+      /* Ein erfasstes Tages-Befinden läuft als Zeile mit; fehlt es, steht hier nichts */
+      var tagesB = liste.length && filter !== 'laeufe' ? tagesBefindenFuer(g.datum) : null;
 
       var tag = el('section', { class: 'tag' });
       var kopf = el('div', { class: 'tag-kopf' });
@@ -4407,9 +4586,16 @@ pre.ausgabe{
         tag.appendChild(einblenden(aktivitaetKarte(akt), position));
       });
 
-      if (zeigeTag) {
-        var tagesZeile = el('div', { class: 'tages-befinden' });
-        tagesZeile.appendChild(befindenBereich(tagZiel(g.datum), false));
+      if (tagesB) {
+        var tagesZeile = el('div', {
+          class: 'tag-befinden' + (tagesB.art === 'keine' ? ' ist-ok' : ' ist-schmerz')
+        });
+        tagesZeile.appendChild(el('span', { class: 'tag-befinden-marke', text: 'Im Tagesverlauf' }));
+        tagesZeile.appendChild(el('span', null, befindenText(tagesB)));
+        if (tagesB.notiz) tagesZeile.appendChild(el('span', { class: 'bef-notiz' }, '„' + tagesB.notiz + '“'));
+        if (tagesB.nachgetragen) {
+          tagesZeile.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
+        }
         tag.appendChild(tagesZeile);
       }
 
@@ -4460,6 +4646,7 @@ pre.ausgabe{
     zeichneSicherung();
     zeichneGist();
     if (aktiverTab === 'statistik') zeichneStatistik();
+    aktualisiereTagesDialog();
   }
 
   function zeigeTab(name) {
@@ -4703,6 +4890,9 @@ pre.ausgabe{
 
   zeichne();
   if (bereinigt) quittiere(bereinigt === 1 ? '1 Dublette entfernt' : bereinigt + ' Dubletten entfernt');
+
+  /* Einmal je Sitzung: das Befinden für gestern */
+  zeigeTagesabfrage();
 })();
 </script>
 </body>
