@@ -495,6 +495,41 @@ details.alle > summary:hover{color:var(--text)}
 .offen-datum{font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
 .offen-detail{color:var(--text-3);font-size:.85rem}
 .offen-zeile .bef-knoepfe{margin-top:11px}
+.offen-tag-kopf{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.offen-wochentag{font-size:.82rem;color:var(--text-4)}
+.offen-eintrag{margin-top:11px}
+.offen-eintrag + .offen-eintrag{margin-top:16px}
+.offen-marke{
+  display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--text-4);font-weight:640;margin-bottom:5px;
+}
+.offen-fuss{
+  border-top:1px solid var(--rand);margin-top:16px;padding-top:14px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+}
+.offen-fuss .link{text-align:left}
+.offen-fuss-text{font-size:.79rem;color:var(--text-4);line-height:1.5}
+
+/* ---------- Tages-Befinden ---------- */
+
+.tages-befinden{
+  background:var(--flaeche-sanft);border:1px solid var(--rand);
+  border-radius:var(--radius);padding:14px 18px;margin-top:10px;
+}
+.tages-befinden .befinden{margin-top:0}
+.bef-nachgetragen{
+  font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
+  font-weight:640;opacity:.7;
+}
+.tagesabfrage{margin-top:28px}
+.tagesabfrage-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.tagesabfrage-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
+.tagesabfrage-datum{
+  display:block;margin-top:4px;font-size:.82rem;color:var(--text-3);
+  font-variant-numeric:tabular-nums;
+}
+.tagesabfrage .befinden{margin-top:14px}
+.tagesabfrage .hinweis-text{font-size:.82rem;color:var(--text-4)}
 
 /* ---------- Leiste und Filter ---------- */
 
@@ -526,14 +561,6 @@ details.alle > summary:hover{color:var(--text)}
   display:flex;justify-content:space-between;align-items:center;gap:12px;
 }
 .zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag{margin-top:10px}
-.zusatz-formular{margin-top:44px}
-.zusatz-formular > summary{
-  cursor:pointer;font-size:.82rem;color:var(--text-3);font-weight:600;
-  padding:8px 0;border-radius:7px;transition:color .16s var(--weich);
-}
-.zusatz-formular > summary:hover{color:var(--text)}
-.zusatz-gitter{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-@media (max-width:520px){.zusatz-gitter{grid-template-columns:1fr}}
 
 .hinweis-text{font-size:.88rem;color:var(--text-2);margin-top:10px;line-height:1.6}
 .ergebnis{
@@ -611,7 +638,7 @@ pre.ausgabe{
 <div class="huelle">
   <header class="kopf">
     <h1>Lauftagebuch</h1>
-    <p class="unterzeile">Aktivitäten aus Garmin, Befinden nach dem Lauf, Export als Text.</p>
+    <p class="unterzeile">Aktivitäten aus Garmin, Befinden je Lauf und Tag, Export als Text.</p>
     <div class="kopfzahlen" id="kopfzahlen" hidden></div>
     <nav class="reiter" role="tablist" aria-label="Bereiche">
       <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf">Verlauf<span class="reiter-zahl" id="reiter-zahl" hidden></span></button>
@@ -754,7 +781,9 @@ pre.ausgabe{
   var SCHLUESSEL_BEF = 'lauftagebuch.befinden.v2';
   var SCHLUESSEL_SIC = 'lauftagebuch.sicherung.v1';
   var SCHLUESSEL_GIST = 'lauftagebuch.gist.v1';
-  var FORMAT_VERSION = 1;
+  /* Version 2 bringt befinden.tage sowie abKm und nachgetragen. Sicherungen der
+     Version 1 bleiben ladbar, normalisiereBefinden ergänzt die fehlenden Felder. */
+  var FORMAT_VERSION = 2;
   var GIST_API = 'https://api.github.com';
   var GIST_DATEI = 'lauftagebuch.json';
 
@@ -825,7 +854,7 @@ pre.ausgabe{
   /* ---------- Speicher ---------- */
 
   var aktivitaeten = [];
-  var befinden = { eintraege: [], zusatztage: [] };
+  var befinden = { eintraege: [], zusatztage: [], tage: [] };
 
   function ladeRoh(schluessel) {
     try {
@@ -864,11 +893,30 @@ pre.ausgabe{
     return normalisiereBefinden(ladeRoh(SCHLUESSEL_BEF));
   }
 
+  /*
+   * Lauf-Befinden und Tages-Befinden tragen dieselben Felder, sie hängen nur an
+   * unterschiedlichen Bezügen: das eine an einer Aktivität, das andere an einem
+   * Datum. Fehlende Felder bekommen Standardwerte, damit ältere Sicherungen
+   * unverändert laden.
+   */
+  function befindenFelder(e, ziel) {
+    ziel.art = e.art === 'schmerz' ? 'schmerz' : 'keine';
+    ziel.ort = typeof e.ort === 'string' ? e.ort : '';
+    ziel.seite = typeof e.seite === 'string' ? e.seite : '';
+    ziel.staerke = typeof e.staerke === 'number' ? e.staerke : null;
+    ziel.notiz = typeof e.notiz === 'string' ? e.notiz : '';
+    ziel.abKm = typeof e.abKm === 'string' ? e.abKm : '';
+    ziel.erfasstAm = typeof e.erfasstAm === 'string' ? e.erfasstAm : '';
+    ziel.nachgetragen = e.nachgetragen === true;
+    return ziel;
+  }
+
   function normalisiereBefinden(daten) {
-    var ergebnis = { eintraege: [], zusatztage: [] };
+    var ergebnis = { eintraege: [], zusatztage: [], tage: [] };
     if (!daten) return ergebnis;
     var eintraege = Array.isArray(daten) ? daten : (Array.isArray(daten.eintraege) ? daten.eintraege : []);
     var zusatz = (!Array.isArray(daten) && Array.isArray(daten.zusatztage)) ? daten.zusatztage : [];
+    var tage = (!Array.isArray(daten) && Array.isArray(daten.tage)) ? daten.tage : [];
     var gesehen = {};
     for (var i = 0; i < eintraege.length; i++) {
       var e = eintraege[i];
@@ -876,15 +924,16 @@ pre.ausgabe{
       if (typeof e.aktivitaetId !== 'string' || !e.aktivitaetId) continue;
       if (gesehen[e.aktivitaetId]) continue;
       gesehen[e.aktivitaetId] = true;
-      ergebnis.eintraege.push({
-        aktivitaetId: e.aktivitaetId,
-        art: e.art === 'schmerz' ? 'schmerz' : 'keine',
-        ort: typeof e.ort === 'string' ? e.ort : '',
-        seite: typeof e.seite === 'string' ? e.seite : '',
-        staerke: typeof e.staerke === 'number' ? e.staerke : null,
-        notiz: typeof e.notiz === 'string' ? e.notiz : '',
-        erfasstAm: typeof e.erfasstAm === 'string' ? e.erfasstAm : ''
-      });
+      ergebnis.eintraege.push(befindenFelder(e, { aktivitaetId: e.aktivitaetId }));
+    }
+    var gesehenBefindenTag = {};
+    for (var t = 0; t < tage.length; t++) {
+      var tg = tage[t];
+      if (!tg || typeof tg !== 'object') continue;
+      if (typeof tg.datum !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(tg.datum)) continue;
+      if (gesehenBefindenTag[tg.datum]) continue;
+      gesehenBefindenTag[tg.datum] = true;
+      ergebnis.tage.push(befindenFelder(tg, { datum: tg.datum }));
     }
     var gesehenTag = {};
     for (var j = 0; j < zusatz.length; j++) {
@@ -1237,6 +1286,23 @@ pre.ausgabe{
 
   /* ---------- Befinden ---------- */
 
+  /*
+   * Ein Eintrag, der zwei Tage oder länger nach dem betreffenden Datum
+   * gespeichert wird, ist aus der Erinnerung rekonstruiert. Das wird vermerkt,
+   * damit eine spätere Auswertung ihn nicht wie einen zeitnah erfassten wiegt.
+   */
+  var NACHTRAG_AB_TAGEN = 2;
+
+  function istNachgetragen(datum) {
+    if (!datum || !/^\d{4}-\d{2}-\d{2}$/.test(datum)) return false;
+    return Math.round((tagAus(heuteIso()) - tagAus(datum)) / 86400000) >= NACHTRAG_AB_TAGEN;
+  }
+
+  function aktivitaetMit(id) {
+    for (var i = 0; i < aktivitaeten.length; i++) if (aktivitaeten[i].id === id) return aktivitaeten[i];
+    return null;
+  }
+
   function befindenFuer(id) {
     for (var i = 0; i < befinden.eintraege.length; i++) {
       if (befinden.eintraege[i].aktivitaetId === id) return befinden.eintraege[i];
@@ -1244,16 +1310,56 @@ pre.ausgabe{
     return null;
   }
 
+  function tagesBefindenFuer(datum) {
+    for (var i = 0; i < befinden.tage.length; i++) {
+      if (befinden.tage[i].datum === datum) return befinden.tage[i];
+    }
+    return null;
+  }
+
+  /*
+   * Der Bezug steht zuerst, damit ein frisch gesetzter Eintrag dieselbe
+   * Feldreihenfolge hat wie ein geladener. Sonst meldet der Fingerabdruck der
+   * Gist-Sicherung nach jedem Neustart eine Änderung, die keine ist.
+   */
+  function befindenAus(kopf, eintrag, datum) {
+    kopf.art = eintrag.art;
+    kopf.ort = eintrag.ort || '';
+    kopf.seite = eintrag.seite || '';
+    kopf.staerke = typeof eintrag.staerke === 'number' ? eintrag.staerke : null;
+    kopf.notiz = eintrag.notiz || '';
+    kopf.abKm = eintrag.art === 'schmerz' ? (eintrag.abKm || '') : '';
+    kopf.erfasstAm = new Date().toISOString();
+    kopf.nachgetragen = istNachgetragen(datum);
+    return kopf;
+  }
+
+  function setzeTagesBefinden(datum, eintrag) {
+    var neu = befindenAus({ datum: datum }, eintrag, datum);
+    var gefunden = false;
+    for (var i = 0; i < befinden.tage.length; i++) {
+      if (befinden.tage[i].datum === datum) {
+        befinden.tage[i] = neu;
+        gefunden = true;
+        break;
+      }
+    }
+    if (!gefunden) befinden.tage.push(neu);
+    speichereBefinden();
+  }
+
+  function entferneTagesBefinden(datum) {
+    var rest = [];
+    for (var i = 0; i < befinden.tage.length; i++) {
+      if (befinden.tage[i].datum !== datum) rest.push(befinden.tage[i]);
+    }
+    befinden.tage = rest;
+    speichereBefinden();
+  }
+
   function setzeBefinden(id, eintrag) {
-    var neu = {
-      aktivitaetId: id,
-      art: eintrag.art,
-      ort: eintrag.ort || '',
-      seite: eintrag.seite || '',
-      staerke: typeof eintrag.staerke === 'number' ? eintrag.staerke : null,
-      notiz: eintrag.notiz || '',
-      erfasstAm: new Date().toISOString()
-    };
+    var akt = aktivitaetMit(id);
+    var neu = befindenAus({ aktivitaetId: id }, eintrag, akt ? akt.datum : '');
     var gefunden = false;
     for (var i = 0; i < befinden.eintraege.length; i++) {
       if (befinden.eintraege[i].aktivitaetId === id) {
@@ -1283,17 +1389,24 @@ pre.ausgabe{
     if (b.ort) detail.push(b.ort);
     if (b.seite && b.seite !== 'keine Angabe') detail.push(b.seite);
     if (detail.length) t += ' · ' + detail.join(' ');
+    if (b.abKm) t += ' · ab ' + b.abKm;
     return t;
   }
 
   function befindenExport(b) {
     if (!b) return 'nicht erfasst';
-    if (b.art === 'keine') return 'Keine Beschwerden' + (b.notiz ? ', Notiz: ' + b.notiz : '');
-    var teile = ['Schmerz ' + (b.staerke || '?') + '/5'];
-    if (b.ort) teile.push(b.ort);
-    if (b.seite && b.seite !== 'keine Angabe') teile.push(b.seite);
-    var t = teile.join(', ');
+    var t;
+    if (b.art === 'keine') {
+      t = 'Keine Beschwerden';
+    } else {
+      var teile = ['Schmerz ' + (b.staerke || '?') + '/5'];
+      if (b.ort) teile.push(b.ort);
+      if (b.seite && b.seite !== 'keine Angabe') teile.push(b.seite);
+      t = teile.join(', ');
+      if (b.abKm) t += ', Beschwerden ab ' + b.abKm;
+    }
     if (b.notiz) t += ', Notiz: ' + b.notiz;
+    if (b.nachgetragen) t += ' (nachgetragen)';
     return t;
   }
 
@@ -1302,18 +1415,11 @@ pre.ausgabe{
     return art;
   }
 
-  function setzeZusatztag(datum, art) {
-    for (var i = 0; i < befinden.zusatztage.length; i++) {
-      if (befinden.zusatztage[i].datum === datum) {
-        befinden.zusatztage[i] = { datum: datum, art: art };
-        speichereBefinden();
-        return;
-      }
-    }
-    befinden.zusatztage.push({ datum: datum, art: art });
-    speichereBefinden();
-  }
-
+  /*
+   * Neue zusatztage entstehen nicht mehr – die Aktivitätsart kommt über den
+   * CSV-Import, das Befinden über die Tages-Erfassung. Bestehende Einträge
+   * werden weiter gelesen, angezeigt, exportiert und gesichert.
+   */
   function entferneZusatztag(datum) {
     var rest = [];
     for (var i = 0; i < befinden.zusatztage.length; i++) {
@@ -1334,26 +1440,60 @@ pre.ausgabe{
   var offeneDetails = {};
   var exportSichtbar = false;
 
-  function oeffneNotiz(id) {
-    var b = befindenFuer(id);
-    delete entwuerfe[id];
-    notizEntwuerfe[id] = { notiz: b && b.notiz ? b.notiz : '' };
+  /*
+   * Lauf-Befinden und Tages-Befinden teilen sich Knöpfe und Formular. Ein „Ziel“
+   * bündelt, woran ein Eintrag hängt – an einer Aktivität oder an einem Datum –
+   * damit die Bausteine davon nichts wissen müssen.
+   */
+  function laufZiel(akt) {
+    return {
+      schluessel: akt.id,
+      datum: akt.datum,
+      hinweis: 'Während des Laufs',
+      notizTitel: 'Notiz zum Lauf',
+      holen: function () { return befindenFuer(akt.id); },
+      setzen: function (e) { setzeBefinden(akt.id, e); },
+      entfernen: function () { entferneBefinden(akt.id); }
+    };
+  }
+
+  function tagZiel(datum) {
+    return {
+      schluessel: 'tag:' + datum,
+      datum: datum,
+      hinweis: 'Im Tagesverlauf',
+      notizTitel: 'Notiz zum Tag',
+      holen: function () { return tagesBefindenFuer(datum); },
+      setzen: function (e) { setzeTagesBefinden(datum, e); },
+      entfernen: function () { entferneTagesBefinden(datum); }
+    };
+  }
+
+  function oeffneNotiz(ziel) {
+    var b = ziel.holen();
+    delete entwuerfe[ziel.schluessel];
+    notizEntwuerfe[ziel.schluessel] = { notiz: b && b.notiz ? b.notiz : '' };
     zeichne();
   }
 
-  function oeffneFormular(id) {
-    var b = befindenFuer(id);
-    delete notizEntwuerfe[id];
+  function oeffneFormular(ziel) {
+    var b = ziel.holen();
+    delete notizEntwuerfe[ziel.schluessel];
     if (b && b.art === 'schmerz') {
-      entwuerfe[id] = { ort: b.ort || '', seite: b.seite || 'keine Angabe', staerke: b.staerke, notiz: b.notiz || '', fehlt: false };
+      entwuerfe[ziel.schluessel] = {
+        ort: b.ort || '', seite: b.seite || 'keine Angabe', staerke: b.staerke,
+        abKm: b.abKm || '', notiz: b.notiz || '', fehlt: false
+      };
     } else {
-      entwuerfe[id] = { ort: '', seite: 'keine Angabe', staerke: null, notiz: '', fehlt: false };
+      entwuerfe[ziel.schluessel] = {
+        ort: '', seite: 'keine Angabe', staerke: null, abKm: '', notiz: '', fehlt: false
+      };
     }
     zeichne();
   }
 
-  function schliesseFormular(id) {
-    delete entwuerfe[id];
+  function schliesseFormular(schluessel) {
+    delete entwuerfe[schluessel];
     zeichne();
   }
 
@@ -1432,8 +1572,8 @@ pre.ausgabe{
     return gruppe;
   }
 
-  function schmerzFormular(akt) {
-    var e = entwuerfe[akt.id];
+  function schmerzFormular(ziel) {
+    var e = entwuerfe[ziel.schluessel];
     var box = el('div', { class: 'formular' });
 
     var gOrt = chipGruppe('Ort', ORTE, e.ort, function (v) { e.ort = v; });
@@ -1442,6 +1582,18 @@ pre.ausgabe{
     box.appendChild(gOrt);
     box.appendChild(gSeite);
     box.appendChild(gStaerke);
+
+    /* Ein Feld für beide Einheiten, damit „ab km 3“ und „ab Minute 20“ hineinpassen */
+    var gAbKm = el('div', { class: 'feld-gruppe' });
+    gAbKm.appendChild(el('span', { class: 'feld-titel', text: 'Beschwerden ab (optional)' }));
+    var abKm = el('input', {
+      type: 'text', maxlength: '40', placeholder: 'z. B. 3 km oder 20 min',
+      'aria-label': 'Beschwerden ab Kilometer oder Minute'
+    });
+    abKm.value = e.abKm || '';
+    abKm.addEventListener('input', function () { e.abKm = abKm.value; });
+    gAbKm.appendChild(abKm);
+    box.appendChild(gAbKm);
 
     var gNotiz = el('div', { class: 'feld-gruppe' });
     gNotiz.appendChild(el('span', { class: 'feld-titel', text: 'Notiz (optional)' }));
@@ -1458,22 +1610,25 @@ pre.ausgabe{
       if (!e.ort) { gOrt.classList.add('fehlt'); vollstaendig = false; }
       if (!e.staerke) { gStaerke.classList.add('fehlt'); vollstaendig = false; }
       if (!vollstaendig) { quittiere('Ort und Stärke wählen'); return; }
-      setzeBefinden(akt.id, { art: 'schmerz', ort: e.ort, seite: e.seite, staerke: e.staerke, notiz: e.notiz });
-      delete entwuerfe[akt.id];
+      ziel.setzen({
+        art: 'schmerz', ort: e.ort, seite: e.seite, staerke: e.staerke,
+        abKm: String(e.abKm || '').trim(), notiz: e.notiz
+      });
+      delete entwuerfe[ziel.schluessel];
       quittiere('Gespeichert');
       zeichne();
     });
     fuss.appendChild(speichern);
 
     var abbrechen = el('button', { type: 'button', class: 'link link--still' }, 'Abbrechen');
-    abbrechen.addEventListener('click', function () { schliesseFormular(akt.id); });
+    abbrechen.addEventListener('click', function () { schliesseFormular(ziel.schluessel); });
     fuss.appendChild(abbrechen);
 
-    if (befindenFuer(akt.id)) {
+    if (ziel.holen()) {
       var weg = el('button', { type: 'button', class: 'link link--still' }, 'Eintrag entfernen');
       weg.addEventListener('click', function () {
-        entferneBefinden(akt.id);
-        delete entwuerfe[akt.id];
+        ziel.entfernen();
+        delete entwuerfe[ziel.schluessel];
         quittiere('Eintrag entfernt');
         zeichne();
       });
@@ -1487,13 +1642,13 @@ pre.ausgabe{
    * Notiz getrennt vom Schmerzformular: „Keine Beschwerden“ bleibt ein Klick,
    * die Notiz ist ein freiwilliger Zusatz danach.
    */
-  function notizFormular(akt) {
-    var entwurf = notizEntwuerfe[akt.id];
+  function notizFormular(ziel) {
+    var entwurf = notizEntwuerfe[ziel.schluessel];
     var box = el('div', { class: 'formular formular--notiz' });
 
     var gruppe = el('div', { class: 'feld-gruppe', style: 'margin-top:0' });
-    gruppe.appendChild(el('span', { class: 'feld-titel', text: 'Notiz zum Lauf' }));
-    var feld = el('input', { type: 'text', maxlength: '300', 'aria-label': 'Notiz zum Lauf' });
+    gruppe.appendChild(el('span', { class: 'feld-titel', text: ziel.notizTitel }));
+    var feld = el('input', { type: 'text', maxlength: '300', 'aria-label': ziel.notizTitel });
     feld.value = entwurf.notiz || '';
     feld.addEventListener('input', function () { entwurf.notiz = feld.value; });
     gruppe.appendChild(feld);
@@ -1502,16 +1657,17 @@ pre.ausgabe{
     var fuss = el('div', { class: 'formular-fuss' });
     var speichern = el('button', { type: 'button', class: 'knopf knopf--primaer' }, 'Speichern');
     speichern.addEventListener('click', function () {
-      var bestehend = befindenFuer(akt.id);
-      if (!bestehend) { delete notizEntwuerfe[akt.id]; zeichne(); return; }
-      setzeBefinden(akt.id, {
+      var bestehend = ziel.holen();
+      if (!bestehend) { delete notizEntwuerfe[ziel.schluessel]; zeichne(); return; }
+      ziel.setzen({
         art: bestehend.art,
         ort: bestehend.ort,
         seite: bestehend.seite,
         staerke: bestehend.staerke,
+        abKm: bestehend.abKm,
         notiz: String(entwurf.notiz || '').trim()
       });
-      delete notizEntwuerfe[akt.id];
+      delete notizEntwuerfe[ziel.schluessel];
       quittiere('Gespeichert');
       zeichne();
     });
@@ -1519,7 +1675,7 @@ pre.ausgabe{
 
     var abbrechen = el('button', { type: 'button', class: 'link link--still' }, 'Abbrechen');
     abbrechen.addEventListener('click', function () {
-      delete notizEntwuerfe[akt.id];
+      delete notizEntwuerfe[ziel.schluessel];
       zeichne();
     });
     fuss.appendChild(abbrechen);
@@ -1527,12 +1683,12 @@ pre.ausgabe{
     return box;
   }
 
-  function befindenBereich(akt, kompakt) {
-    var vorhanden = befindenFuer(akt.id);
-    var offen = Object.prototype.hasOwnProperty.call(entwuerfe, akt.id);
+  function befindenBereich(ziel, kompakt) {
+    var vorhanden = ziel.holen();
+    var offen = Object.prototype.hasOwnProperty.call(entwuerfe, ziel.schluessel);
     var box = el('div', { class: kompakt ? 'befinden-kompakt' : 'befinden' });
 
-    var notizOffen = Object.prototype.hasOwnProperty.call(notizEntwuerfe, akt.id);
+    var notizOffen = Object.prototype.hasOwnProperty.call(notizEntwuerfe, ziel.schluessel);
 
     if (vorhanden && !offen) {
       var fazit = el('div', { class: 'bef-fazit ' + (vorhanden.art === 'keine' ? 'ist-ok' : 'ist-schmerz') });
@@ -1540,8 +1696,12 @@ pre.ausgabe{
       if (vorhanden.notiz) {
         fazit.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
       }
+      /* Rückwirkend erfasst: nur benannt, nicht hervorgehoben */
+      if (vorhanden.nachgetragen) {
+        fazit.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
+      }
       var aendern = el('button', { type: 'button', class: 'link' }, 'ändern');
-      aendern.addEventListener('click', function () { oeffneFormular(akt.id); });
+      aendern.addEventListener('click', function () { oeffneFormular(ziel); });
       fazit.appendChild(aendern);
       box.appendChild(fazit);
 
@@ -1549,23 +1709,23 @@ pre.ausgabe{
       if (vorhanden.art === 'keine' && !notizOffen) {
         var notizLink = el('button', { type: 'button', class: 'link link--still bef-notiz-link' },
           vorhanden.notiz ? 'Notiz ändern' : 'Notiz hinzufügen');
-        notizLink.addEventListener('click', function () { oeffneNotiz(akt.id); });
+        notizLink.addEventListener('click', function () { oeffneNotiz(ziel); });
         box.appendChild(notizLink);
       }
-      if (notizOffen) box.appendChild(notizFormular(akt));
+      if (notizOffen) box.appendChild(notizFormular(ziel));
       return box;
     }
 
     var reihe = el('div', { class: 'bef-knoepfe' });
     if (!kompakt && !offen) {
-      reihe.appendChild(el('span', { class: 'bef-hinweis', text: 'Befinden nach dem Lauf' }));
+      reihe.appendChild(el('span', { class: 'bef-hinweis', text: ziel.hinweis }));
     }
     var keine = el('button', { type: 'button', class: 'knopf knopf--ok' }, 'Keine Beschwerden');
     keine.addEventListener('click', function () {
-      delete entwuerfe[akt.id];
-      /* Eine bereits erfasste Notiz zu einem beschwerdefreien Lauf bleibt erhalten */
-      var bestehend = befindenFuer(akt.id);
-      setzeBefinden(akt.id, {
+      delete entwuerfe[ziel.schluessel];
+      /* Eine bereits erfasste Notiz zu einem beschwerdefreien Eintrag bleibt erhalten */
+      var bestehend = ziel.holen();
+      ziel.setzen({
         art: 'keine',
         notiz: bestehend && bestehend.art === 'keine' ? bestehend.notiz : ''
       });
@@ -1579,11 +1739,11 @@ pre.ausgabe{
       class: 'knopf knopf--schmerz',
       'aria-pressed': offen ? 'true' : 'false'
     }, 'Schmerz');
-    schmerz.addEventListener('click', function () { if (!offen) oeffneFormular(akt.id); });
+    schmerz.addEventListener('click', function () { if (!offen) oeffneFormular(ziel); });
     reihe.appendChild(schmerz);
     box.appendChild(reihe);
 
-    if (offen) box.appendChild(schmerzFormular(akt));
+    if (offen) box.appendChild(schmerzFormular(ziel));
     return box;
   }
 
@@ -1664,40 +1824,163 @@ pre.ausgabe{
       karte.appendChild(details);
     }
 
-    if (lauf) karte.appendChild(befindenBereich(akt, false));
+    if (lauf) karte.appendChild(befindenBereich(laufZiel(akt), false));
     return karte;
   }
 
-  function offeneLaeufe() {
+  function gesternIso() {
+    var d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  /* Frühester Tag, für den überhaupt etwas vorliegt */
+  function ersterTag() {
+    var frueh = null;
+    function pruefe(datum) {
+      if (!datum || !/^\d{4}-\d{2}-\d{2}$/.test(datum)) return;
+      if (!frueh || datum < frueh) frueh = datum;
+    }
+    aktivitaeten.forEach(function (a) { pruefe(a.datum); });
+    befinden.zusatztage.forEach(function (z) { pruefe(z.datum); });
+    befinden.tage.forEach(function (t) { pruefe(t.datum); });
+    return frueh;
+  }
+
+  /*
+   * Jeder Tag vom ersten Eintrag an, an dem etwas fehlt: ein Lauf ohne
+   * Lauf-Befinden oder das Tages-Befinden. Ein Lauftag, an dem nur eine der
+   * beiden Angaben steht, bleibt offen.
+   *
+   * Der heutige Tag zählt beim Tages-Befinden nicht als offen – ein Tag lässt
+   * sich erst beurteilen, wenn er vorbei ist. Erfassen lässt er sich trotzdem,
+   * im Verlauf steht seine Zeile.
+   */
+  function offeneTage() {
+    var start = ersterTag();
+    if (!start) return [];
+    var heute = heuteIso();
+
+    var laeufeAmTag = {}, letzter = heute;
+    aktivitaeten.forEach(function (a) {
+      if (!a.datum) return;
+      if (a.datum > letzter) letzter = a.datum;
+      if (!istLauf(a) || befindenFuer(a.id)) return;
+      if (!laeufeAmTag[a.datum]) laeufeAmTag[a.datum] = [];
+      laeufeAmTag[a.datum].push(a);
+    });
+    var tagErfasst = {};
+    befinden.tage.forEach(function (t) { tagErfasst[t.datum] = true; });
+
     var raus = [];
+    var zeit = tagAus(start), ende = tagAus(letzter);
+    /* Sicherheitsgrenze gegen unplausible Datumsangaben in importierten Daten */
+    var schritte = 0;
+    for (; zeit <= ende && schritte < 4000; zeit += 86400000, schritte++) {
+      var datum = isoAusZeit(zeit);
+      var laeufe = laeufeAmTag[datum] || [];
+      var tagOffen = datum < heute && !tagErfasst[datum];
+      if (!laeufe.length && !tagOffen) continue;
+      raus.push({ datum: datum, laeufe: laeufe, tagOffen: tagOffen });
+    }
+    raus.reverse();
+    return raus;
+  }
+
+  function laeufeOhneBefinden() {
+    var anzahl = 0;
     for (var i = 0; i < aktivitaeten.length; i++) {
-      if (istLauf(aktivitaeten[i]) && !befindenFuer(aktivitaeten[i].id)) raus.push(aktivitaeten[i]);
+      if (istLauf(aktivitaeten[i]) && !befindenFuer(aktivitaeten[i].id)) anzahl++;
+    }
+    return anzahl;
+  }
+
+  /* Die letzten drei offenen Tage, deren Tages-Befinden fehlt */
+  var SAMMEL_TAGE = 3;
+
+  function sammelbareTage(offen) {
+    var raus = [];
+    for (var i = 0; i < offen.length && raus.length < SAMMEL_TAGE; i++) {
+      if (offen[i].tagOffen) raus.push(offen[i].datum);
     }
     return raus;
   }
 
-  function offeneKarte(liste) {
+  function offenLaufZeile(akt) {
+    var zeile = el('div', { class: 'offen-eintrag' });
+    var info = el('div', { class: 'offen-info' });
+    info.appendChild(el('span', null, titelVon(akt)));
+    var distanz = wertVon(akt, 'Distanz');
+    var teile = [];
+    if (!istLeer(distanz) && !istNullWert(distanz)) teile.push('Distanz ' + distanz);
+    var dauer = wertVon(akt, 'Zeit');
+    if (!istLeer(dauer) && !istNullWert(dauer)) teile.push(dauer);
+    if (teile.length) info.appendChild(el('span', { class: 'offen-detail', text: teile.join(' · ') }));
+    zeile.appendChild(el('span', { class: 'offen-marke', text: 'Während des Laufs' }));
+    zeile.appendChild(info);
+    zeile.appendChild(befindenBereich(laufZiel(akt), true));
+    return zeile;
+  }
+
+  function offenTagZeile(datum) {
+    var zeile = el('div', { class: 'offen-eintrag' });
+    zeile.appendChild(el('span', { class: 'offen-marke', text: 'Im Tagesverlauf' }));
+    zeile.appendChild(befindenBereich(tagZiel(datum), true));
+    return zeile;
+  }
+
+  var OFFEN_SICHTBAR = 14;
+  var offenAlleZeigen = false;
+
+  function offeneKarte(offen) {
     var karte = el('div', { class: 'karte offen-karte' });
     var kopf = el('div', { class: 'offen-kopf' });
-    kopf.appendChild(el('h2', null, 'Noch offen (' + liste.length + ')'));
-    kopf.appendChild(el('span', { class: 'hinweis', text: 'Läufe ohne Befinden-Eintrag' }));
+    kopf.appendChild(el('h2', null, 'Noch offen (' + offen.length + ')'));
+    kopf.appendChild(el('span', { class: 'hinweis', text: offen.length === 1 ? 'Tag ohne vollständigen Eintrag' : 'Tage ohne vollständigen Eintrag' }));
     karte.appendChild(kopf);
 
-    liste.forEach(function (akt) {
+    var sichtbar = offenAlleZeigen ? offen : offen.slice(0, OFFEN_SICHTBAR);
+    sichtbar.forEach(function (tag) {
       var zeile = el('div', { class: 'offen-zeile' });
-      var info = el('div', { class: 'offen-info' });
-      info.appendChild(el('span', { class: 'offen-datum', text: datumLang(akt.datum) }));
-      info.appendChild(el('span', null, titelVon(akt)));
-      var distanz = wertVon(akt, 'Distanz');
-      var teile = [];
-      if (!istLeer(distanz) && !istNullWert(distanz)) teile.push('Distanz ' + distanz);
-      var dauer = wertVon(akt, 'Zeit');
-      if (!istLeer(dauer) && !istNullWert(dauer)) teile.push(dauer);
-      if (teile.length) info.appendChild(el('span', { class: 'offen-detail', text: teile.join(' · ') }));
-      zeile.appendChild(info);
-      zeile.appendChild(befindenBereich(akt, true));
+      var titel = el('div', { class: 'offen-tag-kopf' });
+      titel.appendChild(el('span', { class: 'offen-datum', text: datumLang(tag.datum) }));
+      titel.appendChild(el('span', { class: 'offen-wochentag', text: wochentag(tag.datum) }));
+      zeile.appendChild(titel);
+      tag.laeufe.forEach(function (akt) { zeile.appendChild(offenLaufZeile(akt)); });
+      if (tag.tagOffen) zeile.appendChild(offenTagZeile(tag.datum));
       karte.appendChild(zeile);
     });
+
+    var fuss = el('div', { class: 'offen-fuss' });
+
+    if (offen.length > OFFEN_SICHTBAR) {
+      var rest = offen.length - OFFEN_SICHTBAR;
+      var mehr = el('button', { type: 'button', class: 'link link--still' },
+        offenAlleZeigen ? 'Ältere ausblenden' : 'Ältere anzeigen (' + rest + ')');
+      mehr.addEventListener('click', function () { offenAlleZeigen = !offenAlleZeigen; zeichne(); });
+      fuss.appendChild(mehr);
+    }
+
+    /*
+     * Sammelaktion bewusst nur für die letzten drei Tage: weiter zurück wäre der
+     * Eintrag geraten und nicht erfasst, und eine Lücke ist aussagekräftiger als
+     * ein erfundener Wert.
+     */
+    var sammel = sammelbareTage(offen);
+    if (sammel.length > 1) {
+      var knopf = el('button', { type: 'button', class: 'link link--still' },
+        'Tagesbefinden der letzten ' + sammel.length + ' offenen Tage auf „Keine Beschwerden“ setzen');
+      knopf.addEventListener('click', function () {
+        sammel.forEach(function (datum) { setzeTagesBefinden(datum, { art: 'keine', notiz: '' }); });
+        quittiere(sammel.length + ' Tage eingetragen');
+        zeichne();
+      });
+      fuss.appendChild(knopf);
+      fuss.appendChild(el('span', { class: 'offen-fuss-text' },
+        'Betrifft nur das Tagesbefinden. Ältere Tage und Läufe bleiben einzeln zu erfassen.'));
+    }
+
+    if (fuss.childNodes.length) karte.appendChild(fuss);
     return karte;
   }
 
@@ -1710,6 +1993,10 @@ pre.ausgabe{
     }
     aktivitaeten.forEach(function (a) { hole(a.datum).akt.push(a); });
     befinden.zusatztage.forEach(function (z) { hole(z.datum).zusatz = z; });
+    /* Tage mit erfasstem Tages-Befinden brauchen eine Zeile, auch ohne Aktivität */
+    befinden.tage.forEach(function (t) { hole(t.datum); });
+    /* Der heutige Tag ist immer erfassbar, auch wenn noch nichts vorliegt */
+    hole(heuteIso());
     var gruppen = reihenfolge.map(function (d) { return karte[d]; });
     gruppen.sort(function (a, b) { return a.datum < b.datum ? 1 : (a.datum > b.datum ? -1 : 0); });
     gruppen.forEach(function (g) { g.akt.sort(sortiereAbsteigend); });
@@ -1763,45 +2050,46 @@ pre.ausgabe{
     return box;
   }
 
-  function zusatzFormular() {
-    var details = el('details', { class: 'zusatz-formular' });
-    if (offeneDetails['__zusatz']) details.setAttribute('open', '');
-    details.addEventListener('toggle', function () {
-      if (details.open) offeneDetails['__zusatz'] = true; else delete offeneDetails['__zusatz'];
-    });
-    details.appendChild(el('summary', null, 'Tag ohne Aufzeichnung ergänzen'));
-    var karte = el('div', { class: 'karte', style: 'margin-top:10px' });
-    karte.appendChild(el('p', { class: 'hinweis-text', text: 'Für Tage, an denen etwas nicht von der Uhr aufgezeichnet wurde. Pro Datum ein Eintrag; erneutes Speichern überschreibt ihn.' }));
-    var gitter = el('div', { class: 'zusatz-gitter' });
+  /*
+   * Beim Öffnen steht das Befinden für gestern oben – ein Tag lässt sich erst
+   * beurteilen, wenn er vorbei ist. Die Abfrage lässt sich wegklicken und kommt
+   * in derselben Sitzung nicht wieder; ein Zwang würde nur zum Durchtippen
+   * führen und Einträge erzeugen, die keine erfassten Werte sind.
+   */
+  var tagesabfrageWeg = false;
 
-    var feldDatum = el('div');
-    feldDatum.appendChild(el('label', { class: 'feld', for: 'zusatz-datum' }, 'Datum'));
-    var datum = el('input', { type: 'date', id: 'zusatz-datum' });
-    var heute = new Date();
-    datum.value = heute.getFullYear() + '-' + pad2(heute.getMonth() + 1) + '-' + pad2(heute.getDate());
-    feldDatum.appendChild(datum);
-    gitter.appendChild(feldDatum);
+  function tagesabfrageBereich(offen) {
+    if (tagesabfrageWeg) return null;
+    var gestern = gesternIso();
+    if (tagesBefindenFuer(gestern)) return null;
+    var start = ersterTag();
+    if (!start || gestern < start) return null;
 
-    var feldArt = el('div');
-    feldArt.appendChild(el('label', { class: 'feld', for: 'zusatz-art' }, 'Eintrag'));
-    var auswahl = el('select', { id: 'zusatz-art' });
-    ZUSATZ_ARTEN.forEach(function (a) {
-      auswahl.appendChild(el('option', { value: a.wert }, a.label));
-    });
-    feldArt.appendChild(auswahl);
-    gitter.appendChild(feldArt);
-    karte.appendChild(gitter);
+    var karte = el('div', { class: 'karte tagesabfrage' });
+    var kopf = el('div', { class: 'tagesabfrage-kopf' });
+    var titel = el('div');
+    titel.appendChild(el('h2', null, 'Befinden für gestern'));
+    titel.appendChild(el('span', { class: 'tagesabfrage-datum',
+      text: datumLang(gestern) + ' · ' + wochentag(gestern) }));
+    kopf.appendChild(titel);
 
-    var speichern = el('button', { type: 'button', class: 'knopf', style: 'margin-top:12px' }, 'Speichern');
-    speichern.addEventListener('click', function () {
-      if (!datum.value || !/^\d{4}-\d{2}-\d{2}$/.test(datum.value)) { quittiere('Datum wählen'); return; }
-      setzeZusatztag(datum.value, auswahl.value);
-      quittiere('Gespeichert');
-      zeichne();
-    });
-    karte.appendChild(speichern);
-    details.appendChild(karte);
-    return details;
+    var weg = el('button', { type: 'button', class: 'weg', 'aria-label': 'Abfrage ausblenden', title: 'Ausblenden' }, '×');
+    weg.addEventListener('click', function () { tagesabfrageWeg = true; zeichne(); });
+    kopf.appendChild(weg);
+    karte.appendChild(kopf);
+
+    karte.appendChild(befindenBereich(tagZiel(gestern), false));
+
+    /* Weitere offene Tage stehen darunter in der Karte „Noch offen“ */
+    var weitere = 0;
+    offen.forEach(function (t) { if (t.datum !== gestern) weitere++; });
+    if (weitere) {
+      karte.appendChild(el('p', { class: 'hinweis-text' },
+        weitere === 1
+          ? 'Ein weiterer Tag ohne vollständigen Eintrag steht unter „Noch offen“.'
+          : weitere + ' weitere Tage ohne vollständigen Eintrag stehen unter „Noch offen“.'));
+    }
+    return karte;
   }
 
   /* ---------- Bestätigungsdialog ---------- */
@@ -1935,11 +2223,13 @@ pre.ausgabe{
     return {
       aktivitaeten: aktivitaeten.length,
       eintraege: befinden.eintraege.length,
-      zusatztage: befinden.zusatztage.length
+      zusatztage: befinden.zusatztage.length,
+      tage: befinden.tage.length
     };
   }
 
-  function umfangGesamt(u) { return u.aktivitaeten + u.eintraege + u.zusatztage; }
+  /* Ältere Sicherungsstände kennen tage noch nicht */
+  function umfangGesamt(u) { return u.aktivitaeten + u.eintraege + u.zusatztage + (u.tage || 0); }
 
   function ladeSicherungsStand() {
     var daten = ladeRoh(SCHLUESSEL_SIC);
@@ -2062,7 +2352,11 @@ pre.ausgabe{
   function sicherungErsetzen(pruefung) {
     aktivitaeten = pruefung.akt.slice();
     aktivitaeten.sort(sortiereAbsteigend);
-    befinden = { eintraege: pruefung.bef.eintraege.slice(), zusatztage: pruefung.bef.zusatztage.slice() };
+    befinden = {
+      eintraege: pruefung.bef.eintraege.slice(),
+      zusatztage: pruefung.bef.zusatztage.slice(),
+      tage: pruefung.bef.tage.slice()
+    };
     entwuerfe = {};
     speichereAktivitaeten();
     speichereBefinden();
@@ -2131,12 +2425,23 @@ pre.ausgabe{
       neueTage++;
     });
 
+    /* Tages-Befinden: ein vorhandener Eintrag für dasselbe Datum bleibt stehen */
+    var neueTagesBef = 0, dublettenTagesBef = 0;
+    pruefung.bef.tage.forEach(function (t) {
+      if (tagesBefindenFuer(t.datum)) { dublettenTagesBef++; return; }
+      befinden.tage.push(befindenFelder(t, { datum: t.datum }));
+      neueTagesBef++;
+    });
+
     aktivitaeten.sort(sortiereAbsteigend);
     speichereAktivitaeten();
     speichereBefinden();
 
     var meldung = neueAkt + ' Aktivitäten und ' + neueBef + ' Befinden-Einträge übernommen. ' +
       dublettenAkt + ' Aktivitäten und ' + dublettenBef + ' Befinden-Einträge waren bereits vorhanden.';
+    if (neueTagesBef || dublettenTagesBef) {
+      meldung += ' Tages-Befinden: ' + neueTagesBef + ' übernommen, ' + dublettenTagesBef + ' bereits vorhanden.';
+    }
     if (neueTage || dublettenTage) {
       meldung += ' Tage ohne Aufzeichnung: ' + neueTage + ' übernommen, ' + dublettenTage + ' bereits vorhanden.';
     }
@@ -3991,11 +4296,13 @@ pre.ausgabe{
 
   function zeichneReiterZahl() {
     var zahl = document.getElementById('reiter-zahl');
-    var offen = offeneLaeufe().length;
+    var offen = offeneTage().length;
     if (!offen) { zahl.setAttribute('hidden', ''); zahl.textContent = ''; return; }
     zahl.removeAttribute('hidden');
     zahl.textContent = String(offen);
-    zahl.setAttribute('aria-label', offen === 1 ? '1 Lauf ohne Befinden' : offen + ' Läufe ohne Befinden');
+    zahl.setAttribute('aria-label', offen === 1
+      ? '1 Tag ohne vollständigen Eintrag'
+      : offen + ' Tage ohne vollständigen Eintrag');
   }
 
   function zeichneSicherung() {
@@ -4074,7 +4381,9 @@ pre.ausgabe{
       ziel.appendChild(el('div', { class: 'ergebnis verlaufs-meldung', role: 'status', text: verlaufsMeldung }));
     }
 
-    var offen = offeneLaeufe();
+    var offen = offeneTage();
+    var abfrage = tagesabfrageBereich(offen);
+    if (abfrage) ziel.appendChild(abfrage);
     if (offen.length) ziel.appendChild(offeneKarte(offen));
     ziel.appendChild(leiste());
 
@@ -4083,7 +4392,9 @@ pre.ausgabe{
     gruppen.forEach(function (g) {
       var liste = filter === 'laeufe' ? g.akt.filter(istLauf) : g.akt;
       var zeigeZusatz = g.zusatz && filter !== 'laeufe';
-      if (!liste.length && !zeigeZusatz) return;
+      /* Im Lauf-Filter geht es nur um Läufe, das Tages-Befinden bleibt außen vor */
+      var zeigeTag = filter !== 'laeufe';
+      if (!liste.length && !zeigeZusatz && !zeigeTag) return;
       gezeigt++;
 
       var tag = el('section', { class: 'tag' });
@@ -4095,6 +4406,12 @@ pre.ausgabe{
       liste.forEach(function (akt, position) {
         tag.appendChild(einblenden(aktivitaetKarte(akt), position));
       });
+
+      if (zeigeTag) {
+        var tagesZeile = el('div', { class: 'tages-befinden' });
+        tagesZeile.appendChild(befindenBereich(tagZiel(g.datum), false));
+        tag.appendChild(tagesZeile);
+      }
 
       if (zeigeZusatz) {
         var zeile = el('div', { class: 'zusatz-tag' });
@@ -4114,7 +4431,6 @@ pre.ausgabe{
     if (!gezeigt) {
       ziel.appendChild(el('p', { class: 'hinweis-text', style: 'margin-top:20px' }, 'Keine Einträge in dieser Auswahl.'));
     }
-    ziel.appendChild(zusatzFormular());
   }
 
   function zeichneImport() {
@@ -4170,6 +4486,8 @@ pre.ausgabe{
     }
     aktivitaeten.forEach(function (a) { hole(a.datum).akt.push(a); });
     befinden.zusatztage.forEach(function (z) { hole(z.datum).zusatz = z; });
+    /* Tage, an denen nur das Befinden erfasst wurde, gehören ebenfalls hinein */
+    befinden.tage.forEach(function (t) { hole(t.datum); });
     reihenfolge.sort();
 
     var aus = '';
@@ -4186,12 +4504,14 @@ pre.ausgabe{
           if (istLeer(a.felder[sp])) return;
           aus += '  ' + sp + ': ' + a.felder[sp] + '\n';
         });
-        if (lauf) aus += '  Befinden: ' + befindenExport(befindenFuer(a.id)) + '\n';
+        if (lauf) aus += '  Befinden während des Laufs: ' + befindenExport(befindenFuer(a.id)) + '\n';
         aus += '\n';
       });
       if (karte[d].zusatz) {
         aus += 'Ohne Aufzeichnung: ' + zusatzLabel(karte[d].zusatz.art) + '\n\n';
       }
+      /* Immer ausgeben, damit eine Lücke als „nicht erfasst“ erkennbar bleibt */
+      aus += 'Befinden im Tagesverlauf: ' + befindenExport(tagesBefindenFuer(d)) + '\n\n';
     });
     return aus;
   }
@@ -4252,9 +4572,9 @@ pre.ausgabe{
       zeigeImportErgebnis({ fehler: 'Kein Inhalt zum Importieren.' });
       return;
     }
-    var offenVorher = offeneLaeufe().length;
+    var offenVorher = laeufeOhneBefinden();
     var ergebnis = importiere(text);
-    var offenNachher = offeneLaeufe().length;
+    var offenNachher = laeufeOhneBefinden();
     var neuOffen = offenNachher - offenVorher;
 
     zeigeImportErgebnis(ergebnis);
