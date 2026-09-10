@@ -681,6 +681,8 @@ pre.ausgabe{
   </header>
 
   <main>
+    <div id="sicherungs-hinweis" hidden></div>
+
     <section id="tab-verlauf" role="tabpanel" aria-labelledby="reiter-verlauf"></section>
 
     <section id="tab-statistik" role="tabpanel" aria-labelledby="reiter-statistik" hidden></section>
@@ -1895,6 +1897,13 @@ pre.ausgabe{
    */
   var TAGE_NACHTRAGBAR = 3;
 
+  /*
+   * Ab wann der Hinweis im Verlauf auf eine alte automatische Sicherung zeigt.
+   * Bewusst getrennt von den 14 Tagen in gistIstAktuell(), die die Erinnerung
+   * an die Datei-Sicherung steuern – zwei Schwellen für zwei Zwecke.
+   */
+  var TAGE_SICHERUNG_ALT = 7;
+
   function tagErfassbar(datum) {
     var heute = heuteIso();
     if (datum > heute) return false;
@@ -2562,7 +2571,9 @@ pre.ausgabe{
       token: daten.token,
       gistId: typeof daten.gistId === 'string' ? daten.gistId : '',
       konto: typeof daten.konto === 'string' ? daten.konto : '',
-      zuletzt: typeof daten.zuletzt === 'string' ? daten.zuletzt : ''
+      zuletzt: typeof daten.zuletzt === 'string' ? daten.zuletzt : '',
+      /* Fehlt bei älteren Einstellungen – dann gilt der hochgeladene Stand als unbekannt */
+      fingerabdruck: typeof daten.fingerabdruck === 'string' ? daten.fingerabdruck : ''
     };
   }
 
@@ -2599,6 +2610,7 @@ pre.ausgabe{
     zeichneGist();
     /* Die Erinnerung an die Datei hängt am Zustand der Automatik */
     zeichneSicherung();
+    zeichneSicherungsHinweis();
   }
 
   function datenFingerabdruck() {
@@ -2631,6 +2643,7 @@ pre.ausgabe{
     return anfrage.then(function (gist) {
       einstellung.gistId = gist && gist.id ? gist.id : einstellung.gistId;
       einstellung.zuletzt = new Date().toISOString();
+      einstellung.fingerabdruck = kurzerFingerabdruck(fingerabdruck);
       speichere(SCHLUESSEL_GIST, einstellung);
       gistZuletztGesendet = fingerabdruck;
       setzeGistStatus('bereit', '');
@@ -2648,6 +2661,49 @@ pre.ausgabe{
       gistTimer = null;
       gistHochladen(false);
     }, 2500);
+  }
+
+  /*
+   * Kurzform des Fingerabdrucks für den Speicher. Der volle Fingerabdruck ist
+   * so groß wie die Daten selbst und würde den localStorage doppelt belegen.
+   */
+  function kurzerFingerabdruck(text) {
+    var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (var i = 0; i < text.length; i++) {
+      var c = text.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 2654435761);
+      h2 = Math.imul(h2 ^ c, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16) + ':' + text.length;
+  }
+
+  var gistNachholTimer = null;
+
+  /*
+   * Holt eine ausgebliebene Sicherung nach – beim Start und wenn das Netz
+   * zurückkommt. Nur wenn Daten da sind: Ein leerer Speicher (von Safari
+   * geräumt, frisches Gerät) darf die Ablage bei GitHub nie überschreiben.
+   */
+  function holeGistSicherungNach() {
+    var einstellung = ladeGistEinstellung();
+    if (!einstellung) return;
+    if (!navigator.onLine) return;
+    if (!umfangGesamt(aktuellerUmfang())) return;
+    /* Eine vorgemerkte oder laufende Sicherung erledigt das bereits */
+    if (gistTimer || gistStatus === 'laeuft') return;
+    if (einstellung.fingerabdruck === kurzerFingerabdruck(datenFingerabdruck())) return;
+    gistHochladen(false);
+  }
+
+  /* Das online-Ereignis kommt, bevor die Verbindung trägt; mehrfaches Feuern zusammenfassen. */
+  function planeGistNachholen() {
+    if (gistNachholTimer) window.clearTimeout(gistNachholTimer);
+    gistNachholTimer = window.setTimeout(function () {
+      gistNachholTimer = null;
+      holeGistSicherungNach();
+    }, 2000);
   }
 
   function gistLaden() {
@@ -4512,6 +4568,40 @@ pre.ausgabe{
     ziel.textContent = 'Letzte Sicherung: ' + datumLang(stand.zuletzt.slice(0, 10)) + ' (' + wann + ').';
   }
 
+  /*
+   * Hinweis oben im Verlauf, wenn die automatische Sicherung nicht trägt.
+   * Steht außerhalb von #tab-verlauf, damit ein Statuswechsel den Verlauf
+   * nicht neu aufbauen muss. Nicht wegklickbar – er geht mit dem Zustand.
+   */
+  function zeichneSicherungsHinweis() {
+    var ziel = document.getElementById('sicherungs-hinweis');
+    leeren(ziel);
+    var text = '';
+    if (aktiverTab === 'verlauf' && umfangGesamt(aktuellerUmfang())) {
+      var einstellung = ladeGistEinstellung();
+      var tage = einstellung && einstellung.zuletzt ? tageSeit(einstellung.zuletzt) : null;
+      if (gistStatus === 'fehler') {
+        text = 'Die automatische Sicherung meldet einen Fehler. Die Daten auf diesem Gerät sind unverändert.';
+      } else if (!einstellung) {
+        text = 'Für dieses Gerät ist keine automatische Sicherung eingerichtet.';
+      } else if (tage !== null && tage > TAGE_SICHERUNG_ALT) {
+        text = 'Zuletzt automatisch gesichert vor ' + tage + ' Tagen.';
+      } else if (!einstellung.zuletzt) {
+        text = 'Auf diesem Gerät wurde noch nie automatisch gesichert.';
+      }
+    }
+    if (!text) { ziel.setAttribute('hidden', ''); return; }
+
+    var box = el('div', { class: 'ergebnis verlaufs-meldung' + (gistStatus === 'fehler' ? ' ergebnis--fehler' : '') });
+    box.appendChild(el('span', null, text));
+    box.appendChild(document.createTextNode(' '));
+    var knopf = el('button', { type: 'button', class: 'link' }, 'Zur Sicherung');
+    knopf.addEventListener('click', function () { zeigeTab('sicherung'); });
+    box.appendChild(knopf);
+    ziel.appendChild(box);
+    ziel.removeAttribute('hidden');
+  }
+
   function zeichneKopfzahlen() {
     var ziel = document.getElementById('kopfzahlen');
     leeren(ziel);
@@ -4650,6 +4740,7 @@ pre.ausgabe{
     zeichneExport();
     zeichneSicherung();
     zeichneGist();
+    zeichneSicherungsHinweis();
     if (aktiverTab === 'statistik') zeichneStatistik();
     aktualisiereTagesDialog();
   }
@@ -4662,6 +4753,7 @@ pre.ausgabe{
       if (n === name) { panel.removeAttribute('hidden'); reiter.setAttribute('aria-selected', 'true'); }
       else { panel.setAttribute('hidden', ''); reiter.setAttribute('aria-selected', 'false'); }
     });
+    zeichneSicherungsHinweis();
     /* Diagramme brauchen die tatsächliche Breite, die erst im sichtbaren Zustand feststeht */
     if (name === 'statistik') zeichneStatistik();
     window.scrollTo(0, 0);
@@ -4848,6 +4940,7 @@ pre.ausgabe{
   document.getElementById('gist-token').addEventListener('keydown', function (ereignis) {
     if (ereignis.key === 'Enter') { ereignis.preventDefault(); gistVerbinden(); }
   });
+  window.addEventListener('online', planeGistNachholen);
 
   document.getElementById('sicherung-datei').addEventListener('change', function (ereignis) {
     var datei = ereignis.target.files && ereignis.target.files[0];
@@ -4898,6 +4991,9 @@ pre.ausgabe{
 
   /* Einmal je Sitzung: das Befinden für gestern */
   zeigeTagesabfrage();
+
+  /* Was beim letzten Mal nicht bei GitHub ankam, jetzt nachholen */
+  holeGistSicherungNach();
 })();
 
 /* ---------- Offline-Betrieb: Service Worker registrieren ----------
