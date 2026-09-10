@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Lauftagebuch">
+<meta name="theme-color" content="#15181d">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
 <title>Lauftagebuch</title>
 <style>
 *,*::before,*::after{box-sizing:border-box}
@@ -4893,6 +4898,22 @@ pre.ausgabe{
 
   /* Einmal je Sitzung: das Befinden für gestern */
   zeigeTagesabfrage();
+})();
+
+/* ---------- Offline-Betrieb: Service Worker registrieren ----------
+   Nur über https (GitHub Pages). Von der Festplatte (file://) gibt es keinen
+   sicheren Kontext; dann geschieht hier bewusst gar nichts. Fehler bleiben still.
+   Kein Neuladen bei einer neuen Fassung – sie greift beim nächsten Start. */
+(function () {
+  try {
+    if (!('serviceWorker' in navigator) || location.protocol !== 'https:') return;
+    window.addEventListener('load', function () {
+      try {
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+          .catch(function () {});
+      } catch (fehler) {}
+    });
+  } catch (fehler) {}
 })();
 </script>
 </body>
