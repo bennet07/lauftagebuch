@@ -2693,7 +2693,11 @@ pre.ausgabe{
     if (!umfangGesamt(aktuellerUmfang())) return;
     /* Eine vorgemerkte oder laufende Sicherung erledigt das bereits */
     if (gistTimer || gistStatus === 'laeuft') return;
-    if (einstellung.fingerabdruck === kurzerFingerabdruck(datenFingerabdruck())) return;
+    if (einstellung.fingerabdruck === kurzerFingerabdruck(datenFingerabdruck())) {
+      /* Der Gist hat den aktuellen Stand – ein alter Fehler (etwa „Jetzt sichern“ im Flugmodus) ist erledigt */
+      if (gistStatus === 'fehler') setzeGistStatus('bereit', '');
+      return;
+    }
     gistHochladen(false);
   }
 
