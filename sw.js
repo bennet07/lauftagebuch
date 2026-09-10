@@ -35,7 +35,7 @@ self.addEventListener('activate', (ereignis) => {
   ereignis.waitUntil((async () => {
     const namen = await caches.keys();
     await Promise.all(namen
-      .filter((name) => name !== CACHE)
+      .filter((name) => name.startsWith('lauftagebuch-') && name !== CACHE)
       .map((name) => caches.delete(name)));
     await self.clients.claim();
   })());
