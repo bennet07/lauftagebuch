@@ -168,17 +168,11 @@ button{font:inherit;color:inherit}
 .kopfzahlen--kopf .kopfzahl-name{order:0;margin-top:4px;color:var(--text-2)}
 .kopfzahlen--kopf .kopfzahl--fuehrend{
   grid-column:1 / -1;
-  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
   padding:16px 18px;
   border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
   background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
 }
 .kopfzahlen--kopf .kopfzahl--fuehrend .kopfzahl-wert{font-size:38px;font-weight:700;letter-spacing:-.045em;line-height:1}
-.kopfzahlen--kopf .kopfzahl--fuehrend .kopfzahl-wert.ist-text{
-  font-size:13px;font-weight:620;letter-spacing:-.01em;line-height:1.3;padding:0;
-  text-align:right;color:var(--text-2);
-}
-.kopfzahl-seite{text-align:right;min-width:0}
 .kopfzahlen--kopf .kopfzahl--ok{border-color:var(--ok-rand);background:rgba(116,185,141,.09)}
 .kopfzahlen--kopf .kopfzahl--schmerz{border-color:var(--schmerz-rand);background:rgba(217,146,106,.09)}
 
@@ -531,7 +525,10 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .akt-symbol{flex:0 0 auto;width:18px;height:18px;color:#c8821e}
 .kompakt-mitte{flex:1 1 0;min-width:0}
 .aktivitaet--kompakt .akt-titel{font-size:14px;font-weight:600;letter-spacing:-.01em}
-.aktivitaet--kompakt .akt-meta{font-size:11px;color:var(--text-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.aktivitaet--kompakt .akt-meta{
+  font-size:11px;color:var(--text-3);margin-top:2px;font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 .aktivitaet--kompakt details.alle{flex:1 0 100%;margin-top:0;padding-left:30px}
 .aktivitaet--kompakt details.alle > summary{font-size:11px;padding:1px 0;color:var(--text-4)}
 .aktivitaet--kompakt details.alle > summary:hover{color:var(--text)}
@@ -560,7 +557,8 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .kennzahlen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
 .kz{min-width:0}
 .kz-wert{font-size:16px;font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.025em;overflow-wrap:anywhere}
-.kz-name{font-size:9px;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
+.kz-wert--leer{color:var(--text-4);font-weight:560}
+.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
 
 details.alle{margin-top:16px}
 details.alle > summary{
@@ -2011,7 +2009,7 @@ pre.ausgabe{
     return bild;
   }
 
-  /* Andere Aktivität: eine schmale Zeile mit Uhrzeit, Dauer und Ø HF */
+  /* Andere Aktivität: eine schmale Zeile mit Typ, Uhrzeit, Dauer und Ø HF */
   function aktivitaetZeile(akt) {
     var zeile = el('article', { class: 'aktivitaet aktivitaet--kompakt', 'data-id': akt.id });
     zeile.appendChild(aktSymbol(akt));
@@ -2020,6 +2018,9 @@ pre.ausgabe{
     mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
     var kz = kennzahlenVon(akt);
     var teile = [];
+    /* Der Typ bleibt als Text: das Symbol allein unterscheidet ihn nicht sicher */
+    var typ = typVon(akt);
+    if (typ) teile.push(typ);
     var zeit = uhrzeit(akt.datumOriginal);
     if (zeit) teile.push(zeit + ' Uhr');
     if (kennwert(kz, 'Zeit')) teile.push(kennwert(kz, 'Zeit'));
@@ -2059,16 +2060,18 @@ pre.ausgabe{
     var reihe = el('div', { class: 'kennzahlen' });
     kennzahlenVon(akt).forEach(function (k) {
       var block = el('div', { class: 'kz' });
-      block.appendChild(el('div', { class: 'kz-wert', text: k.wert || '–' }));
+      /* „nicht erfasst“ bekommt eine eigene, leisere Form, nie die eines Wertes */
+      block.appendChild(el('div', { class: k.wert ? 'kz-wert' : 'kz-wert kz-wert--leer', text: k.wert || '–' }));
       block.appendChild(el('div', { class: 'kz-name', text: k.name }));
       reihe.appendChild(block);
     });
     karte.appendChild(reihe);
 
+    /* Das Befinden wird täglich angetippt und steht deshalb über der Werteliste */
+    karte.appendChild(befindenBereich(laufZiel(akt), false, true));
+
     var details = alleWerte(akt);
     if (details) karte.appendChild(details);
-
-    karte.appendChild(befindenBereich(laufZiel(akt), false, true));
     return karte;
   }
 
@@ -4848,8 +4851,6 @@ pre.ausgabe{
     ziel.removeAttribute('hidden');
 
     var laeufe = 0, erfasst = 0, mitSchmerz = 0;
-    var bereich = erfassterZeitraum();
-    var frueh = bereich.frueh, spaet = bereich.spaet;
     aktivitaeten.forEach(function (a) {
       if (!istLauf(a)) return;
       laeufe++;
@@ -4859,29 +4860,9 @@ pre.ausgabe{
       if (b.art === 'schmerz') mitSchmerz++;
     });
 
-    var zeitraum = '–';
-    if (frueh && spaet) {
-      zeitraum = frueh === spaet
-        ? datumLang(frueh)
-        : (frueh.slice(0, 4) === spaet.slice(0, 4)
-            ? datumLang(frueh).slice(0, 6) + ' – ' + datumLang(spaet)
-            : datumLang(frueh) + ' – ' + datumLang(spaet));
-    }
-
-    function wertUndName(z) {
-      var teil = el('div', { class: z.seite ? 'kopfzahl-seite' : null });
-      teil.appendChild(el('div', { class: 'kopfzahl-wert' + z.klasse, text: z.wert }));
-      teil.appendChild(el('div', { class: 'kopfzahl-name', text: z.name }));
-      return teil;
-    }
-
-    /* Führend: die Läufe, rechts daneben der Zeitraum */
-    var fuehrend = el('div', { class: 'kopfzahl kopfzahl--fuehrend' });
-    fuehrend.appendChild(wertUndName({ wert: String(laeufe), name: laeufe === 1 ? 'Lauf' : 'Läufe', klasse: '' }));
-    fuehrend.appendChild(wertUndName({ wert: zeitraum, name: 'Zeitraum', klasse: ' ist-text', seite: true }));
-    ziel.appendChild(fuehrend);
-
+    /* Der Zeitraum steht in der Kopfzeile, hier nicht noch einmal */
     [
+      { wert: String(laeufe), name: laeufe === 1 ? 'Lauf' : 'Läufe', klasse: '', karte: ' kopfzahl--fuehrend' },
       { wert: String(erfasst), name: 'Befinden erfasst', klasse: ' ist-ok', karte: ' kopfzahl--ok' },
       { wert: String(mitSchmerz), name: 'davon mit Schmerz', klasse: ' ist-schmerz', karte: ' kopfzahl--schmerz' }
     ].forEach(function (z) {
