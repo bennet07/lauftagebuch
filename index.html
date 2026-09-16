@@ -157,6 +157,31 @@ button{font:inherit;color:inherit}
   color:var(--text-4);font-weight:640;margin-top:6px;
 }
 
+/* Kopfzahlen oben: eine führende Karte, zwei begleitende. Die Statistik nutzt
+   .kopfzahlen ebenfalls und bleibt davon unberührt. */
+.kopfzahlen--kopf{
+  grid-template-columns:1fr 1fr;gap:8px;
+  background:none;border:0;border-radius:0;overflow:visible;box-shadow:none;
+}
+.kopfzahlen--kopf .kopfzahl{display:block;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--rand)}
+.kopfzahlen--kopf .kopfzahl-wert{font-size:22px;font-weight:680;text-align:left}
+.kopfzahlen--kopf .kopfzahl-name{order:0;margin-top:4px;color:var(--text-2)}
+.kopfzahlen--kopf .kopfzahl--fuehrend{
+  grid-column:1 / -1;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  padding:16px 18px;
+  border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
+  background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
+}
+.kopfzahlen--kopf .kopfzahl--fuehrend .kopfzahl-wert{font-size:38px;font-weight:700;letter-spacing:-.045em;line-height:1}
+.kopfzahlen--kopf .kopfzahl--fuehrend .kopfzahl-wert.ist-text{
+  font-size:13px;font-weight:620;letter-spacing:-.01em;line-height:1.3;padding:0;
+  text-align:right;color:var(--text-2);
+}
+.kopfzahl-seite{text-align:right;min-width:0}
+.kopfzahlen--kopf .kopfzahl--ok{border-color:var(--ok-rand);background:rgba(116,185,141,.09)}
+.kopfzahlen--kopf .kopfzahl--schmerz{border-color:var(--schmerz-rand);background:rgba(217,146,106,.09)}
+
 .verlaufs-meldung{margin-top:24px}
 .bef-notiz-link{margin-top:8px;display:inline-block}
 .formular--notiz{margin-top:10px}
@@ -469,12 +494,14 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 /* ---------- Tag und Aktivität ---------- */
 
 .tag{margin-top:38px}
+/* Tageskopf: Datum, Wochentag und eine Linie über die restliche Breite */
 .tag-kopf{
-  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
-  margin-bottom:12px;padding:0 4px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:9px;padding:0 4px;
 }
-.tag-datum{font-size:1.06rem;font-weight:660;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.tag-wochentag{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:600}
+.tag-kopf::after{content:'';flex:1 1 auto;height:0;border-top:1px solid var(--rand)}
+.tag-datum{font-size:13px;font-weight:660;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag-wochentag{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:600;white-space:nowrap}
 
 .aktivitaet{
   background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 92px),var(--flaeche);
@@ -484,12 +511,30 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
   box-shadow:var(--schatten-karte);
   position:relative;overflow:hidden;
 }
+/* Der Streifen zeigt das Befinden des Laufs; grau, solange keines erfasst ist */
 .aktivitaet::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:var(--rand-stark);
+  background:linear-gradient(180deg,var(--rand-stark),rgba(59,67,81,.25));
 }
-.aktivitaet.ist-lauf::before{background:linear-gradient(180deg,var(--akzent),rgba(91,156,248,.25))}
+.aktivitaet.streifen-ok::before{background:linear-gradient(180deg,var(--ok),rgba(116,185,141,.25))}
+.aktivitaet.streifen-schmerz::before{background:linear-gradient(180deg,var(--schmerz),rgba(217,146,106,.25))}
 .aktivitaet + .aktivitaet{margin-top:10px}
+
+/* Andere Aktivitäten: schmale Zeile statt Karte */
+.aktivitaet--kompakt{
+  display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;
+  padding:11px 14px;border-radius:14px;
+  background:var(--flaeche-sanft);border:1px solid var(--rand);box-shadow:none;
+}
+.aktivitaet--kompakt::before{content:none}
+.aktivitaet--kompakt + .aktivitaet--kompakt{margin-top:6px}
+.akt-symbol{flex:0 0 auto;width:18px;height:18px;color:#c8821e}
+.kompakt-mitte{flex:1 1 0;min-width:0}
+.aktivitaet--kompakt .akt-titel{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.aktivitaet--kompakt .akt-meta{font-size:11px;color:var(--text-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.aktivitaet--kompakt details.alle{flex:1 0 100%;margin-top:0;padding-left:30px}
+.aktivitaet--kompakt details.alle > summary{font-size:11px;padding:1px 0;color:var(--text-4)}
+.aktivitaet--kompakt details.alle > summary:hover{color:var(--text)}
 .akt-kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .akt-titel{font-size:1.06rem;font-weight:620;letter-spacing:-.02em;overflow-wrap:anywhere}
 .akt-meta{font-size:.78rem;color:var(--text-3);margin-top:3px;letter-spacing:.005em}
@@ -512,9 +557,10 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .weg:hover{background:var(--kritisch-sanft);color:var(--kritisch)}
 .weg:active{transform:translateY(1px)}
 
-.kennzahlen{display:flex;flex-wrap:wrap;gap:22px;margin-top:16px}
-.kz-wert{font-size:1.16rem;font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.025em}
-.kz-name{font-size:.68rem;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
+.kennzahlen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.kz{min-width:0}
+.kz-wert{font-size:16px;font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.025em;overflow-wrap:anywhere}
+.kz-name{font-size:9px;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
 
 details.alle{margin-top:16px}
 details.alle > summary{
@@ -547,6 +593,8 @@ details.alle > summary:hover{color:var(--text)}
 }
 .bef-fazit.ist-ok{background:var(--ok-sanft);color:var(--ok);border-color:var(--ok-rand)}
 .bef-fazit.ist-schmerz{background:var(--schmerz-sanft);color:var(--schmerz);border-color:var(--schmerz-rand)}
+.bef-symbol{flex:0 0 auto;width:15px;height:15px;margin-right:-3px}
+.bef-ab{font-weight:500;font-size:.83rem;opacity:.72}
 .bef-fazit .link{color:inherit;opacity:.8;font-weight:560}
 .bef-fazit .link:hover{opacity:1;color:inherit}
 .bef-notiz{font-weight:400;font-size:.83rem;opacity:.85;overflow-wrap:anywhere}
@@ -725,7 +773,7 @@ pre.ausgabe{
       <h1><svg class="wortmarke" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false"><path d="M3 15 7.5 9l4 3.5L17 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="15" r="2" fill="currentColor"/><circle cx="17" cy="5" r="2" fill="currentColor"/></svg><span>Lauftagebuch</span></h1>
       <span class="kopf-zeitraum" id="kopf-zeitraum"></span>
     </div>
-    <div class="kopfzahlen" id="kopfzahlen" hidden></div>
+    <div class="kopfzahlen kopfzahlen--kopf" id="kopfzahlen" hidden></div>
   </header>
 
   <main>
@@ -889,12 +937,12 @@ pre.ausgabe{
     { wert: 'kraft', label: 'Kraft/Mobility' },
     { wert: 'andere', label: 'andere Sportart' }
   ];
+  /* Die vier Werte der Lauf-Karte, in dieser Reihenfolge; alles Weitere steht unter „alle Werte“ */
   var KENNZAHLEN = [
     { name: 'Distanz', spalten: ['Distanz'], nullVerbergen: true },
-    { name: 'Zeit', spalten: ['Zeit', 'Zeit in Bewegung'], nullVerbergen: true },
+    { name: 'Ø Pace', spalten: ['Ø Pace'], nullVerbergen: true },
     { name: 'Ø HF', spalten: ['Ø Herzfrequenz'], nullVerbergen: true },
-    { name: 'Ø Schrittfr.', spalten: ['Ø Schrittfrequenz (Laufen)', 'Ø Schrittfrequenz'], nullVerbergen: true },
-    { name: 'Anstieg', spalten: ['Anstieg gesamt'], nullVerbergen: true }
+    { name: 'Zeit', spalten: ['Zeit', 'Zeit in Bewegung'], nullVerbergen: true }
   ];
 
   /* ---------- kleine Helfer ---------- */
@@ -1623,6 +1671,7 @@ pre.ausgabe{
     return sucheFeld(akt.felder, ['aktivitätstyp', 'aktivitaetstyp', 'activity type', 'typ']);
   }
 
+  /* Immer alle Einträge aus KENNZAHLEN; fehlt ein Wert, ist wert leer */
   function kennzahlenVon(akt) {
     var raus = [];
     for (var i = 0; i < KENNZAHLEN.length; i++) {
@@ -1632,11 +1681,15 @@ pre.ausgabe{
         var v = wertVon(akt, k.spalten[s]);
         if (!istLeer(v)) w = v;
       }
-      if (!w) continue;
-      if (k.nullVerbergen && istNullWert(w)) continue;
+      if (w && k.nullVerbergen && istNullWert(w)) w = '';
       raus.push({ name: k.name, wert: w });
     }
     return raus;
+  }
+
+  function kennwert(kz, name) {
+    for (var i = 0; i < kz.length; i++) if (kz[i].name === name) return kz[i].wert;
+    return '';
   }
 
   /* ---------- Bausteine ---------- */
@@ -1776,7 +1829,20 @@ pre.ausgabe{
     return box;
   }
 
-  function befindenBereich(ziel, kompakt) {
+  /* Kreis mit Haken bei „keine“, Kreis mit Ausrufezeichen bei Schmerz */
+  function befindenSymbol(ok) {
+    var bild = svg('svg', {
+      class: 'bef-symbol', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+      'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      'aria-hidden': 'true', focusable: 'false'
+    });
+    bild.appendChild(svg('circle', { cx: 12, cy: 12, r: 9.5 }));
+    bild.appendChild(svg('path', { d: ok ? 'm7.8 12.3 2.8 2.8 5.6-5.8' : 'M12 7v6M12 16.8v.01' }));
+    return bild;
+  }
+
+  /* mitSymbol: nur an der Lauf-Karte – Symbol vorn, „ab …“ als eigener, leiserer Teil */
+  function befindenBereich(ziel, kompakt, mitSymbol) {
     var vorhanden = ziel.holen();
     var offen = Object.prototype.hasOwnProperty.call(entwuerfe, ziel.schluessel);
     var box = el('div', { class: kompakt ? 'befinden-kompakt' : 'befinden' });
@@ -1785,7 +1851,15 @@ pre.ausgabe{
 
     if (vorhanden && !offen) {
       var fazit = el('div', { class: 'bef-fazit ' + (vorhanden.art === 'keine' ? 'ist-ok' : 'ist-schmerz') });
-      fazit.appendChild(el('span', null, befindenText(vorhanden)));
+      if (mitSymbol) {
+        fazit.appendChild(befindenSymbol(vorhanden.art === 'keine'));
+        fazit.appendChild(el('span', null, befindenText({
+          art: vorhanden.art, staerke: vorhanden.staerke, ort: vorhanden.ort, seite: vorhanden.seite, abKm: ''
+        })));
+        if (vorhanden.abKm) fazit.appendChild(el('span', { class: 'bef-ab', text: 'ab ' + vorhanden.abKm }));
+      } else {
+        fazit.appendChild(el('span', null, befindenText(vorhanden)));
+      }
       if (vorhanden.notiz) {
         fazit.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
       }
@@ -1840,22 +1914,8 @@ pre.ausgabe{
     return box;
   }
 
-  function aktivitaetKarte(akt) {
-    var lauf = istLauf(akt);
-    var karte = el('article', { class: 'aktivitaet' + (lauf ? ' ist-lauf' : ''), 'data-id': akt.id });
-
-    var kopf = el('div', { class: 'akt-kopf' });
-    var links = el('div');
-    links.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
-    var metaTeile = [];
-    var typ = typVon(akt);
-    if (typ) metaTeile.push(typ);
-    var zeit = uhrzeit(akt.datumOriginal);
-    if (zeit) metaTeile.push(zeit + ' Uhr');
-    if (metaTeile.length) links.appendChild(el('div', { class: 'akt-meta', text: metaTeile.join(' · ') }));
-    kopf.appendChild(links);
-
-    var werkzeuge = el('div', { class: 'akt-werkzeuge' });
+  /* Die Einstufung wird hier nur gelesen und über die Marke umgeschaltet */
+  function einstufungsMarke(akt, lauf) {
     var marke = el('button', {
       type: 'button',
       class: 'marke' + (lauf ? ' ist-lauf' : ''),
@@ -1867,8 +1927,10 @@ pre.ausgabe{
       quittiere(akt.istLaufManuell ? 'Als Lauf eingestuft' : 'Als „kein Lauf“ eingestuft');
       zeichne();
     });
-    werkzeuge.appendChild(marke);
+    return marke;
+  }
 
+  function loeschKnopf(akt) {
     var weg = el('button', { type: 'button', class: 'weg', title: 'Aktivität löschen', 'aria-label': 'Aktivität löschen' }, '×');
     weg.addEventListener('click', function () {
       var text = titelVon(akt) + ' vom ' + datumLang(akt.datum) + ' löschen?';
@@ -1884,40 +1946,129 @@ pre.ausgabe{
         zeichne();
       });
     });
-    werkzeuge.appendChild(weg);
-    kopf.appendChild(werkzeuge);
+    return weg;
+  }
+
+  function akteWerkzeuge(akt, lauf) {
+    var werkzeuge = el('div', { class: 'akt-werkzeuge' });
+    werkzeuge.appendChild(einstufungsMarke(akt, lauf));
+    werkzeuge.appendChild(loeschKnopf(akt));
+    return werkzeuge;
+  }
+
+  /* Aufklappliste mit allen Spalten der CSV; null, wenn keine gefüllt ist */
+  function alleWerte(akt) {
+    var spalten = Object.keys(akt.felder).filter(function (sp) { return !istLeer(akt.felder[sp]); });
+    if (!spalten.length) return null;
+    var details = el('details', { class: 'alle' });
+    if (offeneDetails[akt.id]) details.setAttribute('open', '');
+    details.appendChild(el('summary', null, 'alle Werte (' + spalten.length + ')'));
+    var dl = el('dl', { class: 'werte' });
+    spalten.forEach(function (sp) {
+      dl.appendChild(el('dt', { text: sp }));
+      dl.appendChild(el('dd', { text: akt.felder[sp] }));
+    });
+    details.appendChild(dl);
+    details.addEventListener('toggle', function () {
+      if (details.open) offeneDetails[akt.id] = true; else delete offeneDetails[akt.id];
+    });
+    return details;
+  }
+
+  /* 18-px-Symbol nach Aktivitätstyp für die schmale Zeile */
+  var AKT_SYMBOLE = {
+    rad: ['c:5.5,16,3.5', 'c:18.5,16,3.5', 'p:M5.5 16 9 8.5h7M12 16 9 8.5M12 16l4-7.5 2.5 7.5M8 6h2.5M16 8.5 15.2 6H17'],
+    hantel: ['p:M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11'],
+    dehnen: ['c:12,4.5,1.8', 'p:M4.5 9.5 12 8l7.5 1.5M12 8v6l-4 6.5M12 14l4 6.5'],
+    schwimmen: ['c:17,7,1.8', 'p:M4 13.5 9 9.5l3 3 4.5-2', 'p:M2.5 18c1.6 0 1.6-1 3.2-1s1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1'],
+    kreis: ['c:12,12,6.5']
+  };
+
+  function aktSymbolArt(akt) {
+    var s = (typVon(akt) + ' ' + titelVon(akt)).toLowerCase();
+    if (/schwimm|swim/.test(s)) return 'schwimmen';
+    if (/rad|cycl|bike|velo|spinning/.test(s)) return 'rad';
+    if (/kraft|strength|hantel|gewicht|fitness/.test(s)) return 'hantel';
+    if (/mobil|dehn|stretch|yoga|pilates/.test(s)) return 'dehnen';
+    return 'kreis';
+  }
+
+  function aktSymbol(akt) {
+    var bild = svg('svg', {
+      class: 'akt-symbol', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+      'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      'aria-hidden': 'true', focusable: 'false'
+    });
+    AKT_SYMBOLE[aktSymbolArt(akt)].forEach(function (teil) {
+      var inhalt = teil.slice(2);
+      if (teil.charAt(0) === 'c') {
+        var z = inhalt.split(',');
+        bild.appendChild(svg('circle', { cx: z[0], cy: z[1], r: z[2] }));
+      } else {
+        bild.appendChild(svg('path', { d: inhalt }));
+      }
+    });
+    return bild;
+  }
+
+  /* Andere Aktivität: eine schmale Zeile mit Uhrzeit, Dauer und Ø HF */
+  function aktivitaetZeile(akt) {
+    var zeile = el('article', { class: 'aktivitaet aktivitaet--kompakt', 'data-id': akt.id });
+    zeile.appendChild(aktSymbol(akt));
+
+    var mitte = el('div', { class: 'kompakt-mitte' });
+    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var kz = kennzahlenVon(akt);
+    var teile = [];
+    var zeit = uhrzeit(akt.datumOriginal);
+    if (zeit) teile.push(zeit + ' Uhr');
+    if (kennwert(kz, 'Zeit')) teile.push(kennwert(kz, 'Zeit'));
+    if (kennwert(kz, 'Ø HF')) teile.push('Ø HF ' + kennwert(kz, 'Ø HF'));
+    if (teile.length) mitte.appendChild(el('div', { class: 'akt-meta', text: teile.join(' · ') }));
+    zeile.appendChild(mitte);
+
+    zeile.appendChild(akteWerkzeuge(akt, false));
+
+    var details = alleWerte(akt);
+    if (details) zeile.appendChild(details);
+    return zeile;
+  }
+
+  function aktivitaetKarte(akt) {
+    var lauf = istLauf(akt);
+    if (!lauf) return aktivitaetZeile(akt);
+
+    /* Der Streifen links trägt das Befinden; dass es ein Lauf ist, sagt die Marke */
+    var b = befindenFuer(akt.id);
+    var streifen = !b ? '' : (b.art === 'keine' ? ' streifen-ok' : ' streifen-schmerz');
+    var karte = el('article', { class: 'aktivitaet ist-lauf' + streifen, 'data-id': akt.id });
+
+    var kopf = el('div', { class: 'akt-kopf' });
+    var links = el('div');
+    links.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var metaTeile = [];
+    var typ = typVon(akt);
+    if (typ) metaTeile.push(typ);
+    var zeit = uhrzeit(akt.datumOriginal);
+    if (zeit) metaTeile.push(zeit + ' Uhr');
+    if (metaTeile.length) links.appendChild(el('div', { class: 'akt-meta', text: metaTeile.join(' · ') }));
+    kopf.appendChild(links);
+    kopf.appendChild(akteWerkzeuge(akt, lauf));
     karte.appendChild(kopf);
 
-    var kz = kennzahlenVon(akt);
-    if (kz.length) {
-      var reihe = el('div', { class: 'kennzahlen' });
-      kz.forEach(function (k) {
-        var block = el('div', { class: 'kz' });
-        block.appendChild(el('div', { class: 'kz-wert', text: k.wert }));
-        block.appendChild(el('div', { class: 'kz-name', text: k.name }));
-        reihe.appendChild(block);
-      });
-      karte.appendChild(reihe);
-    }
+    var reihe = el('div', { class: 'kennzahlen' });
+    kennzahlenVon(akt).forEach(function (k) {
+      var block = el('div', { class: 'kz' });
+      block.appendChild(el('div', { class: 'kz-wert', text: k.wert || '–' }));
+      block.appendChild(el('div', { class: 'kz-name', text: k.name }));
+      reihe.appendChild(block);
+    });
+    karte.appendChild(reihe);
 
-    var spalten = Object.keys(akt.felder).filter(function (sp) { return !istLeer(akt.felder[sp]); });
-    if (spalten.length) {
-      var details = el('details', { class: 'alle' });
-      if (offeneDetails[akt.id]) details.setAttribute('open', '');
-      details.appendChild(el('summary', null, 'alle Werte (' + spalten.length + ')'));
-      var dl = el('dl', { class: 'werte' });
-      spalten.forEach(function (sp) {
-        dl.appendChild(el('dt', { text: sp }));
-        dl.appendChild(el('dd', { text: akt.felder[sp] }));
-      });
-      details.appendChild(dl);
-      details.addEventListener('toggle', function () {
-        if (details.open) offeneDetails[akt.id] = true; else delete offeneDetails[akt.id];
-      });
-      karte.appendChild(details);
-    }
+    var details = alleWerte(akt);
+    if (details) karte.appendChild(details);
 
-    if (lauf) karte.appendChild(befindenBereich(laufZiel(akt), false));
+    karte.appendChild(befindenBereich(laufZiel(akt), false, true));
     return karte;
   }
 
@@ -4599,15 +4750,26 @@ pre.ausgabe{
     }, 12000);
   }
 
-  function zeichneReiterZahl() {
-    /* Erfasster Zeitraum in der Kopfzeile – hier, weil diese Funktion nach jeder Änderung läuft */
-    var zeitraum = document.getElementById('kopf-zeitraum');
+  /*
+   * Frühester und spätester Tag über alle Aktivitäten, Läufe wie andere, als
+   * YYYY-MM-DD; beide null, solange nichts erfasst ist. Die einzige Rechnung
+   * dafür – Kopfzeile und Kopfzahlen lesen beide hier.
+   */
+  function erfassterZeitraum() {
     var frueh = null, spaet = null;
     aktivitaeten.forEach(function (a) {
       if (!a.datum) return;
       if (!frueh || a.datum < frueh) frueh = a.datum;
       if (!spaet || a.datum > spaet) spaet = a.datum;
     });
+    return { frueh: frueh, spaet: spaet };
+  }
+
+  function zeichneReiterZahl() {
+    /* Erfasster Zeitraum in der Kopfzeile – hier, weil diese Funktion nach jeder Änderung läuft */
+    var zeitraum = document.getElementById('kopf-zeitraum');
+    var bereich = erfassterZeitraum();
+    var frueh = bereich.frueh, spaet = bereich.spaet;
     function kurz(iso) {
       var teile = iso.split('-');
       /* Das Jahr nur, wenn der Zeitraum über einen Jahreswechsel reicht */
@@ -4685,12 +4847,10 @@ pre.ausgabe{
     if (!aktivitaeten.length) { ziel.setAttribute('hidden', ''); return; }
     ziel.removeAttribute('hidden');
 
-    var laeufe = 0, erfasst = 0, mitSchmerz = 0, frueh = null, spaet = null;
+    var laeufe = 0, erfasst = 0, mitSchmerz = 0;
+    var bereich = erfassterZeitraum();
+    var frueh = bereich.frueh, spaet = bereich.spaet;
     aktivitaeten.forEach(function (a) {
-      if (a.datum) {
-        if (!frueh || a.datum < frueh) frueh = a.datum;
-        if (!spaet || a.datum > spaet) spaet = a.datum;
-      }
       if (!istLauf(a)) return;
       laeufe++;
       var b = befindenFuer(a.id);
@@ -4708,13 +4868,24 @@ pre.ausgabe{
             : datumLang(frueh) + ' – ' + datumLang(spaet));
     }
 
+    function wertUndName(z) {
+      var teil = el('div', { class: z.seite ? 'kopfzahl-seite' : null });
+      teil.appendChild(el('div', { class: 'kopfzahl-wert' + z.klasse, text: z.wert }));
+      teil.appendChild(el('div', { class: 'kopfzahl-name', text: z.name }));
+      return teil;
+    }
+
+    /* Führend: die Läufe, rechts daneben der Zeitraum */
+    var fuehrend = el('div', { class: 'kopfzahl kopfzahl--fuehrend' });
+    fuehrend.appendChild(wertUndName({ wert: String(laeufe), name: laeufe === 1 ? 'Lauf' : 'Läufe', klasse: '' }));
+    fuehrend.appendChild(wertUndName({ wert: zeitraum, name: 'Zeitraum', klasse: ' ist-text', seite: true }));
+    ziel.appendChild(fuehrend);
+
     [
-      { wert: String(laeufe), name: laeufe === 1 ? 'Lauf' : 'Läufe', klasse: '' },
-      { wert: String(erfasst), name: 'Befinden erfasst', klasse: ' ist-ok' },
-      { wert: String(mitSchmerz), name: 'davon mit Schmerz', klasse: ' ist-schmerz' },
-      { wert: zeitraum, name: 'Zeitraum', klasse: ' ist-text' }
+      { wert: String(erfasst), name: 'Befinden erfasst', klasse: ' ist-ok', karte: ' kopfzahl--ok' },
+      { wert: String(mitSchmerz), name: 'davon mit Schmerz', klasse: ' ist-schmerz', karte: ' kopfzahl--schmerz' }
     ].forEach(function (z) {
-      var block = el('div', { class: 'kopfzahl' });
+      var block = el('div', { class: 'kopfzahl' + z.karte });
       block.appendChild(el('div', { class: 'kopfzahl-wert' + z.klasse, text: z.wert }));
       block.appendChild(el('div', { class: 'kopfzahl-name', text: z.name }));
       ziel.appendChild(block);
