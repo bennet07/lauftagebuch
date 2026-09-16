@@ -353,7 +353,15 @@ button{font:inherit;color:inherit}
 .stat-legende{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.76rem;color:var(--text-4);font-weight:600}
 .stat-legende .legende-ok{color:var(--ok)}
 .stat-legende .legende-schmerz{color:var(--schmerz)}
-.stat-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+/* Kopfzeile der Statistik: keine Karte, nur Überschrift und Pillenreihen.
+   Passt der Zeitraum nicht neben die Überschrift, rückt er in eine eigene Zeile. */
+.stat-kopf{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.stat-kopf-zeile{align-self:stretch;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px}
+.stat-titel{font-size:17px;font-weight:660;letter-spacing:-.025em;line-height:1.2}
+.stat-kopf .schalter{background:var(--flaeche-sanft);max-width:100%}
+.stat-kopf .schalter button{white-space:nowrap}
+.stat-kopf details.stat-erklaerung{margin-top:-4px}
+.stat-erklaerung .hinweis-text{margin-top:4px;max-width:60ch}
 .stat-kennzahlen{margin-top:14px}
 /* Summenkarte der Statistik: Kilometer führend, darunter vier Kacheln im 2×2-Raster.
    Nur über .stat-kennzahlen – die Kopfzahlen im Verlauf bleiben unberührt. */
@@ -373,8 +381,16 @@ button{font:inherit;color:inherit}
   border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
   background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
 }
-.summe-text{padding:16px 18px 10px}
+.summe-text{padding:16px 18px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.summe-haupt{min-width:0}
+.summe-zahl{display:flex;align-items:baseline;gap:5px}
 .stat-kennzahlen .kopfzahl--summe .kopfzahl-wert{font-size:33px;font-weight:700;letter-spacing:-.045em;line-height:1}
+.summe-einheit{font-size:15px;font-weight:600;color:var(--text-2)}
+.summe-neben{display:flex;flex-direction:column;gap:8px;text-align:right;flex:0 0 auto}
+.stat-kennzahlen .kopfzahl--summe .summe-neben .kopfzahl-wert{
+  font-size:16px;font-weight:660;letter-spacing:-.02em;line-height:1.2;text-align:right;
+}
+.summe-neben .kopfzahl-name{margin-top:2px}
 .summe-flaeche{display:block;width:100%;height:40px}
 .summe-flaeche-grund{fill:rgba(91,156,248,.17)}
 .summe-flaeche-linie{fill:none;stroke:var(--akzent);stroke-width:1.8;stroke-linejoin:round}
@@ -399,9 +415,6 @@ button{font:inherit;color:inherit}
 #diagramm-feld > .karte{margin-top:10px}
 .diagramm-bereich + .karte{margin-top:16px}
 @media (max-width:560px){
-  .stat-filter{flex-direction:column;align-items:stretch}
-  .stat-filter .schalter{justify-content:center}
-  .stat-filter .schalter button{white-space:nowrap;padding:6px 10px;font-size:.78rem}
   .diagramm .ax{font-size:10px}
 }
 
@@ -3119,6 +3132,8 @@ pre.ausgabe{
   var statNurLaeufe = true;
   /* Nur für die laufende Sitzung; nach dem Neuladen steht wieder „Schmerz“ */
   var statDiagramm = 'schmerz';
+  /* Ebenso nur für die Sitzung: bleibt beim Umschalten offen, startet zugeklappt */
+  var statErklaerungOffen = false;
   var statResizeTimer = null;
   var statKalenderMonat = null;
   var uebersichtVorherigerFokus = null;
@@ -3319,19 +3334,21 @@ pre.ausgabe{
     });
     var minuten = Math.round(sekunden / 60);
 
-    var kacheln = [
+    /* Rechts in der führenden Karte, untereinander */
+    var neben = [
+      {
+        wert: mitZeit ? Math.floor(minuten / 60) + ':' + pad2(minuten % 60) : '–',
+        name: 'Stunden'
+      },
       {
         wert: String(gefiltert.length),
         name: statNurLaeufe
           ? (gefiltert.length === 1 ? 'Lauf' : 'Läufe')
-          : (gefiltert.length === 1 ? 'Aktivität' : 'Aktivitäten'),
-        klasse: ''
-      },
-      {
-        wert: mitZeit ? Math.floor(minuten / 60) + ':' + pad2(minuten % 60) : '–',
-        name: 'Stunden gelaufen',
-        klasse: ''
-      },
+          : (gefiltert.length === 1 ? 'Aktivität' : 'Aktivitäten')
+      }
+    ];
+
+    var kacheln = [
       {
         wert: bewertet ? mitSchmerz + ' von ' + bewertet : '–',
         name: 'mit Beschwerden',
@@ -3340,12 +3357,25 @@ pre.ausgabe{
       { wert: String(wochen), name: wochen === 1 ? 'Woche erfasst' : 'Wochen erfasst', klasse: '' }
     ];
 
-    /* Führend die Kilometer, am unteren Rand der Wochenumfang als Fläche */
+    /* Führend: links die Kilometer, rechts Stunden und Anzahl, am unteren Rand der Wochenumfang */
     var leiste = el('div', { class: 'kopfzahlen stat-kennzahlen' });
     var fuehrend = el('div', { class: 'kopfzahl kopfzahl--summe' });
     var text = el('div', { class: 'summe-text' });
-    text.appendChild(el('div', { class: 'kopfzahl-wert', text: zahlText(km, 1) }));
-    text.appendChild(el('div', { class: 'kopfzahl-name', text: 'Kilometer gelaufen' }));
+    var haupt = el('div', { class: 'summe-haupt' });
+    var zahl = el('div', { class: 'summe-zahl' });
+    zahl.appendChild(el('span', { class: 'kopfzahl-wert', text: zahlText(km, 1) }));
+    zahl.appendChild(el('span', { class: 'summe-einheit', text: 'km' }));
+    haupt.appendChild(zahl);
+    haupt.appendChild(el('div', { class: 'kopfzahl-name', text: 'gelaufen' }));
+    text.appendChild(haupt);
+    var seite = el('div', { class: 'summe-neben' });
+    neben.forEach(function (n) {
+      var block = el('div');
+      block.appendChild(el('div', { class: 'kopfzahl-wert', text: n.wert }));
+      block.appendChild(el('div', { class: 'kopfzahl-name', text: n.name }));
+      seite.appendChild(block);
+    });
+    text.appendChild(seite);
     fuehrend.appendChild(text);
     var flaeche = wochenFlaeche(wochenUmfang());
     if (flaeche) fuehrend.appendChild(flaeche);
@@ -4792,9 +4822,11 @@ pre.ausgabe{
 
   /* ---------- Statistik: Aufbau ---------- */
 
+  /* Kopfzeile der Statistik: Überschrift, beide Umschalter, Erklärtext zum Aufklappen */
   function statFilter() {
-    var karte = el('div', { class: 'karte' });
-    var reihe = el('div', { class: 'stat-filter' });
+    var kopf = el('div', { class: 'stat-kopf' });
+    var reihe = el('div', { class: 'stat-kopf-zeile' });
+    reihe.appendChild(el('h2', { class: 'stat-titel', text: 'Statistik' }));
 
     var zeitraum = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Zeitraum' });
     ZEITRAEUME.forEach(function (z) {
@@ -4803,6 +4835,7 @@ pre.ausgabe{
       zeitraum.appendChild(knopf);
     });
     reihe.appendChild(zeitraum);
+    kopf.appendChild(reihe);
 
     var auswahl = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Auswahl' });
     [[true, 'Nur Läufe'], [false, 'Alle Aktivitäten']].forEach(function (paar) {
@@ -4810,11 +4843,16 @@ pre.ausgabe{
       knopf.addEventListener('click', function () { statNurLaeufe = paar[0]; zeichneStatistik(); });
       auswahl.appendChild(knopf);
     });
-    reihe.appendChild(auswahl);
-    karte.appendChild(reihe);
-    karte.appendChild(el('p', { class: 'hinweis-text' },
+    kopf.appendChild(auswahl);
+
+    /* Standardmäßig zu; der Zustand wird nicht gespeichert */
+    var erklaerung = el('details', { class: 'alle stat-erklaerung', open: statErklaerungOffen });
+    erklaerung.addEventListener('toggle', function () { statErklaerungOffen = erklaerung.open; });
+    erklaerung.appendChild(el('summary', null, 'Was die Umschalter bewirken'));
+    erklaerung.appendChild(el('p', { class: 'hinweis-text' },
       'Der Umschalter wirkt auf die Kennzahlen. Die Diagramme beziehen sich immer auf Läufe, weil nur dort Befinden, Distanz und Pace erfasst werden. Der Kalender zeigt immer alle Aktivitäten.'));
-    return karte;
+    kopf.appendChild(erklaerung);
+    return kopf;
   }
 
   /* Die Kurzform steht nur auf dem Umschalter, die Karte behält ihre Überschrift */
@@ -5013,7 +5051,8 @@ pre.ausgabe{
   function zeichneKopfzahlen() {
     var ziel = document.getElementById('kopfzahlen');
     leeren(ziel);
-    if (!aktivitaeten.length) { ziel.setAttribute('hidden', ''); return; }
+    /* Die Kopfzahlen gehören zum Verlauf; auf den anderen Reitern stehen sie nicht */
+    if (!aktivitaeten.length || aktiverTab !== 'verlauf') { ziel.setAttribute('hidden', ''); return; }
     ziel.removeAttribute('hidden');
 
     var laeufe = 0, erfasst = 0, mitSchmerz = 0;
@@ -5148,6 +5187,7 @@ pre.ausgabe{
       if (n === name) { panel.removeAttribute('hidden'); reiter.setAttribute('aria-selected', 'true'); }
       else { panel.setAttribute('hidden', ''); reiter.setAttribute('aria-selected', 'false'); }
     });
+    zeichneKopfzahlen();
     zeichneSicherungsHinweis();
     /* Diagramme brauchen die tatsächliche Breite, die erst im sichtbaren Zustand feststeht */
     if (name === 'statistik') zeichneStatistik();
