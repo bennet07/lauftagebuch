@@ -93,10 +93,10 @@ body::after{
 /* Unten Platz für die feste Reiterleiste, seitlich für die Aussparung im Querformat */
 .huelle{
   max-width:840px;margin:0 auto;position:relative;
-  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(260px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));
+  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(130px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));
 }
 @media (max-width:560px){
-  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(230px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 }
 
 h1,h2,h3{margin:0;font-weight:640}
@@ -301,7 +301,10 @@ button{font:inherit;color:inherit}
 .kal-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
 .kal-titel{font-size:.9rem;font-weight:620;letter-spacing:-.01em}
 .kal-summe{font-size:.72rem;color:var(--text-4);font-weight:600}
-.kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px}
+/* Jede Zelle eine Spalte: oben die Kachel, darunter der Platz für den Befinden-Punkt */
+.kal-zelle{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.kal-zelle > .kal-tag{align-self:stretch}
 .kal-wochentag{
   font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;
   color:var(--text-4);font-weight:640;text-align:center;padding-bottom:2px;
@@ -328,7 +331,9 @@ button{font:inherit;color:inherit}
   position:absolute;left:50%;bottom:3px;transform:translateX(-50%);
   width:6px;height:6px;border-radius:50%;z-index:1;pointer-events:none;
 }
-.kal-tag--beides .kal-punkt{bottom:8px}
+/* Im Kalender unter der Kachel, auf dem dunklen Grund; ohne Eintrag ein leerer Platz */
+.kal-zelle > .kal-punkt{position:static;transform:none;flex:0 0 auto}
+.kal-punkt--leer{background:transparent}
 .kal-tag--luecke{border-style:dashed;border-color:currentColor;opacity:.98}
 .kal-tag[role="button"]{cursor:pointer}
 .kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
@@ -342,9 +347,6 @@ button{font:inherit;color:inherit}
 @media (max-width:560px){
   .kalender{gap:20px}
   .kal-monat{min-width:0;max-width:none;flex-basis:100%}
-  /* Wird es eng, weicht der Punkt – die Tageszahl hat Vorrang */
-  .kal-punkt{width:5px;height:5px;bottom:2px}
-  .kal-tag--beides .kal-punkt{bottom:7px}
 }
 .stat-detail{margin-top:14px;font-size:.83rem;color:var(--text-2);line-height:1.55;min-height:2.6em}
 .stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-3);line-height:1.6}
@@ -353,6 +355,49 @@ button{font:inherit;color:inherit}
 .stat-legende .legende-schmerz{color:var(--schmerz)}
 .stat-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .stat-kennzahlen{margin-top:14px}
+/* Summenkarte der Statistik: Kilometer führend, darunter vier Kacheln im 2×2-Raster.
+   Nur über .stat-kennzahlen – die Kopfzahlen im Verlauf bleiben unberührt. */
+.kopfzahlen.stat-kennzahlen{
+  grid-template-columns:1fr 1fr;gap:8px;
+  background:none;border:0;border-radius:0;overflow:visible;box-shadow:none;
+}
+.stat-kennzahlen .kopfzahl{
+  display:block;padding:12px 14px;
+  border-radius:var(--radius);border:1px solid var(--rand);
+}
+.stat-kennzahlen .kopfzahl-wert{font-size:22px;font-weight:680;text-align:left}
+.stat-kennzahlen .kopfzahl-wert.ist-text{font-size:17px;padding:3px 0 2px}
+.stat-kennzahlen .kopfzahl-name{order:0;margin-top:4px}
+.stat-kennzahlen .kopfzahl--summe{
+  grid-column:1 / -1;padding:0;overflow:hidden;
+  border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
+  background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
+}
+.summe-text{padding:16px 18px 10px}
+.stat-kennzahlen .kopfzahl--summe .kopfzahl-wert{font-size:33px;font-weight:700;letter-spacing:-.045em;line-height:1}
+.summe-flaeche{display:block;width:100%;height:40px}
+.summe-flaeche-grund{fill:rgba(91,156,248,.17)}
+.summe-flaeche-linie{fill:none;stroke:var(--akzent);stroke-width:1.8;stroke-linejoin:round}
+
+/* Umschalter: genau ein Diagramm zur Zeit */
+.diagramm-bereich{margin-top:24px}
+.diagramm-wahl{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  padding:3px;border-radius:999px;
+  background:var(--flaeche-sanft);border:1px solid var(--rand);
+}
+.diagramm-wahl button{
+  border:0;background:transparent;border-radius:999px;
+  padding:7px 4px;font-size:.82rem;font-weight:560;color:var(--text-3);
+  cursor:pointer;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .16s var(--weich),color .16s var(--weich);
+}
+@media (hover:hover){.diagramm-wahl button:hover{color:var(--text-2)}}
+.diagramm-wahl button[aria-selected="true"]{background:var(--flaeche-hoch);color:var(--text);font-weight:620;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.diagramm-wahl button:focus-visible{outline:2px solid var(--akzent);outline-offset:1px;border-radius:999px}
+#diagramm-feld > .karte{margin-top:10px}
+.diagramm-bereich + .karte{margin-top:16px}
 @media (max-width:560px){
   .stat-filter{flex-direction:column;align-items:stretch}
   .stat-filter .schalter{justify-content:center}
@@ -3072,6 +3117,8 @@ pre.ausgabe{
 
   var statZeitraum = 'gesamt';
   var statNurLaeufe = true;
+  /* Nur für die laufende Sitzung; nach dem Neuladen steht wieder „Schmerz“ */
+  var statDiagramm = 'schmerz';
   var statResizeTimer = null;
   var statKalenderMonat = null;
   var uebersichtVorherigerFokus = null;
@@ -3262,6 +3309,16 @@ pre.ausgabe{
       wochen = Math.round((letzteWoche - ersteWoche) / (7 * 86400000)) + 1;
     }
 
+    /* Die einzige neue Größe: Summe der Spalte „Zeit“ über dieselben Läufe */
+    var sekunden = 0, mitZeit = 0;
+    laeufe.forEach(function (a) {
+      var dauer = zeitSekunden(wertVon(a, 'Zeit'));
+      if (dauer === null) return;
+      sekunden += dauer;
+      mitZeit++;
+    });
+    var minuten = Math.round(sekunden / 60);
+
     var kacheln = [
       {
         wert: String(gefiltert.length),
@@ -3270,7 +3327,11 @@ pre.ausgabe{
           : (gefiltert.length === 1 ? 'Aktivität' : 'Aktivitäten'),
         klasse: ''
       },
-      { wert: zahlText(km, 1), name: 'Kilometer gelaufen', klasse: '' },
+      {
+        wert: mitZeit ? Math.floor(minuten / 60) + ':' + pad2(minuten % 60) : '–',
+        name: 'Stunden gelaufen',
+        klasse: ''
+      },
       {
         wert: bewertet ? mitSchmerz + ' von ' + bewertet : '–',
         name: 'mit Beschwerden',
@@ -3279,7 +3340,17 @@ pre.ausgabe{
       { wert: String(wochen), name: wochen === 1 ? 'Woche erfasst' : 'Wochen erfasst', klasse: '' }
     ];
 
+    /* Führend die Kilometer, am unteren Rand der Wochenumfang als Fläche */
     var leiste = el('div', { class: 'kopfzahlen stat-kennzahlen' });
+    var fuehrend = el('div', { class: 'kopfzahl kopfzahl--summe' });
+    var text = el('div', { class: 'summe-text' });
+    text.appendChild(el('div', { class: 'kopfzahl-wert', text: zahlText(km, 1) }));
+    text.appendChild(el('div', { class: 'kopfzahl-name', text: 'Kilometer gelaufen' }));
+    fuehrend.appendChild(text);
+    var flaeche = wochenFlaeche(wochenUmfang());
+    if (flaeche) fuehrend.appendChild(flaeche);
+    leiste.appendChild(fuehrend);
+
     kacheln.forEach(function (k) {
       var block = el('div', { class: 'kopfzahl' });
       block.appendChild(el('div', { class: 'kopfzahl-wert' + k.klasse, text: k.wert }));
@@ -3287,6 +3358,31 @@ pre.ausgabe{
       leiste.appendChild(block);
     });
     return leiste;
+  }
+
+  /* Wochen-km als schmale Fläche, rein zur Anmutung; die Werte stehen im Diagramm */
+  function wochenFlaeche(wochen) {
+    if (wochen.length < 2) return null;
+    var hoehe = 40, luft = 4, breite = 100;
+    var max = 0;
+    wochen.forEach(function (w) { if (w.km > max) max = w.km; });
+    var punkte = wochen.map(function (w, i) {
+      var x = (i / (wochen.length - 1)) * breite;
+      var y = hoehe - (max > 0 ? (w.km / max) * (hoehe - luft) : 0);
+      return x.toFixed(2) + ' ' + y.toFixed(2);
+    });
+    var bild = svg('svg', {
+      class: 'summe-flaeche', viewBox: '0 0 ' + breite + ' ' + hoehe,
+      preserveAspectRatio: 'none', 'aria-hidden': 'true', focusable: 'false'
+    });
+    bild.appendChild(svg('path', {
+      d: 'M0 ' + hoehe + ' L' + punkte.join(' L') + ' L' + breite + ' ' + hoehe + ' Z',
+      class: 'summe-flaeche-grund'
+    }));
+    bild.appendChild(svg('path', {
+      d: 'M' + punkte.join(' L'), class: 'summe-flaeche-linie', 'vector-effect': 'non-scaling-stroke'
+    }));
+    return bild;
   }
 
   /*
@@ -3428,25 +3524,19 @@ pre.ausgabe{
 
   /* ---------- Statistik: Kilometer pro Woche ---------- */
 
-  function wochenDiagramm() {
-    var karte = diagrammKarte('Kilometer pro Woche',
-      'Summe der gelaufenen Kilometer je Kalenderwoche. Wochen ohne Lauf bleiben als Null sichtbar.');
+  /*
+   * Umfang je Kalenderwoche im gewählten Zeitraum, lückenlos von der ersten bis
+   * zur letzten Woche. Geteilt von „Kilometer pro Woche“ und der Summenkarte.
+   */
+  function wochenUmfang() {
     var alle = statAktivitaeten(false);
-
-    if (!alle.length) {
-      karte.appendChild(statHinweis('Für diesen Zeitraum sind keine Aktivitäten erfasst.'));
-      return karte;
-    }
+    if (!alle.length) return [];
 
     var ersteWoche = wochenStart(alle[0].datum);
     var letzteWoche = wochenStart(alle[alle.length - 1].datum);
     var wochen = [];
     for (var zeit = ersteWoche; zeit <= letzteWoche; zeit += 7 * 86400000) {
       wochen.push({ start: zeit, km: 0, andere: 0, laeufe: 0 });
-    }
-    if (wochen.length < 2) {
-      karte.appendChild(statHinweis('Ab zwei Kalenderwochen entsteht hier ein Verlauf. Zurzeit liegt nur eine Woche vor.'));
-      return karte;
     }
 
     alle.forEach(function (a) {
@@ -3455,6 +3545,22 @@ pre.ausgabe{
       if (istLauf(a)) { wochen[index].km += kmVon(a); wochen[index].laeufe++; }
       else wochen[index].andere++;
     });
+    return wochen;
+  }
+
+  function wochenDiagramm() {
+    var karte = diagrammKarte('Kilometer pro Woche',
+      'Summe der gelaufenen Kilometer je Kalenderwoche. Wochen ohne Lauf bleiben als Null sichtbar.');
+    var wochen = wochenUmfang();
+
+    if (!wochen.length) {
+      karte.appendChild(statHinweis('Für diesen Zeitraum sind keine Aktivitäten erfasst.'));
+      return karte;
+    }
+    if (wochen.length < 2) {
+      karte.appendChild(statHinweis('Ab zwei Kalenderwochen entsteht hier ein Verlauf. Zurzeit liegt nur eine Woche vor.'));
+      return karte;
+    }
 
     var maxKm = 0, maxAndere = 0;
     wochen.forEach(function (w) {
@@ -3861,7 +3967,11 @@ pre.ausgabe{
     });
 
     var ersterWochentag = (new Date(Date.UTC(eintrag.jahr, eintrag.monat - 1, 1)).getUTCDay() || 7) - 1;
-    for (d = 0; d < ersterWochentag; d++) gitter.appendChild(el('span', { class: 'kal-tag kal-tag--leer' }));
+    for (d = 0; d < ersterWochentag; d++) {
+      var leerZelle = el('span', { class: 'kal-zelle' });
+      leerZelle.appendChild(el('span', { class: 'kal-tag kal-tag--leer' }));
+      gitter.appendChild(leerZelle);
+    }
 
     var heute = heuteIso();
     var beginn = ersterTag();
@@ -3883,11 +3993,15 @@ pre.ausgabe{
       var zelle = el('span', { class: klasse, role: 'button', tabindex: '0' });
       zelle.appendChild(el('span', { class: 'kal-zahl', text: String(d) }));
 
-      if (befindenTag) {
-        var punkt = el('span', { class: 'kal-punkt' });
-        punkt.style.background = befindenPunktFarbe(befindenTag);
-        zelle.appendChild(punkt);
-      }
+      /*
+       * Der Befinden-Punkt steht unter der Kachel auf dem dunklen Grund, nicht
+       * auf der Füllfarbe. Ohne Eintrag bleibt der Platz leer, aber gleich groß.
+       */
+      var spalte = el('span', { class: 'kal-zelle' });
+      spalte.appendChild(zelle);
+      var punkt = el('span', { class: befindenTag ? 'kal-punkt' : 'kal-punkt kal-punkt--leer', 'aria-hidden': 'true' });
+      if (befindenTag) punkt.style.background = befindenPunktFarbe(befindenTag);
+      spalte.appendChild(punkt);
 
       if (tag) {
         var stufeL = tag.hatLauf ? stufeAus(tag.km, maxKm) : 0;
@@ -3921,7 +4035,7 @@ pre.ausgabe{
           oeffneKalenderTag(tagesDatum);
         });
       }(datum));
-      gitter.appendChild(zelle);
+      gitter.appendChild(spalte);
     }
     block.appendChild(gitter);
     return block;
@@ -4703,6 +4817,61 @@ pre.ausgabe{
     return karte;
   }
 
+  /* Die Kurzform steht nur auf dem Umschalter, die Karte behält ihre Überschrift */
+  var DIAGRAMME = [
+    { wert: 'schmerz', text: 'Schmerz', zeichnen: function () { return schmerzDiagramm(); } },
+    { wert: 'wochen', text: 'Wochen-km', zeichnen: function () { return wochenDiagramm(); } },
+    { wert: 'tempo', text: 'Tempo', zeichnen: function () { return tempoDiagramm(); } },
+    { wert: 'puls', text: 'Puls', zeichnen: function () { return pulsDiagramm(); } }
+  ];
+
+  /* Genau ein Diagramm zur Zeit; beim Wechsel wird nur das Feld neu gezeichnet */
+  function diagrammWahl() {
+    var bereich = el('div', { class: 'diagramm-bereich' });
+    var leiste = el('div', { class: 'diagramm-wahl', role: 'tablist', 'aria-label': 'Diagramme' });
+    var feld = el('div', { id: 'diagramm-feld', role: 'tabpanel' });
+    var knoepfe = [];
+
+    function waehle(index, fokus) {
+      statDiagramm = DIAGRAMME[index].wert;
+      knoepfe.forEach(function (k, i) {
+        k.setAttribute('aria-selected', i === index ? 'true' : 'false');
+        k.setAttribute('tabindex', i === index ? '0' : '-1');
+      });
+      feld.setAttribute('aria-labelledby', knoepfe[index].id);
+      leeren(feld);
+      feld.appendChild(DIAGRAMME[index].zeichnen());
+      if (fokus) knoepfe[index].focus();
+    }
+
+    var aktiv = 0;
+    DIAGRAMME.forEach(function (d, i) {
+      if (d.wert === statDiagramm) aktiv = i;
+      var knopf = el('button', {
+        type: 'button', role: 'tab', id: 'diagramm-reiter-' + d.wert,
+        'aria-controls': 'diagramm-feld'
+      }, d.text);
+      knopf.addEventListener('click', function () { waehle(i, false); });
+      knopf.addEventListener('keydown', function (ereignis) {
+        var ziel = null;
+        if (ereignis.key === 'ArrowRight') ziel = (i + 1) % DIAGRAMME.length;
+        else if (ereignis.key === 'ArrowLeft') ziel = (i - 1 + DIAGRAMME.length) % DIAGRAMME.length;
+        else if (ereignis.key === 'Home') ziel = 0;
+        else if (ereignis.key === 'End') ziel = DIAGRAMME.length - 1;
+        if (ziel === null) return;
+        ereignis.preventDefault();
+        waehle(ziel, true);
+      });
+      knoepfe.push(knopf);
+      leiste.appendChild(knopf);
+    });
+
+    bereich.appendChild(leiste);
+    bereich.appendChild(feld);
+    waehle(aktiv, false);
+    return bereich;
+  }
+
   function zeichneStatistik() {
     var ziel = document.getElementById('tab-statistik');
     leeren(ziel);
@@ -4731,10 +4900,7 @@ pre.ausgabe{
       return;
     }
 
-    ziel.appendChild(schmerzDiagramm());
-    ziel.appendChild(wochenDiagramm());
-    ziel.appendChild(tempoDiagramm());
-    ziel.appendChild(pulsDiagramm());
+    ziel.appendChild(diagrammWahl());
     ziel.appendChild(kalenderDiagramm());
     ziel.appendChild(faktorBereich());
   }
