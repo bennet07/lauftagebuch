@@ -106,7 +106,7 @@ button{font:inherit;color:inherit}
 
 /* ---------- Kopfbereich ---------- */
 
-.kopf{padding:26px 0 18px}
+.kopf{padding:calc(26px + env(safe-area-inset-top,0px)) 0 18px}
 .kopf-zeile{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px}
 .kopf h1{
   display:flex;align-items:center;gap:8px;
@@ -210,7 +210,7 @@ button{font:inherit;color:inherit}
   .huelle{padding-bottom:140px}
   .navleiste{
     top:0;right:auto;width:232px;
-    padding:26px 14px 20px max(14px,env(safe-area-inset-left,0px));
+    padding:calc(26px + env(safe-area-inset-top,0px)) 14px 20px max(14px,env(safe-area-inset-left,0px));
     background:rgba(26,30,37,.72);border-right:1px solid var(--rand);
     -webkit-backdrop-filter:blur(14px) saturate(140%);
     backdrop-filter:blur(14px) saturate(140%);
