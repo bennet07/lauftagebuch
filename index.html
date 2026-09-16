@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Lauftagebuch">
@@ -90,8 +90,14 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23r)' opacity='.22'/%3E%3C/svg%3E");
 }
 
-.huelle{max-width:840px;margin:0 auto;padding:0 24px 140px;position:relative}
-@media (max-width:560px){.huelle{padding:0 16px 110px}}
+/* Unten Platz für die feste Reiterleiste, seitlich für die Aussparung im Querformat */
+.huelle{
+  max-width:840px;margin:0 auto;position:relative;
+  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(260px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));
+}
+@media (max-width:560px){
+  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(230px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+}
 
 h1,h2,h3{margin:0;font-weight:640}
 p{margin:0}
@@ -100,18 +106,20 @@ button{font:inherit;color:inherit}
 
 /* ---------- Kopfbereich ---------- */
 
-.kopf{padding:44px 0 18px}
+.kopf{padding:calc(26px + env(safe-area-inset-top,0px)) 0 18px}
+.kopf-zeile{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px}
 .kopf h1{
-  font-size:clamp(2rem,5.4vw,2.75rem);
-  font-weight:700;
-  letter-spacing:-.035em;
-  line-height:1.05;
+  display:flex;align-items:center;gap:8px;
+  font-size:17px;
+  font-weight:660;
+  letter-spacing:-.025em;
+  line-height:1.2;
 }
-.kopf .unterzeile{
-  color:var(--text-2);
-  font-size:1.02rem;
-  margin-top:10px;
-  max-width:46ch;
+.wortmarke{flex:0 0 auto;width:20px;height:20px;color:var(--akzent)}
+.kopf-zeitraum{
+  margin-left:auto;text-align:right;white-space:nowrap;
+  font-size:11px;font-weight:600;color:var(--text-4);
+  font-variant-numeric:tabular-nums;
 }
 
 .kopfzahlen{
@@ -149,43 +157,86 @@ button{font:inherit;color:inherit}
   color:var(--text-4);font-weight:640;margin-top:6px;
 }
 
-.reiter{
-  display:flex;gap:4px;margin-top:26px;
-  background:rgba(28,32,39,.82);
-  border:1px solid var(--rand);
-  padding:5px;border-radius:var(--radius);
-  position:sticky;top:10px;z-index:20;
-  -webkit-backdrop-filter:blur(14px) saturate(140%);
-  backdrop-filter:blur(14px) saturate(140%);
-  box-shadow:var(--schatten-karte);
-}
-.reiter button{
-  flex:1;border:0;background:transparent;padding:10px 12px;border-radius:11px;
-  font-size:.94rem;font-weight:560;letter-spacing:-.005em;color:var(--text-3);
-  cursor:pointer;transition:background .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
-}
-.reiter button:hover{color:var(--text)}
-.reiter button:active{transform:translateY(1px)}
-.reiter button[aria-selected="true"]{
-  background:var(--flaeche-hoch);color:var(--text);
-  box-shadow:0 1px 2px rgba(0,0,0,.4);
-}
-/* Zurückhaltender Hinweis, keine Signalfarbe */
-.reiter-zahl{
-  display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
-  background:var(--flaeche-hoch);border:1px solid var(--rand);
-  font-size:.72rem;font-weight:640;color:var(--text-3);
-  font-variant-numeric:tabular-nums;vertical-align:1px;
-}
-.reiter button[aria-selected="true"] .reiter-zahl{background:var(--bg-tief);color:var(--text-2)}
 .verlaufs-meldung{margin-top:24px}
 .bef-notiz-link{margin-top:8px;display:inline-block}
 .formular--notiz{margin-top:10px}
-/* Fünf Reiter müssen auch auf schmalen Bildschirmen nebeneinander passen */
-@media (max-width:560px){
-  .reiter{gap:1px;padding:4px}
-  .reiter button{padding:9px 2px;font-size:.76rem;letter-spacing:-.02em}
-  .reiter-zahl{margin-left:3px;padding:1px 5px;font-size:.66rem}
+
+/* ---------- Reiterleiste: unten am Telefon, links am Rechner ---------- */
+
+.navleiste{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  padding:0 max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+  pointer-events:none;
+}
+.navleiste-marke{display:none}
+.reiter{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
+  max-width:560px;margin:0 auto;padding:7px 6px;
+  border-radius:22px;border:1px solid var(--rand);
+  background:rgba(28,32,39,.93);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:var(--schatten-hoch);
+  pointer-events:auto;
+}
+.reiter button{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
+  border:0;background:transparent;padding:9px 2px 8px;border-radius:16px;
+  color:var(--text-3);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:background .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
+}
+.reiter button:focus-visible{outline-offset:1px}
+@media (hover:hover){.reiter button:hover{color:var(--text-2)}}
+.reiter button:active{transform:translateY(1px)}
+.reiter button[aria-selected="true"]{background:var(--akzent-sanft);color:var(--akzent)}
+.reiter-symbol{display:block;width:21px;height:21px;flex:0 0 auto}
+.reiter-symbol svg{display:block;width:21px;height:21px}
+.reiter-text{
+  display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:10px;font-weight:560;letter-spacing:-.01em;line-height:1.2;
+}
+.reiter button[aria-selected="true"] .reiter-text{font-weight:640}
+/* Offene Tage: nur ein Punkt, die genaue Zahl steht im aria-label.
+   Im DOM hinter der Beschriftung, damit der Reiter weiter „Verlauf …“ heißt;
+   optisch sitzt er oben rechts am Symbol. */
+.reiter-zahl{
+  position:absolute;top:7px;left:calc(50% + 6.5px);
+  width:7px;height:7px;border-radius:50%;
+  background:var(--akzent);box-shadow:0 0 0 2px rgba(28,32,39,.93);
+}
+
+@media (min-width:900px){
+  body{padding-left:232px}
+  .huelle{padding-bottom:140px}
+  .navleiste{
+    top:0;right:auto;width:232px;
+    padding:calc(26px + env(safe-area-inset-top,0px)) 14px 20px max(14px,env(safe-area-inset-left,0px));
+    background:rgba(26,30,37,.72);border-right:1px solid var(--rand);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    backdrop-filter:blur(14px) saturate(140%);
+    overflow-y:auto;pointer-events:auto;
+  }
+  .navleiste-marke{
+    display:flex;align-items:center;gap:8px;padding:0 13px;margin-bottom:22px;
+    font-size:17px;font-weight:660;letter-spacing:-.025em;line-height:1.2;
+  }
+  .reiter{
+    display:flex;flex-direction:column;gap:4px;max-width:none;margin:0;padding:0;
+    border:0;border-radius:0;background:none;box-shadow:none;
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+  .reiter button{
+    flex-direction:row;gap:12px;padding:11px 13px;border-radius:14px;
+    border:1px solid transparent;text-align:left;
+  }
+  .reiter button[aria-selected="true"]{border-color:var(--akzent-rand)}
+  .reiter-text{font-size:14px}
+  .reiter-zahl{top:9px;left:30px;box-shadow:0 0 0 2px rgba(26,30,37,.95)}
+  /* Die Wortmarke steht in der Seitenleiste; die Überschrift bleibt für Screenreader */
+  .kopf h1{
+    position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+  }
 }
 
 /* ---------- Diagramme ---------- */
@@ -657,6 +708,8 @@ pre.ausgabe{
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
 }
 #toast.sichtbar{opacity:1;transform:translate(-50%,0)}
+/* Über der Reiterleiste, nicht darauf */
+@media (max-width:899px){#toast{bottom:calc(104px + env(safe-area-inset-bottom,0px))}}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.001ms !important;animation-duration:.001ms !important}
@@ -668,16 +721,11 @@ pre.ausgabe{
 <body>
 <div class="huelle">
   <header class="kopf">
-    <h1>Lauftagebuch</h1>
-    <p class="unterzeile">Aktivitäten aus Garmin, Befinden je Lauf und Tag, Export als Text.</p>
+    <div class="kopf-zeile">
+      <h1><svg class="wortmarke" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false"><path d="M3 15 7.5 9l4 3.5L17 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="15" r="2" fill="currentColor"/><circle cx="17" cy="5" r="2" fill="currentColor"/></svg><span>Lauftagebuch</span></h1>
+      <span class="kopf-zeitraum" id="kopf-zeitraum"></span>
+    </div>
     <div class="kopfzahlen" id="kopfzahlen" hidden></div>
-    <nav class="reiter" role="tablist" aria-label="Bereiche">
-      <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf">Verlauf<span class="reiter-zahl" id="reiter-zahl" hidden></span></button>
-      <button type="button" role="tab" id="reiter-statistik" aria-selected="false" data-tab="statistik">Statistik</button>
-      <button type="button" role="tab" id="reiter-import" aria-selected="false" data-tab="import">Import</button>
-      <button type="button" role="tab" id="reiter-export" aria-selected="false" data-tab="export">Export</button>
-      <button type="button" role="tab" id="reiter-sicherung" aria-selected="false" data-tab="sicherung">Sicherung</button>
-    </nav>
   </header>
 
   <main>
@@ -805,6 +853,17 @@ pre.ausgabe{
     </div>
     <div id="uebersicht-inhalt"></div>
   </div>
+</div>
+
+<div class="navleiste">
+  <div class="navleiste-marke" aria-hidden="true"><svg class="wortmarke" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false"><path d="M3 15 7.5 9l4 3.5L17 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="15" r="2" fill="currentColor"/><circle cx="17" cy="5" r="2" fill="currentColor"/></svg><span>Lauftagebuch</span></div>
+  <nav class="reiter" role="tablist" aria-label="Bereiche">
+    <button type="button" role="tab" id="reiter-verlauf" aria-selected="true" data-tab="verlauf"><span class="reiter-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6h11M4 12h11M4 18h11M20 6h.01M20 12h.01M20 18h.01"/></svg></span><span class="reiter-text">Verlauf</span><span class="reiter-zahl" id="reiter-zahl" role="img" hidden></span></button>
+    <button type="button" role="tab" id="reiter-statistik" aria-selected="false" data-tab="statistik"><span class="reiter-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 20h18M7 17v-5M12 17V5M17 17v-8"/></svg></span><span class="reiter-text">Statistik</span></button>
+    <button type="button" role="tab" id="reiter-import" aria-selected="false" data-tab="import"><span class="reiter-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 14v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3M12 3v11M7.5 9.5 12 14l4.5-4.5"/></svg></span><span class="reiter-text">Import</span></button>
+    <button type="button" role="tab" id="reiter-export" aria-selected="false" data-tab="export"><span class="reiter-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 14v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3M12 14V3M7.5 7.5 12 3l4.5 4.5"/></svg></span><span class="reiter-text">Export</span></button>
+    <button type="button" role="tab" id="reiter-sicherung" aria-selected="false" data-tab="sicherung"><span class="reiter-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5.5c0 4.3-2.9 7.9-7 9.5-4.1-1.6-7-5.2-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="reiter-text">Sicherung</span></button>
+  </nav>
 </div>
 
 <script>
@@ -4541,11 +4600,25 @@ pre.ausgabe{
   }
 
   function zeichneReiterZahl() {
+    /* Erfasster Zeitraum in der Kopfzeile – hier, weil diese Funktion nach jeder Änderung läuft */
+    var zeitraum = document.getElementById('kopf-zeitraum');
+    var frueh = null, spaet = null;
+    aktivitaeten.forEach(function (a) {
+      if (!a.datum) return;
+      if (!frueh || a.datum < frueh) frueh = a.datum;
+      if (!spaet || a.datum > spaet) spaet = a.datum;
+    });
+    function kurz(iso) {
+      var teile = iso.split('-');
+      /* Das Jahr nur, wenn der Zeitraum über einen Jahreswechsel reicht */
+      return teile[2] + '.' + teile[1] + '.' + (frueh.slice(0, 4) === spaet.slice(0, 4) ? '' : teile[0].slice(2));
+    }
+    zeitraum.textContent = !frueh ? '' : (frueh === spaet ? kurz(frueh) : kurz(frueh) + ' – ' + kurz(spaet));
+
     var zahl = document.getElementById('reiter-zahl');
     var offen = offeneTage().length;
-    if (!offen) { zahl.setAttribute('hidden', ''); zahl.textContent = ''; return; }
+    if (!offen) { zahl.setAttribute('hidden', ''); return; }
     zahl.removeAttribute('hidden');
-    zahl.textContent = String(offen);
     zahl.setAttribute('aria-label', offen === 1
       ? '1 Tag ohne vollständigen Eintrag'
       : offen + ' Tage ohne vollständigen Eintrag');
