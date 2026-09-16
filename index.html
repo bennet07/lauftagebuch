@@ -4828,7 +4828,7 @@ pre.ausgabe{
   /* Genau ein Diagramm zur Zeit; beim Wechsel wird nur das Feld neu gezeichnet */
   function diagrammWahl() {
     var bereich = el('div', { class: 'diagramm-bereich' });
-    var leiste = el('div', { class: 'diagramm-wahl', role: 'tablist' });
+    var leiste = el('div', { class: 'diagramm-wahl', role: 'tablist', 'aria-label': 'Diagramme' });
     var feld = el('div', { id: 'diagramm-feld', role: 'tabpanel' });
     var knoepfe = [];
 
