@@ -366,6 +366,7 @@ main > section > :first-child{margin-top:12px}
 .kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
 .kal-probe--punkt{background:var(--kal-leer);border:1px solid var(--rand)}
 .kal-probe--punkt .kal-punkt{bottom:50%;transform:translate(-50%,50%)}
+.kal-probe--vorbeginn{background:var(--kal-leer)}
 .kal-probe--luecke{background:transparent;border:1px dashed var(--text-4)}
 .kal-tag--heute{box-shadow:0 0 0 2px var(--akzent)}
 .kal-probe--heute{background:transparent;box-shadow:inset 0 0 0 2px var(--akzent)}
@@ -701,6 +702,7 @@ details.alle > summary:hover{color:var(--text)}
   text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);
 }
 .werte-liste{margin:0}
+.einstellung{margin-top:16px}
 .werte-zeile{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:4px 0}
 .werte-zeile + .werte-zeile{border-top:1px solid var(--rand-fein)}
 .werte dt{flex:1 1 0;min-width:0;color:var(--text-4);overflow-wrap:anywhere}
@@ -961,6 +963,15 @@ pre.ausgabe{
 
     <section id="tab-sicherung" role="tabpanel" aria-labelledby="reiter-sicherung" hidden>
       <div class="karte">
+        <h2>Einstellungen</h2>
+        <div class="einstellung">
+          <label class="feld" for="zaehlbeginn">Erfassung zählt ab</label>
+          <input type="date" id="zaehlbeginn">
+          <p class="hinweis-text">Tage davor zählen nicht in die Abdeckung. Ältere Einträge bleiben erhalten.</p>
+        </div>
+      </div>
+
+      <div class="karte">
         <h2>Sicherung herunterladen</h2>
         <p class="hinweis-text">Alle Aktivitäten und Befinden-Einträge liegen ausschließlich in diesem Browser auf diesem Gerät. Wird der Browser-Speicher geleert oder das Gerät gewechselt, sind sie weg. Die Sicherung schreibt den gesamten Bestand in eine JSON-Datei. Mit derselben Datei lassen sich die Daten auch auf ein anderes Gerät übertragen.</p>
         <p class="hinweis-text">Die Datei enthält deine Trainings- und Befinden-Einträge. Leg sie dort ab, wo du auch andere persönliche Unterlagen aufbewahrst.</p>
@@ -1058,6 +1069,8 @@ pre.ausgabe{
   var SCHLUESSEL_BEF = 'lauftagebuch.befinden.v2';
   var SCHLUESSEL_SIC = 'lauftagebuch.sicherung.v1';
   var SCHLUESSEL_GIST = 'lauftagebuch.gist.v1';
+  /* Einstellungen, vorerst nur der Zählbeginn der Tagesabdeckung. Geht mit in Datei und Gist. */
+  var SCHLUESSEL_EIN = 'lauftagebuch.einstellungen.v1';
   /* Version 2 bringt befinden.tage sowie abKm und nachgetragen. Sicherungen der
      Version 1 bleiben ladbar, normalisiereBefinden ergänzt die fehlenden Felder. */
   var FORMAT_VERSION = 2;
@@ -1177,6 +1190,40 @@ pre.ausgabe{
     return sauber;
   }
 
+  /* { zaehlbeginn: 'YYYY-MM-DD' } oder {} für „kein Zählbeginn“ */
+  var einstellungen = {};
+
+  function normalisiereEinstellungen(daten) {
+    var raus = {};
+    if (daten && typeof daten === 'object' && !Array.isArray(daten) &&
+        typeof daten.zaehlbeginn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(daten.zaehlbeginn)) {
+      raus.zaehlbeginn = daten.zaehlbeginn;
+    }
+    return raus;
+  }
+
+  /*
+   * Vorbelegung des Zählbeginns: der früheste Tag mit einem Befinden-Eintrag –
+   * Lauf-Befinden über das Datum seiner Aktivität, Tages-Befinden direkt. Ist
+   * beides leer, heute. Wird einmal gesetzt und gespeichert, nie still neu
+   * abgeleitet: sonst verschöbe er sich, sobald der früheste Eintrag wegfällt.
+   */
+  function vorbelegterZaehlbeginn(akt, bef) {
+    var datumVon = {}, frueh = null;
+    akt.forEach(function (a) { datumVon[a.id] = a.datum; });
+    function pruefe(datum) {
+      if (!datum || !/^\d{4}-\d{2}-\d{2}$/.test(datum)) return;
+      if (!frueh || datum < frueh) frueh = datum;
+    }
+    bef.eintraege.forEach(function (e) { pruefe(datumVon[e.aktivitaetId]); });
+    bef.tage.forEach(function (t) { pruefe(t.datum); });
+    return frueh || heuteIso();
+  }
+
+  function zaehlbeginn() {
+    return einstellungen.zaehlbeginn || null;
+  }
+
   function ladeBefinden() {
     return normalisiereBefinden(ladeRoh(SCHLUESSEL_BEF));
   }
@@ -1257,6 +1304,12 @@ pre.ausgabe{
 
   function speichereBefinden() {
     var ergebnis = speichere(SCHLUESSEL_BEF, befinden);
+    planeGistSicherung();
+    return ergebnis;
+  }
+
+  function speichereEinstellungen() {
+    var ergebnis = speichere(SCHLUESSEL_EIN, einstellungen);
     planeGistSicherung();
     return ergebnis;
   }
@@ -2761,13 +2814,14 @@ pre.ausgabe{
   }
 
   /*
-   * Inhalt einer Sicherung. Enthält bewusst nur die beiden Datenschlüssel –
-   * der Zugriffsschlüssel für die automatische Sicherung gehört nicht hinein.
+   * Inhalt einer Sicherung: die beiden Datenschlüssel und die Einstellungen.
+   * Der Zugriffsschlüssel für die automatische Sicherung gehört nicht hinein.
    */
   function sicherungsInhalt() {
     var daten = {};
     daten[SCHLUESSEL_AKT] = aktivitaeten;
     daten[SCHLUESSEL_BEF] = befinden;
+    daten[SCHLUESSEL_EIN] = einstellungen;
     return JSON.stringify({
       formatVersion: FORMAT_VERSION,
       anwendung: 'Lauftagebuch',
@@ -2838,9 +2892,14 @@ pre.ausgabe{
       return { fehler: 'Die Aktivitäten in der Datei haben nicht den erwarteten Aufbau. Es wurde nichts verändert.' };
     }
 
+    /* Ältere Sicherungen kennen die Einstellungen nicht – das ist kein Fehler, dann null */
+    var rohEin = roh.daten[SCHLUESSEL_EIN];
+    var ein = rohEin && typeof rohEin === 'object' && !Array.isArray(rohEin) ? normalisiereEinstellungen(rohEin) : null;
+
     return {
       akt: akt,
       bef: bef,
+      ein: ein,
       erstelltAm: typeof roh.erstelltAm === 'string' ? roh.erstelltAm : ''
     };
   }
@@ -2860,8 +2919,11 @@ pre.ausgabe{
       tage: pruefung.bef.tage.slice()
     };
     entwuerfe = {};
+    /* Ohne Einstellungen in der Datei: vorbelegt aus den eingelesenen Daten */
+    einstellungen = pruefung.ein || { zaehlbeginn: vorbelegterZaehlbeginn(pruefung.akt, pruefung.bef) };
     speichereAktivitaeten();
     speichereBefinden();
+    speichereEinstellungen();
     zeigeSicherungsErgebnis(pruefung.akt.length + ' Aktivitäten und ' + pruefung.bef.eintraege.length +
       ' Befinden-Einträge eingelesen. Der vorherige Bestand wurde ersetzt.', false);
     quittiere('Sicherung eingelesen');
@@ -2935,9 +2997,19 @@ pre.ausgabe{
       neueTagesBef++;
     });
 
+    /*
+     * Zählbeginn: der frühere gewinnt, sonst fielen tatsächlich erfasste Tage aus
+     * der Rechnung. „Kein Zählbeginn“ zählt ab dem Anfang und ist damit der früheste.
+     */
+    var ihrer = pruefung.ein || { zaehlbeginn: vorbelegterZaehlbeginn(pruefung.akt, pruefung.bef) };
+    var vorher = zaehlbeginn();
+    einstellungen = !einstellungen.zaehlbeginn || !ihrer.zaehlbeginn ? {} :
+      { zaehlbeginn: einstellungen.zaehlbeginn < ihrer.zaehlbeginn ? einstellungen.zaehlbeginn : ihrer.zaehlbeginn };
+
     aktivitaeten.sort(sortiereAbsteigend);
     speichereAktivitaeten();
     speichereBefinden();
+    speichereEinstellungen();
 
     var meldung = neueAkt + ' Aktivitäten und ' + neueBef + ' Befinden-Einträge übernommen. ' +
       dublettenAkt + ' Aktivitäten und ' + dublettenBef + ' Befinden-Einträge waren bereits vorhanden.';
@@ -2949,6 +3021,11 @@ pre.ausgabe{
     }
     if (ohneAktivitaet) {
       meldung += ' ' + ohneAktivitaet + ' Befinden-Einträge ohne zugehörige Aktivität blieben unberücksichtigt.';
+    }
+    if (zaehlbeginn() !== vorher) {
+      meldung += zaehlbeginn()
+        ? ' Die Erfassung zählt jetzt ab ' + datumLang(zaehlbeginn()) + '.'
+        : ' Für die Erfassung ist jetzt kein Zählbeginn gesetzt.';
     }
     zeigeSicherungsErgebnis(meldung, false);
     quittiere('Sicherung zusammengeführt');
@@ -3012,8 +3089,9 @@ pre.ausgabe{
     zeichneSicherungsHinweis();
   }
 
+  /* Mit den Einstellungen, damit ein geänderter Zählbeginn auch gesichert wird */
   function datenFingerabdruck() {
-    return JSON.stringify({ a: aktivitaeten, b: befinden });
+    return JSON.stringify({ a: aktivitaeten, b: befinden, e: einstellungen });
   }
 
   function gistHochladen(erzwingen) {
@@ -3566,11 +3644,28 @@ pre.ausgabe{
       if (tagesBefindenFuer(isoAusZeit(zeit))) erfasst++;
     }
     if (!gesamt) return null;
-    return { erfasst: erfasst, gesamt: gesamt, prozent: Math.round((erfasst / gesamt) * 100) };
+    return { erfasst: erfasst, gesamt: gesamt, prozent: Math.round((erfasst / gesamt) * 100), start: start };
+  }
+
+  /*
+   * Beginn der Tagesabdeckung. Ohne Zeitraum-Filter: der Zählbeginn, ohne
+   * Zählbeginn wie bisher der erste Tag mit Daten. Mit Filter der spätere von
+   * Filtergrenze und Zählbeginn – Tage davor liegen außerhalb des Messzeitraums.
+   */
+  function abdeckungsBeginn(grenze) {
+    var zb = zaehlbeginn();
+    if (grenze && zb) return grenze > zb ? grenze : zb;
+    return grenze || zb || ersterTag();
+  }
+
+  /* „08.09.“, mit Jahr nur, wenn es nicht das laufende ist */
+  function seitText(iso) {
+    var teile = iso.split('-');
+    return teile[2] + '.' + teile[1] + '.' + (teile[0] === heuteIso().slice(0, 4) ? '' : teile[0]);
   }
 
   function abdeckungsZeile() {
-    var abdeckung = abdeckungAb(statGrenze() || ersterTag());
+    var abdeckung = abdeckungAb(abdeckungsBeginn(statGrenze()));
     if (!abdeckung) return null;
     var gesamt = abdeckung.gesamt, erfasst = abdeckung.erfasst;
 
@@ -3578,7 +3673,7 @@ pre.ausgabe{
     var kachel = el('div', { class: 'karte stat-kachel stat-abdeckung' });
     kachel.appendChild(el('div', { class: 'kachel-wert', text: abdeckung.prozent + ' %' }));
     kachel.appendChild(el('div', { class: 'kachel-name' },
-      'der Tage mit Tagesbefinden erfasst (' + erfasst + ' von ' + gesamt + ')'));
+      erfasst + ' von ' + gesamt + (gesamt === 1 ? ' Tag' : ' Tagen') + ' seit ' + seitText(abdeckung.start) + ' erfasst'));
     var balken = el('div', { class: 'abdeckung-balken', 'aria-hidden': 'true' });
     var fuellung = el('span');
     fuellung.style.width = abdeckung.prozent + '%';
@@ -4110,12 +4205,18 @@ pre.ausgabe{
     }
 
     var heute = heuteIso();
-    var beginn = ersterTag();
+    var zb = zaehlbeginn();
+    var beginn = zb || ersterTag();
 
     for (d = 1; d <= anzahlTage; d++) {
       var datum = eintrag.jahr + '-' + pad2(eintrag.monat) + '-' + pad2(d);
       var tag = tage[datum];
       var befindenTag = tagesBefindenFuer(datum);
+      /*
+       * Vor dem Zählbeginn gab es das Erfassungsdesign nicht: dort weder Rahmen
+       * noch Punkt, denn „nicht erfasst“ wäre eine falsche Aussage.
+       */
+      var vorZaehlbeginn = !!zb && datum < zb;
       /* Nur Tage im erfassten Zeitraum können eine Lücke sein */
       var istLuecke = !befindenTag && !!beginn && datum >= beginn && datum <= heute;
       var klasse = 'kal-tag';
@@ -4140,7 +4241,8 @@ pre.ausgabe{
        */
       var spalte = el('span', { class: 'kal-zelle' });
       spalte.appendChild(zelle);
-      spalte.appendChild(el('span', { class: 'kal-punkt ' + befindenPunktKlasse(befindenTag), 'aria-hidden': 'true' }));
+      spalte.appendChild(el('span', { class: 'kal-punkt ' + befindenPunktKlasse(vorZaehlbeginn ? null : befindenTag), 'aria-hidden': 'true' }));
+      var befindenHinweis = vorZaehlbeginn ? ' · vor dem Zählbeginn' : ' · Tagesbefinden: ' + befindenExport(befindenTag);
 
       if (tag) {
         if (tag.hatLauf && tag.hatAndere) zelle.appendChild(el('span', { class: 'kal-balken' }));
@@ -4148,11 +4250,9 @@ pre.ausgabe{
           (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
           (tag.hatLauf && tag.km ? ', ' + zahlText(tag.km, 2) + ' km' : '') +
           (tag.hatAndere && tag.dauer ? ', ' + dauerText(tag.dauer) + ' übrige' : '') +
-          ' · ' + tag.titel.join(', ') +
-          ' · Tagesbefinden: ' + befindenExport(befindenTag));
+          ' · ' + tag.titel.join(', ') + befindenHinweis);
       } else {
-        zelle.setAttribute('title', datumLang(datum) + ': keine Aktivität' +
-          ' · Tagesbefinden: ' + befindenExport(befindenTag));
+        zelle.setAttribute('title', datumLang(datum) + ': keine Aktivität' + befindenHinweis);
       }
 
       /* Antippen öffnet die Erfassung für genau diesen Tag */
@@ -4233,6 +4333,13 @@ pre.ausgabe{
     heute.appendChild(el('span', { class: 'kal-probe kal-probe--heute' }));
     heute.appendChild(el('span', { text: 'heute' }));
     legende.appendChild(heute);
+
+    if (zaehlbeginn()) {
+      var vor = el('span', { class: 'kal-legende-teil' });
+      vor.appendChild(el('span', { class: 'kal-probe kal-probe--vorbeginn' }));
+      vor.appendChild(el('span', { text: 'vor dem Zählbeginn – keine Erfassung vorgesehen' }));
+      legende.appendChild(vor);
+    }
     return legende;
   }
 
@@ -5174,8 +5281,8 @@ pre.ausgabe{
       if (b.art === 'schmerz') mitSchmerz++;
     });
 
-    /* Links der Ring: an wie vielen Tagen seit dem ersten Eintrag ein Tages-Befinden steht */
-    ziel.appendChild(erfassungsRing(abdeckungAb(ersterTag())));
+    /* Links der Ring: an wie vielen Tagen seit dem Zählbeginn ein Tages-Befinden steht */
+    ziel.appendChild(erfassungsRing(abdeckungAb(abdeckungsBeginn(null))));
 
     /*
      * Rechts drei Felder über den gesamten Bestand. Die Kleingrafiken zeigen die
@@ -5222,7 +5329,7 @@ pre.ausgabe{
     var box = el('div', {
       class: 'ring', role: 'img',
       'aria-label': abdeckung
-        ? 'Tagesbefinden an ' + prozent + ' % der Tage erfasst (' + abdeckung.erfasst + ' von ' + abdeckung.gesamt + ')'
+        ? 'Tagesbefinden an ' + prozent + ' % der Tage seit ' + seitText(abdeckung.start) + ' erfasst (' + abdeckung.erfasst + ' von ' + abdeckung.gesamt + ')'
         : 'Noch kein Tag im erfassten Zeitraum'
     });
     var r = 26, umfang = 2 * Math.PI * r;
@@ -5239,6 +5346,7 @@ pre.ausgabe{
     mitte.appendChild(el('span', { class: 'ring-zahl', text: prozent === null ? '–' : prozent + ' %' }));
     box.appendChild(mitte);
     box.appendChild(el('span', { class: 'ring-name', text: 'Tage erfasst' }));
+    if (abdeckung) box.appendChild(el('span', { class: 'ring-name ring-zeitraum', text: 'seit ' + seitText(abdeckung.start) }));
     return box;
   }
 
@@ -5365,6 +5473,12 @@ pre.ausgabe{
     }
   }
 
+  function zeichneEinstellungen() {
+    var feld = document.getElementById('zaehlbeginn');
+    /* Nicht überschreiben, während jemand im Feld tippt */
+    if (document.activeElement !== feld) feld.value = zaehlbeginn() || '';
+  }
+
   function zeichneImport() {
     var manuell = 0;
     aktivitaeten.forEach(function (a) { if (a.istLaufManuell !== null) manuell++; });
@@ -5391,6 +5505,7 @@ pre.ausgabe{
     zeichneExport();
     zeichneSicherung();
     zeichneGist();
+    zeichneEinstellungen();
     zeichneSicherungsHinweis();
     if (aktiverTab === 'statistik') zeichneStatistik();
     aktualisiereTagesDialog();
@@ -5587,6 +5702,15 @@ pre.ausgabe{
     }, 200);
   });
 
+  /* Leeren heißt „kein Zählbeginn“: dann zählt die Abdeckung wieder über alles */
+  document.getElementById('zaehlbeginn').addEventListener('change', function (ereignis) {
+    var wert = ereignis.target.value;
+    einstellungen = /^\d{4}-\d{2}-\d{2}$/.test(wert) ? { zaehlbeginn: wert } : {};
+    speichereEinstellungen();
+    quittiere(zaehlbeginn() ? 'Erfassung zählt ab ' + datumLang(zaehlbeginn()) : 'Kein Zählbeginn gesetzt');
+    zeichne();
+  });
+
   document.getElementById('sicherung-erstellen').addEventListener('click', erstelleSicherung);
   document.getElementById('gist-verbinden').addEventListener('click', gistVerbinden);
   document.getElementById('gist-jetzt').addEventListener('click', function () { gistHochladen(true); });
@@ -5631,6 +5755,15 @@ pre.ausgabe{
   aktivitaeten = ladeAktivitaeten();
   aktivitaeten.sort(sortiereAbsteigend);
   befinden = ladeBefinden();
+
+  /* Noch nie gesetzt: einmal vorbelegen und speichern. {} heißt dagegen bewusst geleert. */
+  var rohEinstellungen = ladeRoh(SCHLUESSEL_EIN);
+  if (rohEinstellungen === null) {
+    einstellungen = { zaehlbeginn: vorbelegterZaehlbeginn(aktivitaeten, befinden) };
+    speichere(SCHLUESSEL_EIN, einstellungen);
+  } else {
+    einstellungen = normalisiereEinstellungen(rohEinstellungen);
+  }
 
   /* Altlast aus der früheren Duplikat-Erkennung, einmalig beim Start */
   var bereinigt = entferneDubletten();
