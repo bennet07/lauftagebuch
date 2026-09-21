@@ -171,26 +171,45 @@ button{font:inherit;color:inherit}
   color:var(--text-4);font-weight:640;margin-top:6px;
 }
 
-/* Kopfzahlen oben: eine führende Karte, zwei begleitende. Die Statistik nutzt
-   .kopfzahlen ebenfalls und bleibt davon unberührt. */
-.kopfzahlen--kopf{
-  grid-template-columns:1fr 1fr;gap:8px;
-  background:none;border:0;border-radius:0;overflow:visible;box-shadow:none;
+/* ---------- Kopfkarte im Verlauf: links der Erfassungsring, rechts drei Felder ---------- */
+.kopfkarte{display:flex;align-items:stretch;gap:11px;padding:12px;margin-top:18px;min-height:100px}
+.ring{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.ring-kreis{position:relative;width:58px;height:58px}
+/* Um 90° gegen den Uhrzeigersinn gedreht: der Bogen beginnt oben */
+.ring-bild{display:block;width:58px;height:58px;transform:rotate(-90deg)}
+.ring-spur{fill:none;stroke:var(--erfassung-spur);stroke-width:6}
+.ring-bogen{fill:none;stroke:var(--erfassung);stroke-width:6;stroke-linecap:round}
+.ring-zahl{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
 }
-.kopfzahlen--kopf .kopfzahl{display:block;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--rand)}
-.kopfzahlen--kopf .kopfzahl-wert{font-size:22px;font-weight:680;text-align:left}
-.kopfzahlen--kopf .kopfzahl-name{order:0;margin-top:4px;color:var(--text-2)}
-.kopfzahlen--kopf .kopfzahl--fuehrend{
-  grid-column:1 / -1;
-  padding:16px 18px;
-  border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
-  background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
+.ring-name{font-size:9px;font-weight:600;color:var(--text-3);white-space:nowrap;line-height:1.2}
+.kopf-felder{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.kopf-feld{
+  display:flex;flex-direction:column;min-width:0;
+  padding:9px 10px;border-radius:var(--radius);background:var(--flaeche-tief);
 }
-.kopfzahlen--kopf .kopfzahl--fuehrend .kopfzahl-wert{font-size:38px;font-weight:700;letter-spacing:-.045em;line-height:1}
-.kopfzahlen--kopf .kopfzahl--ok{border-color:var(--ok-rand);background:rgba(116,185,141,.09)}
-.kopfzahlen--kopf .kopfzahl--schmerz{border-color:var(--schmerz-rand);background:rgba(217,146,106,.09)}
+.kopf-feld-zahl{
+  font-size:21px;font-weight:800;letter-spacing:-.03em;line-height:1.05;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.kopf-feld-zahl.ist-schmerz{color:var(--schmerz)}
+.kopf-feld-nenner{font-size:13px;font-weight:600;letter-spacing:0;color:var(--text-2)}
+.kopf-feld-name{margin-top:3px;font-size:10px;font-weight:500;color:var(--text-2);line-height:1.3}
+.kopf-feld-grafik{margin-top:auto;padding-top:7px}
+.kopf-feld-grafik:empty{display:none}
+.mini-balken{display:block;width:100%;height:22px}
+.mini-grund{stroke:var(--rand-fein);stroke-width:1;vector-effect:non-scaling-stroke}
+.mini-balken-stab{fill:var(--akzent)}
+.kopf-feld .summe-flaeche{height:22px}
+/* Anteil über alle Läufe; ohne Befinden gestrichelt, damit es nicht wie ein Wert aussieht */
+.anteil{display:flex;gap:2px;height:7px;margin-bottom:7px}
+.anteil-teil{flex:0 0 0;min-width:4px;border-radius:4px}
+.anteil--schmerz{background:var(--schmerz)}
+.anteil--ok{background:var(--ok)}
+.anteil--offen{border:1px dashed var(--offen)}
 
-.verlaufs-meldung{margin-top:24px}
+.verlaufs-meldung{margin-top:18px}
 .bef-notiz-link{margin-top:8px;display:inline-block}
 .formular--notiz{margin-top:10px}
 
@@ -550,78 +569,91 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 
 /* ---------- Tag und Aktivität ---------- */
 
-.tag{margin-top:38px}
-/* Tageskopf: Datum, Wochentag und eine Linie über die restliche Breite */
-.tag-kopf{
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:9px;padding:0 4px;
+/* Monat über den Tagesgruppen – die Schiene nennt nur Tag und Wochentag */
+.monat-kopf{
+  margin:30px 0 -8px 46px;font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-2);
 }
-.tag-kopf::after{content:'';flex:1 1 auto;height:0;border-top:1px solid var(--rand)}
-.tag-datum{font-size:13px;font-weight:660;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
-.tag-wochentag{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:600;white-space:nowrap}
+.nur-vorlesen{
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+}
+/* Tagesgruppe: links die Datumsschiene, rechts die Einträge des Tages */
+.tag{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;margin-top:22px}
+.tag-schiene{display:flex;flex-direction:column;align-items:center;padding-top:6px;position:relative}
+.tag-zahl{font-size:19px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tag-wochentag{margin-top:4px;font-size:11px;font-weight:600;color:var(--text-2);letter-spacing:.04em;line-height:1.1}
+/* Durchgehend bis zum Ende der Gruppe */
+.tag-linie{flex:1 1 auto;width:2px;min-height:12px;margin-top:8px;border-radius:1px;background:var(--linie)}
+.tag-inhalt{min-width:0}
 
 .aktivitaet{
-  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 92px),var(--flaeche);
-  border:1px solid var(--rand);
+  background:var(--flaeche);
+  border:1px solid var(--rand-lauf);
   border-radius:var(--radius-gross);
-  padding:20px;
+  padding:14px;
   box-shadow:var(--schatten-karte);
-  position:relative;overflow:hidden;
+  position:relative;
 }
-/* Der Streifen zeigt das Befinden des Laufs; grau, solange keines erfasst ist */
-.aktivitaet::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:linear-gradient(180deg,var(--rand-stark),rgba(59,67,81,.25));
-}
-.aktivitaet.streifen-ok::before{background:linear-gradient(180deg,var(--ok),rgba(116,185,141,.25))}
-.aktivitaet.streifen-schmerz::before{background:linear-gradient(180deg,var(--schmerz),rgba(217,146,106,.25))}
-.aktivitaet + .aktivitaet{margin-top:10px}
+.aktivitaet + .aktivitaet,.tag-befinden + .aktivitaet{margin-top:10px}
 
-/* Andere Aktivitäten: schmale Zeile statt Karte */
-.aktivitaet--kompakt{
-  display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;
-  padding:11px 14px;border-radius:14px;
-  background:var(--flaeche-sanft);border:1px solid var(--rand);box-shadow:none;
+/* Andere Einheit: dieselbe Kartenform, leiser */
+.aktivitaet--kompakt{background:var(--flaeche-sanft);border-color:var(--rand-sanft)}
+.akt-kopf{display:flex;align-items:flex-start;gap:11px}
+.akt-symbolfeld{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:10px;
+  background:var(--akzent-flaeche);color:var(--akzent);
 }
-.aktivitaet--kompakt::before{content:none}
-.aktivitaet--kompakt + .aktivitaet--kompakt{margin-top:6px}
-.akt-symbol{flex:0 0 auto;width:18px;height:18px;color:#c8821e}
+.aktivitaet--kompakt .akt-symbolfeld{background:var(--andere-symbol-flaeche);color:var(--andere-symbol)}
+.akt-symbol{display:block;width:18px;height:18px}
 .kompakt-mitte{flex:1 1 0;min-width:0}
-.aktivitaet--kompakt .akt-titel{font-size:14px;font-weight:600;letter-spacing:-.01em}
-.aktivitaet--kompakt .akt-meta{
-  font-size:11px;color:var(--text-3);margin-top:2px;font-variant-numeric:tabular-nums;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.akt-titel{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3;overflow-wrap:anywhere}
+.akt-meta{
+  font-size:12px;font-weight:500;color:var(--akzent-meta);margin-top:2px;
+  font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.aktivitaet--kompakt details.alle{flex:1 0 100%;margin-top:0;padding-left:30px}
-.aktivitaet--kompakt details.alle > summary{font-size:11px;padding:1px 0;color:var(--text-4)}
-.aktivitaet--kompakt details.alle > summary:hover{color:var(--text)}
-.akt-kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.akt-titel{font-size:1.06rem;font-weight:620;letter-spacing:-.02em;overflow-wrap:anywhere}
-.akt-meta{font-size:.78rem;color:var(--text-3);margin-top:3px;letter-spacing:.005em}
-.akt-werkzeuge{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.aktivitaet--kompakt .akt-meta{color:var(--text-3)}
+.akt-distanz{
+  flex:0 0 auto;display:flex;align-items:baseline;gap:3px;
+  font-size:25px;font-weight:800;letter-spacing:-.035em;line-height:1.05;
+  color:var(--akzent);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.akt-distanz.kz-wert--leer{font-size:18px}
+.akt-distanz-einheit{font-size:12px;font-weight:600;letter-spacing:0;color:var(--akzent-meta)}
+.akt-rechts{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.akt-rechts-zeit{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3}
+.akt-rechts-hf{font-size:12px;font-weight:500;color:var(--text-3);margin-top:2px}
+
+/* Unten: „alle Werte“ links, Einstufung und Löschen rechts in derselben Zeile */
+.akt-fuss{position:relative;min-height:30px;margin-top:10px}
+.akt-werkzeuge{position:absolute;top:0;right:0;display:flex;align-items:center;gap:4px}
+.akt-fuss details.alle{margin-top:0}
+.akt-fuss details.alle > summary{min-height:30px;margin-right:140px}
 
 .marke{
-  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);color:var(--text-3);
-  border-radius:999px;padding:4px 11px;font-size:.73rem;font-weight:620;letter-spacing:.01em;
+  border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text-2);
+  border-radius:var(--radius-innen);padding:4px 10px;font-size:.73rem;font-weight:600;letter-spacing:.01em;
   cursor:pointer;white-space:nowrap;
   transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich),transform .08s var(--weich);
 }
-.marke:hover{border-color:var(--text-4);color:var(--text)}
+.marke:hover{border-color:var(--rand-stark);color:var(--text)}
 .marke:active{transform:translateY(1px)}
 .marke.ist-lauf{background:var(--akzent-sanft);color:var(--akzent);border-color:var(--akzent-rand)}
 .weg{
   border:0;background:transparent;color:var(--text-4);
-  font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:9px;cursor:pointer;
+  font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:var(--radius-innen);cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
 .weg:hover{background:var(--kritisch-sanft);color:var(--kritisch)}
 .weg:active{transform:translateY(1px)}
 
-.kennzahlen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
-.kz{min-width:0}
-.kz-wert{font-size:16px;font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.025em;overflow-wrap:anywhere}
-.kz-wert--leer{color:var(--text-4);font-weight:560}
-.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
+/* Drei Felder unter dem Kopf der Lauf-Karte */
+.kennzahlen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.kz{min-width:0;padding:8px 10px;border-radius:var(--radius-klein);background:var(--flaeche-tief)}
+.kz-wert{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.3;overflow-wrap:anywhere}
+.kz-wert--leer{color:var(--text-3);font-weight:500}
+.kz-name{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-top:1px}
 
 details.alle{margin-top:16px}
 details.alle > summary{
@@ -636,7 +668,7 @@ details.alle > summary:hover{color:var(--text)}
 .werte{
   display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:4px 18px;
   margin:10px 0 0;padding:14px 16px;
-  background:var(--flaeche-sanft);border:1px solid var(--rand);
+  background:var(--flaeche-tief);border:1px solid var(--rand-fein);
   border-radius:var(--radius-klein);font-size:.82rem;
 }
 .werte dt{color:var(--text-3);min-width:0;overflow-wrap:anywhere}
@@ -644,74 +676,87 @@ details.alle > summary:hover{color:var(--text)}
 
 /* ---------- Befinden ---------- */
 
-.befinden{margin-top:16px;padding-top:16px;border-top:1px solid var(--rand)}
-.bef-knoepfe{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
-.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640;width:100%;margin-bottom:2px}
+.befinden{margin-top:10px}
+/* Noch nicht erfasst: gestrichelt, damit es nicht wie ein Wert aussieht */
+.befinden.ist-offen{padding:11px 12px;border:1px dashed var(--offen);border-radius:var(--radius)}
+.bef-knoepfe{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:600;width:100%;margin-bottom:2px}
+/* Erfasst: Fläche in der Kategorie, Punkt vorn, „Ändern“ rechts */
 .bef-fazit{
-  display:inline-flex;flex-wrap:wrap;align-items:center;gap:10px;
-  padding:10px 16px;border-radius:999px;font-size:.89rem;font-weight:620;
-  border:1px solid transparent;max-width:100%;
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 10px 10px 12px;border-radius:var(--radius);font-size:.89rem;
+  border:1px solid transparent;
 }
-.bef-fazit.ist-ok{background:var(--ok-flaeche);color:var(--ok);border-color:var(--ok-rand)}
-.bef-fazit.ist-schmerz{background:var(--schmerz-flaeche);color:var(--schmerz);border-color:var(--schmerz-rand)}
-.bef-symbol{flex:0 0 auto;width:15px;height:15px;margin-right:-3px}
-.bef-ab{font-weight:500;font-size:.83rem;opacity:.72}
-.bef-fazit .link{color:inherit;opacity:.8;font-weight:560}
-.bef-fazit .link:hover{opacity:1;color:inherit}
-.bef-notiz{font-weight:400;font-size:.83rem;opacity:.85;overflow-wrap:anywhere}
+.bef-fazit.ist-ok{background:var(--ok-flaeche);border-color:var(--ok-rand);--kategorie:var(--ok)}
+.bef-fazit.ist-schmerz{background:var(--schmerz-flaeche);border-color:var(--schmerz-rand);--kategorie:var(--schmerz)}
+.bef-punkt{flex:0 0 auto;width:8px;height:8px;margin-top:.5em;border-radius:50%;background:var(--kategorie)}
+.bef-inhalt{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding-top:1px}
+.bef-haupt{font-weight:600;color:var(--text)}
+.bef-ab{font-weight:500;font-size:.83rem;color:var(--text-2)}
+.bef-notiz{font-weight:400;font-size:.83rem;color:var(--text-2);overflow-wrap:anywhere}
+.bef-aendern{
+  flex:0 0 auto;border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text);
+  border-radius:var(--radius-innen);padding:4px 11px;font-size:.78rem;font-weight:600;cursor:pointer;
+  transition:border-color .16s var(--weich),background .16s var(--weich);
+}
+.bef-aendern:hover{border-color:var(--rand-stark);background:var(--flaeche-hoch)}
+.bef-aendern:active{transform:translateY(1px)}
 .formular{
-  margin-top:14px;background:var(--flaeche-sanft);
-  border:1px solid var(--rand);border-radius:var(--radius);padding:18px;
+  margin-top:12px;background:var(--flaeche-tief);
+  border:1px solid var(--rand-fein);border-radius:var(--radius);padding:16px;
 }
+.befinden.ist-offen .formular{margin-left:-1px;margin-right:-1px}
 .formular-fuss{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
 
 /* ---------- Noch offen ---------- */
 
+/* Streifen links in --akzent: hier fehlt noch etwas */
 .offen-karte{
-  border-color:var(--akzent-rand);
-  background:linear-gradient(180deg,rgba(91,156,248,.09),rgba(91,156,248,.02) 120px),var(--flaeche);
-  margin-top:28px;
+  position:relative;overflow:hidden;margin-top:18px;padding-left:23px;
 }
+.offen-karte::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--akzent)}
 .offen-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .offen-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
-.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640}
-.offen-zeile{border-top:1px solid var(--rand);padding-top:14px;margin-top:14px}
+.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:600}
+.offen-zeile{border-top:1px solid var(--rand-fein);padding-top:14px;margin-top:14px}
 .offen-info{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;font-size:.92rem}
-.offen-datum{font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
+.offen-datum{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
 .offen-detail{color:var(--text-3);font-size:.85rem}
 .offen-zeile .bef-knoepfe{margin-top:11px}
 .offen-tag-kopf{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
-.offen-wochentag{font-size:.82rem;color:var(--text-4)}
+.offen-wochentag{font-size:.82rem;color:var(--text-2)}
 .offen-eintrag{margin-top:11px}
 .offen-eintrag + .offen-eintrag{margin-top:16px}
+.offen-eintrag .bef-fazit{margin-top:8px}
 .offen-marke{
-  display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;margin-bottom:5px;
+  display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text-3);font-weight:600;margin-bottom:5px;
 }
 .offen-fuss{
-  border-top:1px solid var(--rand);margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--rand-fein);margin-top:16px;padding-top:14px;
   display:flex;flex-direction:column;align-items:flex-start;gap:7px;
 }
 .offen-fuss .link{text-align:left}
-.offen-fuss-text{font-size:.79rem;color:var(--text-4);line-height:1.5}
+.offen-fuss-text{font-size:.79rem;color:var(--text-3);line-height:1.5}
 
 /* ---------- Tages-Befinden ---------- */
 
 /* Im Verlauf nur eine Zeile, kein Kasten – die Aktivitäten bleiben die Hauptsache */
 .tag-befinden{
-  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;
-  margin-top:10px;padding:0 4px;font-size:.86rem;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
+  margin-top:10px;padding:0 4px;font-size:.86rem;color:var(--text);
 }
-.tag-befinden.ist-ok{color:var(--ok)}
-.tag-befinden.ist-schmerz{color:var(--schmerz)}
+.tag-befinden.ist-ok{--kategorie:var(--ok)}
+.tag-befinden.ist-schmerz{--kategorie:var(--schmerz)}
+.tag-befinden .bef-punkt{margin-top:0;align-self:center}
 .tag-befinden-marke{
-  font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text-3);font-weight:600;
 }
-.tag-befinden .bef-notiz{color:var(--text-3);font-style:italic}
+.tag-befinden .bef-notiz{color:var(--text-2);font-style:italic}
 .bef-nachgetragen{
   font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
-  font-weight:640;opacity:.7;
+  font-weight:600;color:var(--text-3);
 }
 .tages-dialog{margin-top:16px}
 .tages-dialog .befinden{margin-top:0}
@@ -724,7 +769,7 @@ details.alle > summary:hover{color:var(--text)}
 
 /* ---------- Leiste und Filter ---------- */
 
-.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:30px}
+.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:22px}
 .zaehler{font-size:.79rem;color:var(--text-3);font-variant-numeric:tabular-nums;letter-spacing:.01em}
 /* Umschalter: Zeitraum, Filter, Auswahl – außen 12 px, innen 9 px */
 .schalter{display:flex;background:var(--flaeche-tief);border:1px solid var(--linie);border-radius:var(--radius);padding:3px}
@@ -749,11 +794,11 @@ details.alle > summary:hover{color:var(--text)}
 /* ---------- Zusatztag ---------- */
 
 .zusatz-tag{
-  background:var(--flaeche-sanft);border:1px dashed var(--rand-stark);
-  border-radius:var(--radius);padding:13px 18px;font-size:.89rem;color:var(--text-2);
+  background:var(--flaeche-sanft);border:1px dashed var(--offen);
+  border-radius:var(--radius-gross);padding:13px 18px;font-size:.89rem;color:var(--text-2);
   display:flex;justify-content:space-between;align-items:center;gap:12px;
 }
-.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag{margin-top:10px}
+.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag,.tag-befinden + .zusatz-tag{margin-top:10px}
 
 .hinweis-text{font-size:.88rem;color:var(--text-2);margin-top:10px;line-height:1.6}
 .ergebnis{
@@ -832,7 +877,7 @@ pre.ausgabe{
   <header class="kopf">
     <h1 class="kopf-titel" id="kopf-titel">Verlauf</h1>
     <span class="kopf-zeitraum" id="kopf-zeitraum"></span>
-    <div class="kopfzahlen kopfzahlen--kopf" id="kopfzahlen" hidden></div>
+    <div class="karte kopfkarte" id="kopfzahlen" hidden></div>
   </header>
 
   <main>
@@ -1888,45 +1933,41 @@ pre.ausgabe{
     return box;
   }
 
-  /* Kreis mit Haken bei „keine“, Kreis mit Ausrufezeichen bei Schmerz */
-  function befindenSymbol(ok) {
-    var bild = svg('svg', {
-      class: 'bef-symbol', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
-      'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      'aria-hidden': 'true', focusable: 'false'
-    });
-    bild.appendChild(svg('circle', { cx: 12, cy: 12, r: 9.5 }));
-    bild.appendChild(svg('path', { d: ok ? 'm7.8 12.3 2.8 2.8 5.6-5.8' : 'M12 7v6M12 16.8v.01' }));
-    return bild;
-  }
-
-  /* mitSymbol: nur an der Lauf-Karte – Symbol vorn, „ab …“ als eigener, leiserer Teil */
+  /*
+   * mitSymbol: nur an der Lauf-Karte – „ab …“ als eigener, leiserer Teil.
+   * Vorn steht immer ein Punkt in der Farbe der Kategorie, kein Warnzeichen.
+   */
   function befindenBereich(ziel, kompakt, mitSymbol) {
     var vorhanden = ziel.holen();
     var offen = Object.prototype.hasOwnProperty.call(entwuerfe, ziel.schluessel);
-    var box = el('div', { class: kompakt ? 'befinden-kompakt' : 'befinden' });
+    /* Ohne Eintrag gestrichelt: „nicht erfasst“ sieht anders aus als jeder Wert */
+    var box = el('div', {
+      class: (kompakt ? 'befinden-kompakt' : 'befinden') + (vorhanden && !offen ? '' : ' ist-offen')
+    });
 
     var notizOffen = Object.prototype.hasOwnProperty.call(notizEntwuerfe, ziel.schluessel);
 
     if (vorhanden && !offen) {
       var fazit = el('div', { class: 'bef-fazit ' + (vorhanden.art === 'keine' ? 'ist-ok' : 'ist-schmerz') });
+      fazit.appendChild(el('span', { class: 'bef-punkt', 'aria-hidden': 'true' }));
+      var inhalt = el('div', { class: 'bef-inhalt' });
       if (mitSymbol) {
-        fazit.appendChild(befindenSymbol(vorhanden.art === 'keine'));
-        fazit.appendChild(el('span', null, befindenText({
+        inhalt.appendChild(el('span', { class: 'bef-haupt' }, befindenText({
           art: vorhanden.art, staerke: vorhanden.staerke, ort: vorhanden.ort, seite: vorhanden.seite, abKm: ''
         })));
-        if (vorhanden.abKm) fazit.appendChild(el('span', { class: 'bef-ab', text: 'ab ' + vorhanden.abKm }));
+        if (vorhanden.abKm) inhalt.appendChild(el('span', { class: 'bef-ab', text: 'ab ' + vorhanden.abKm }));
       } else {
-        fazit.appendChild(el('span', null, befindenText(vorhanden)));
+        inhalt.appendChild(el('span', { class: 'bef-haupt' }, befindenText(vorhanden)));
       }
       if (vorhanden.notiz) {
-        fazit.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
+        inhalt.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
       }
       /* Rückwirkend erfasst: nur benannt, nicht hervorgehoben */
       if (vorhanden.nachgetragen) {
-        fazit.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
+        inhalt.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
       }
-      var aendern = el('button', { type: 'button', class: 'link' }, 'ändern');
+      fazit.appendChild(inhalt);
+      var aendern = el('button', { type: 'button', class: 'bef-aendern' }, 'Ändern');
       aendern.addEventListener('click', function () { oeffneFormular(ziel); });
       fazit.appendChild(aendern);
       box.appendChild(fazit);
@@ -2040,7 +2081,8 @@ pre.ausgabe{
     hantel: ['p:M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11'],
     dehnen: ['c:12,4.5,1.8', 'p:M4.5 9.5 12 8l7.5 1.5M12 8v6l-4 6.5M12 14l4 6.5'],
     schwimmen: ['c:17,7,1.8', 'p:M4 13.5 9 9.5l3 3 4.5-2', 'p:M2.5 18c1.6 0 1.6-1 3.2-1s1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1'],
-    kreis: ['c:12,12,6.5']
+    kreis: ['c:12,12,6.5'],
+    lauf: ['c:15,4.5,2', 'p:M13.5 8.5 11 14l-3.2 2.2L4.5 16M11 14l3.2 2.6-1.2 4.4M8.5 11l3.3-2.3 2.9.6 2.3 3.2 2.5.3']
   };
 
   function aktSymbolArt(akt) {
@@ -2052,13 +2094,16 @@ pre.ausgabe{
     return 'kreis';
   }
 
-  function aktSymbol(akt) {
+  /* Im Symbolfeld: Läufe mit Läufer, andere Einheiten nach Aktivitätstyp */
+  function aktSymbol(akt, lauf) {
+    var feld = el('span', { class: 'akt-symbolfeld', 'aria-hidden': 'true' });
     var bild = svg('svg', {
       class: 'akt-symbol', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
       'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       'aria-hidden': 'true', focusable: 'false'
     });
-    AKT_SYMBOLE[aktSymbolArt(akt)].forEach(function (teil) {
+    feld.appendChild(bild);
+    AKT_SYMBOLE[lauf ? 'lauf' : aktSymbolArt(akt)].forEach(function (teil) {
       var inhalt = teil.slice(2);
       if (teil.charAt(0) === 'c') {
         var z = inhalt.split(',');
@@ -2067,32 +2112,48 @@ pre.ausgabe{
         bild.appendChild(svg('path', { d: inhalt }));
       }
     });
-    return bild;
+    return feld;
   }
 
-  /* Andere Aktivität: eine schmale Zeile mit Typ, Uhrzeit, Dauer und Ø HF */
-  function aktivitaetZeile(akt) {
-    var zeile = el('article', { class: 'aktivitaet aktivitaet--kompakt', 'data-id': akt.id });
-    zeile.appendChild(aktSymbol(akt));
-
-    var mitte = el('div', { class: 'kompakt-mitte' });
-    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
-    var kz = kennzahlenVon(akt);
+  /* Metazeile: Typ und Uhrzeit. Der Typ bleibt als Text: das Symbol allein unterscheidet ihn nicht sicher */
+  function aktMeta(akt) {
     var teile = [];
-    /* Der Typ bleibt als Text: das Symbol allein unterscheidet ihn nicht sicher */
     var typ = typVon(akt);
     if (typ) teile.push(typ);
     var zeit = uhrzeit(akt.datumOriginal);
     if (zeit) teile.push(zeit + ' Uhr');
-    if (kennwert(kz, 'Zeit')) teile.push(kennwert(kz, 'Zeit'));
-    if (kennwert(kz, 'Ø HF')) teile.push('Ø HF ' + kennwert(kz, 'Ø HF'));
-    if (teile.length) mitte.appendChild(el('div', { class: 'akt-meta', text: teile.join(' · ') }));
-    zeile.appendChild(mitte);
+    return teile.length ? el('div', { class: 'akt-meta', text: teile.join(' · ') }) : null;
+  }
 
-    zeile.appendChild(akteWerkzeuge(akt, false));
-
+  /* Unten in jeder Karte: „alle Werte“ zum Aufklappen, rechts Einstufung und Löschen */
+  function aktFuss(akt, lauf) {
+    var fuss = el('div', { class: 'akt-fuss' });
+    fuss.appendChild(akteWerkzeuge(akt, lauf));
     var details = alleWerte(akt);
-    if (details) zeile.appendChild(details);
+    if (details) fuss.appendChild(details);
+    return fuss;
+  }
+
+  /* Andere Aktivität: leisere Karte mit Typ und Uhrzeit, rechts Dauer und Ø HF */
+  function aktivitaetZeile(akt) {
+    var zeile = el('article', { class: 'aktivitaet aktivitaet--kompakt', 'data-id': akt.id });
+    var kopf = el('div', { class: 'akt-kopf' });
+    kopf.appendChild(aktSymbol(akt, false));
+
+    var mitte = el('div', { class: 'kompakt-mitte' });
+    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var meta = aktMeta(akt);
+    if (meta) mitte.appendChild(meta);
+    kopf.appendChild(mitte);
+
+    var kz = kennzahlenVon(akt);
+    var rechts = el('div', { class: 'akt-rechts' });
+    if (kennwert(kz, 'Zeit')) rechts.appendChild(el('div', { class: 'akt-rechts-zeit', text: kennwert(kz, 'Zeit') }));
+    if (kennwert(kz, 'Ø HF')) rechts.appendChild(el('div', { class: 'akt-rechts-hf', text: 'Ø HF ' + kennwert(kz, 'Ø HF') }));
+    if (rechts.childNodes.length) kopf.appendChild(rechts);
+    zeile.appendChild(kopf);
+
+    zeile.appendChild(aktFuss(akt, false));
     return zeile;
   }
 
@@ -2100,26 +2161,28 @@ pre.ausgabe{
     var lauf = istLauf(akt);
     if (!lauf) return aktivitaetZeile(akt);
 
-    /* Der Streifen links trägt das Befinden; dass es ein Lauf ist, sagt die Marke */
-    var b = befindenFuer(akt.id);
-    var streifen = !b ? '' : (b.art === 'keine' ? ' streifen-ok' : ' streifen-schmerz');
-    var karte = el('article', { class: 'aktivitaet ist-lauf' + streifen, 'data-id': akt.id });
+    var karte = el('article', { class: 'aktivitaet ist-lauf', 'data-id': akt.id });
+    var kz = kennzahlenVon(akt);
 
     var kopf = el('div', { class: 'akt-kopf' });
-    var links = el('div');
-    links.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
-    var metaTeile = [];
-    var typ = typVon(akt);
-    if (typ) metaTeile.push(typ);
-    var zeit = uhrzeit(akt.datumOriginal);
-    if (zeit) metaTeile.push(zeit + ' Uhr');
-    if (metaTeile.length) links.appendChild(el('div', { class: 'akt-meta', text: metaTeile.join(' · ') }));
-    kopf.appendChild(links);
-    kopf.appendChild(akteWerkzeuge(akt, lauf));
+    kopf.appendChild(aktSymbol(akt, true));
+    var mitte = el('div', { class: 'kompakt-mitte' });
+    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var meta = aktMeta(akt);
+    if (meta) mitte.appendChild(meta);
+    kopf.appendChild(mitte);
+
+    /* Die Distanz groß rechts; fehlt sie, steht die leise Form für „nicht erfasst“ */
+    var distanz = kennwert(kz, 'Distanz');
+    var rechts = el('div', { class: distanz ? 'akt-distanz' : 'akt-distanz kz-wert--leer' });
+    rechts.appendChild(document.createTextNode(distanz || '–'));
+    if (distanz) rechts.appendChild(el('span', { class: 'akt-distanz-einheit', text: 'km' }));
+    kopf.appendChild(rechts);
     karte.appendChild(kopf);
 
     var reihe = el('div', { class: 'kennzahlen' });
-    kennzahlenVon(akt).forEach(function (k) {
+    kz.forEach(function (k) {
+      if (k.name === 'Distanz') return;
       var block = el('div', { class: 'kz' });
       /* „nicht erfasst“ bekommt eine eigene, leisere Form, nie die eines Wertes */
       block.appendChild(el('div', { class: k.wert ? 'kz-wert' : 'kz-wert kz-wert--leer', text: k.wert || '–' }));
@@ -2131,8 +2194,7 @@ pre.ausgabe{
     /* Das Befinden wird täglich angetippt und steht deshalb über der Werteliste */
     karte.appendChild(befindenBereich(laufZiel(akt), false, true));
 
-    var details = alleWerte(akt);
-    if (details) karte.appendChild(details);
+    karte.appendChild(aktFuss(akt, lauf));
     return karte;
   }
 
@@ -3422,8 +3484,8 @@ pre.ausgabe{
    * Wie viele Tage des Zeitraums tragen ein Tages-Befinden. Reine
    * Vollständigkeitsangabe, damit Lücken nicht erst beim Export auffallen.
    */
-  function abdeckungsZeile() {
-    var start = statGrenze() || ersterTag();
+  /* Tage mit Tages-Befinden von start bis heute; null, wenn der Zeitraum leer ist */
+  function abdeckungAb(start) {
     if (!start) return null;
     var heute = heuteIso();
     if (start > heute) return null;
@@ -3435,6 +3497,13 @@ pre.ausgabe{
       if (tagesBefindenFuer(isoAusZeit(zeit))) erfasst++;
     }
     if (!gesamt) return null;
+    return { erfasst: erfasst, gesamt: gesamt, prozent: Math.round((erfasst / gesamt) * 100) };
+  }
+
+  function abdeckungsZeile() {
+    var abdeckung = abdeckungAb(statGrenze() || ersterTag());
+    if (!abdeckung) return null;
+    var gesamt = abdeckung.gesamt, erfasst = abdeckung.erfasst;
 
     return el('p', { class: 'stat-abdeckung' },
       'Erfassung: ' + Math.round((erfasst / gesamt) * 100) + ' % der Tage (' +
@@ -3559,10 +3628,11 @@ pre.ausgabe{
 
   /*
    * Umfang je Kalenderwoche im gewählten Zeitraum, lückenlos von der ersten bis
-   * zur letzten Woche. Geteilt von „Kilometer pro Woche“ und der Summenkarte.
+   * zur letzten Woche. Geteilt von „Kilometer pro Woche“, der Summenkarte und
+   * – mit allen Aktivitäten statt des Zeitraums – der Kopfkarte im Verlauf.
    */
-  function wochenUmfang() {
-    var alle = statAktivitaeten(false);
+  function wochenUmfang(liste) {
+    var alle = liste || statAktivitaeten(false);
     if (!alle.length) return [];
 
     var ersteWoche = wochenStart(alle[0].datum);
@@ -5058,27 +5128,120 @@ pre.ausgabe{
     if (!aktivitaeten.length || aktiverTab !== 'verlauf') { ziel.setAttribute('hidden', ''); return; }
     ziel.removeAttribute('hidden');
 
-    var laeufe = 0, erfasst = 0, mitSchmerz = 0;
+    var laeufe = 0, erfasst = 0, mitSchmerz = 0, km = 0;
     aktivitaeten.forEach(function (a) {
       if (!istLauf(a)) return;
       laeufe++;
+      km += kmVon(a);
       var b = befindenFuer(a.id);
       if (!b) return;
       erfasst++;
       if (b.art === 'schmerz') mitSchmerz++;
     });
 
-    /* Der Zeitraum steht in der Kopfzeile, hier nicht noch einmal */
-    [
-      { wert: String(laeufe), name: laeufe === 1 ? 'Lauf' : 'Läufe', klasse: '', karte: ' kopfzahl--fuehrend' },
-      { wert: String(erfasst), name: 'Befinden erfasst', klasse: ' ist-ok', karte: ' kopfzahl--ok' },
-      { wert: String(mitSchmerz), name: 'davon mit Schmerz', klasse: ' ist-schmerz', karte: ' kopfzahl--schmerz' }
-    ].forEach(function (z) {
-      var block = el('div', { class: 'kopfzahl' + z.karte });
-      block.appendChild(el('div', { class: 'kopfzahl-wert' + z.klasse, text: z.wert }));
-      block.appendChild(el('div', { class: 'kopfzahl-name', text: z.name }));
-      ziel.appendChild(block);
+    /* Links der Ring: an wie vielen Tagen seit dem ersten Eintrag ein Tages-Befinden steht */
+    ziel.appendChild(erfassungsRing(abdeckungAb(ersterTag())));
+
+    /*
+     * Rechts drei Felder über den gesamten Bestand. Die Kleingrafiken zeigen die
+     * letzten acht Kalenderwochen mit Daten, gerechnet wie „Kilometer pro Woche“.
+     */
+    var alle = aktivitaeten.filter(function (a) { return !!a.datum; });
+    alle.sort(function (x, y) { return -sortiereAbsteigend(x, y); });
+    var wochen = wochenUmfang(alle).slice(-8);
+
+    var felder = el('div', { class: 'kopf-felder' });
+    felder.appendChild(kopfFeld(String(laeufe), laeufe === 1 ? 'Lauf' : 'Läufe', '',
+      laeufeJeWoche(wochen)));
+    felder.appendChild(kopfFeld(zahlText(km, km >= 100 ? 0 : 1), 'Kilometer', '',
+      wochenFlaeche(wochen)));
+    /*
+     * „4 /11“: Läufe mit Schmerz von den Läufen mit erfasstem Befinden. Läufe
+     * ohne Befinden zählen nicht als beschwerdefrei – sie stehen im Balken gestrichelt.
+     */
+    var schmerzFeld = kopfFeld(String(mitSchmerz), 'mit Schmerz', ' ist-schmerz',
+      anteilsBalken(mitSchmerz, erfasst - mitSchmerz, laeufe - erfasst), '/' + erfasst);
+    schmerzFeld.setAttribute('title', mitSchmerz + ' von ' + erfasst +
+      (erfasst === 1 ? ' Lauf mit erfasstem Befinden' : ' Läufen mit erfasstem Befinden') + ' mit Schmerz');
+    felder.appendChild(schmerzFeld);
+    ziel.appendChild(felder);
+  }
+
+  function kopfFeld(wert, name, klasse, grafik, nenner) {
+    var feld = el('div', { class: 'kopf-feld' });
+    var zahl = el('div', { class: 'kopf-feld-zahl' + klasse, text: wert });
+    if (nenner) {
+      zahl.appendChild(el('span', { class: 'kopf-feld-nenner', 'aria-hidden': 'true', text: ' ' + nenner }));
+      zahl.appendChild(el('span', { class: 'nur-vorlesen', text: ' von ' + nenner.slice(1) + ' mit erfasstem Befinden' }));
+    }
+    feld.appendChild(zahl);
+    feld.appendChild(el('div', { class: 'kopf-feld-name', text: name }));
+    var unten = el('div', { class: 'kopf-feld-grafik' });
+    if (grafik) unten.appendChild(grafik);
+    feld.appendChild(unten);
+    return feld;
+  }
+
+  function erfassungsRing(abdeckung) {
+    var prozent = abdeckung ? abdeckung.prozent : null;
+    var box = el('div', {
+      class: 'ring', role: 'img',
+      'aria-label': abdeckung
+        ? 'Tagesbefinden an ' + prozent + ' % der Tage erfasst (' + abdeckung.erfasst + ' von ' + abdeckung.gesamt + ')'
+        : 'Noch kein Tag im erfassten Zeitraum'
     });
+    var r = 26, umfang = 2 * Math.PI * r;
+    var bild = svg('svg', { class: 'ring-bild', viewBox: '0 0 58 58', 'aria-hidden': 'true', focusable: 'false' });
+    bild.appendChild(svg('circle', { cx: 29, cy: 29, r: r, class: 'ring-spur' }));
+    if (prozent) {
+      bild.appendChild(svg('circle', {
+        cx: 29, cy: 29, r: r, class: 'ring-bogen',
+        'stroke-dasharray': (umfang * prozent / 100).toFixed(2) + ' ' + umfang.toFixed(2)
+      }));
+    }
+    var mitte = el('div', { class: 'ring-kreis' });
+    mitte.appendChild(bild);
+    mitte.appendChild(el('span', { class: 'ring-zahl', text: prozent === null ? '–' : prozent + ' %' }));
+    box.appendChild(mitte);
+    box.appendChild(el('span', { class: 'ring-name', text: 'Tage erfasst' }));
+    return box;
+  }
+
+  /* Acht schmale Balken: Läufe je Kalenderwoche */
+  function laeufeJeWoche(wochen) {
+    if (!wochen.length) return null;
+    var max = 0;
+    wochen.forEach(function (w) { if (w.laeufe > max) max = w.laeufe; });
+    var bild = svg('svg', {
+      class: 'mini-balken', viewBox: '0 0 80 22', preserveAspectRatio: 'none',
+      'aria-hidden': 'true', focusable: 'false'
+    });
+    bild.appendChild(svg('line', { x1: 0, x2: 80, y1: 21.5, y2: 21.5, class: 'mini-grund' }));
+    wochen.forEach(function (w, i) {
+      if (!w.laeufe) return;
+      var hoehe = Math.max(3, (w.laeufe / max) * 20);
+      bild.appendChild(svg('rect', {
+        x: i * 10 + 2, y: 22 - hoehe, width: 6, height: hoehe, rx: 1.5, class: 'mini-balken-stab'
+      }));
+    });
+    return bild;
+  }
+
+  /* Anteil über alle Läufe: mit Schmerz, ohne Beschwerden, ohne Befinden (gestrichelt) */
+  function anteilsBalken(schmerz, ok, offen) {
+    var gesamt = schmerz + ok + offen;
+    if (!gesamt) return null;
+    var balken = el('div', { class: 'anteil', role: 'img' });
+    [['anteil--schmerz', schmerz], ['anteil--ok', ok], ['anteil--offen', offen]].forEach(function (teil) {
+      if (!teil[1]) return;
+      var stueck = el('span', { class: 'anteil-teil ' + teil[0] });
+      stueck.style.flexGrow = String(teil[1]);
+      balken.appendChild(stueck);
+    });
+    var text = schmerz + ' mit Schmerz · ' + ok + ' ohne Beschwerden · ' + offen + ' ohne Befinden';
+    balken.setAttribute('title', text);
+    balken.setAttribute('aria-label', 'Läufe: ' + text);
+    return balken;
   }
 
   function zeichneVerlauf() {
@@ -5100,6 +5263,7 @@ pre.ausgabe{
 
     var gruppen = tagesGruppen();
     var gezeigt = 0;
+    var letzterMonat = null;
     gruppen.forEach(function (g) {
       var liste = filter === 'laeufe' ? g.akt.filter(istLauf) : g.akt;
       var zeigeZusatz = g.zusatz && filter !== 'laeufe';
@@ -5108,27 +5272,42 @@ pre.ausgabe{
       /* Ein erfasstes Tages-Befinden läuft als Zeile mit; fehlt es, steht hier nichts */
       var tagesB = liste.length && filter !== 'laeufe' ? tagesBefindenFuer(g.datum) : null;
 
+      /* Die Schiene nennt nur Tag und Wochentag; Monat und Jahr stehen einmal darüber */
+      var monat = g.datum.slice(0, 7);
+      if (monat !== letzterMonat) {
+        letzterMonat = monat;
+        ziel.appendChild(el('h2', {
+          class: 'monat-kopf',
+          text: MONATE[Number(monat.slice(5, 7)) - 1] + ' ' + monat.slice(0, 4)
+        }));
+      }
+
       var tag = el('section', { class: 'tag' });
-      var kopf = el('div', { class: 'tag-kopf' });
-      kopf.appendChild(el('span', { class: 'tag-datum', text: datumLang(g.datum) }));
-      kopf.appendChild(el('span', { class: 'tag-wochentag', text: wochentag(g.datum) }));
-      tag.appendChild(kopf);
+      var schiene = el('div', { class: 'tag-schiene' });
+      schiene.appendChild(el('span', { class: 'tag-zahl', 'aria-hidden': 'true', text: String(Number(g.datum.slice(8, 10))) }));
+      schiene.appendChild(el('span', { class: 'tag-wochentag', 'aria-hidden': 'true', text: wochentag(g.datum).slice(0, 2).toUpperCase() }));
+      schiene.appendChild(el('span', { class: 'nur-vorlesen', text: datumLang(g.datum) + ', ' + wochentag(g.datum) }));
+      schiene.appendChild(el('span', { class: 'tag-linie', 'aria-hidden': 'true' }));
+      tag.appendChild(schiene);
+      var inhalt = el('div', { class: 'tag-inhalt' });
+      tag.appendChild(inhalt);
 
       liste.forEach(function (akt, position) {
-        tag.appendChild(einblenden(aktivitaetKarte(akt), position));
+        inhalt.appendChild(einblenden(aktivitaetKarte(akt), position));
       });
 
       if (tagesB) {
         var tagesZeile = el('div', {
           class: 'tag-befinden' + (tagesB.art === 'keine' ? ' ist-ok' : ' ist-schmerz')
         });
+        tagesZeile.appendChild(el('span', { class: 'bef-punkt', 'aria-hidden': 'true' }));
         tagesZeile.appendChild(el('span', { class: 'tag-befinden-marke', text: 'Im Tagesverlauf' }));
         tagesZeile.appendChild(el('span', null, befindenText(tagesB)));
         if (tagesB.notiz) tagesZeile.appendChild(el('span', { class: 'bef-notiz' }, '„' + tagesB.notiz + '“'));
         if (tagesB.nachgetragen) {
           tagesZeile.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
         }
-        tag.appendChild(tagesZeile);
+        inhalt.appendChild(tagesZeile);
       }
 
       if (zeigeZusatz) {
@@ -5141,7 +5320,7 @@ pre.ausgabe{
           zeichne();
         });
         zeile.appendChild(weg);
-        tag.appendChild(zeile);
+        inhalt.appendChild(zeile);
       }
       ziel.appendChild(tag);
     });
