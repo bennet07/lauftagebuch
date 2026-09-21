@@ -52,11 +52,11 @@
 
   /* Zwei Statusfarben – Kategorien, keine Wertung */
   --ok:#5BD68F;
-  --ok-flaeche:#101C18;
-  --ok-rand:#1E3329;
-  --schmerz:#F5A524;
-  --schmerz-flaeche:#1D1810;
-  --schmerz-rand:#453724;
+  --ok-flaeche:rgba(91,214,143,.12);
+  --ok-rand:rgba(91,214,143,.30);
+  --schmerz:#FFB02E;
+  --schmerz-flaeche:rgba(255,176,46,.12);
+  --schmerz-rand:rgba(255,176,46,.34);
 
   --offen:#66738A;          /* gestrichelt: nicht erfasst – hält 3:1 auf allen Flächen */
 
@@ -68,10 +68,11 @@
   --kal-2:#2C4A72;
   --kal-3:#3C6BA8;
   --kal-4:#4D8DF0;
-  --kal-andere-1:#1F2731;   /* andere Einheit: vier Stufen nach Dauer, Stahlton */
-  --kal-andere-2:#262F3B;
-  --kal-andere-3:#2A3441;
-  --kal-andere-4:#333E4D;
+  --kal-andere-1:#23203A;   /* andere Einheit: vier Stufen nach Dauer, Violett */
+  --kal-andere-2:#2C2851;
+  --kal-andere-3:#372F6B;
+  --kal-andere-4:#443B86;
+  --kal-andere-zahl:#C6D2E2;
   --kal-leer:#141A24;
   --kal-zukunft:#0F141C;
 
@@ -91,6 +92,9 @@
   --radius-innen:9px;       /* Umschalter innen, Kalenderkachel */
 
   --schatten-karte:inset 0 1px 0 var(--hauch),0 16px 30px -22px rgba(0,0,0,1);
+  /* Reiterleiste am Telefon: gemessene Kachelhöhe (1+6+8+21+4+12+7+6+1) und Abstand zum Rand */
+  --leiste-hoehe:66px;
+  --leiste-abstand:12px;
   --schatten-leiste:0 20px 40px -18px rgba(0,0,0,1);
   --schatten-hoch:0 2px 4px var(--schatten-tief),0 30px 60px -22px rgba(0,0,0,.95);
 
@@ -117,10 +121,10 @@ body{
 /* Unten Platz für die feste Reiterleiste, seitlich für die Aussparung im Querformat */
 .huelle{
   max-width:840px;margin:0 auto;position:relative;
-  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(130px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));
+  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(var(--leiste-abstand) + var(--leiste-hoehe) + 12px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));
 }
 @media (max-width:560px){
-  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--leiste-abstand) + var(--leiste-hoehe) + 12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 }
 
 h1,h2,h3{margin:0;font-weight:700}
@@ -131,18 +135,19 @@ button{font:inherit;color:inherit}
 /* ---------- Kopfbereich ---------- */
 
 /* Große Überschrift des Reiters, darunter der erfasste Zeitraum */
-.kopf{padding:calc(24px + env(safe-area-inset-top,0px)) 0 18px}
+.kopf{padding:calc(24px + env(safe-area-inset-top,0px)) 0 0}
 .kopf-titel{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
 .kopf-zeitraum{
-  display:block;margin-top:5px;min-height:20px;
+  display:block;margin-top:4px;min-height:20px;
   font-size:13px;font-weight:500;color:var(--text-2);line-height:1.5;
   font-variant-numeric:tabular-nums;
 }
 .wortmarke{flex:0 0 auto;width:20px;height:20px;color:var(--akzent)}
 
 /* ---------- Kopfkarte im Verlauf: links der Erfassungsring, rechts drei Felder ---------- */
-.kopfkarte{display:flex;align-items:stretch;gap:11px;padding:12px;margin-top:18px;min-height:100px}
-.ring{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+/* .karte.kopfkarte: sonst gewinnt der Innenabstand von .karte (20 px), der weiter unten steht */
+.karte.kopfkarte{display:flex;align-items:stretch;gap:12px;padding:12px;margin-top:12px}
+.ring{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .ring-kreis{position:relative;width:58px;height:58px}
 /* Um 90° gegen den Uhrzeigersinn gedreht: der Bogen beginnt oben */
 .ring-bild{display:block;width:58px;height:58px;transform:rotate(-90deg)}
@@ -153,10 +158,10 @@ button{font:inherit;color:inherit}
   font-size:16px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
 }
 .ring-name{font-size:9px;font-weight:600;color:var(--text-4);white-space:nowrap;line-height:1.2}
-.kopf-felder{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.kopf-felder{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .kopf-feld{
   display:flex;flex-direction:column;min-width:0;
-  padding:9px 10px;border-radius:var(--radius);background:var(--flaeche-tief);
+  padding:8px;border-radius:var(--radius);background:var(--flaeche-tief);
 }
 .kopf-feld-zahl{
   font-size:21px;font-weight:800;letter-spacing:-.03em;line-height:1.05;
@@ -164,8 +169,8 @@ button{font:inherit;color:inherit}
 }
 .kopf-feld-zahl.ist-schmerz{color:var(--schmerz)}
 .kopf-feld-nenner{font-size:13px;font-weight:600;letter-spacing:0;color:var(--text-2)}
-.kopf-feld-name{margin-top:3px;font-size:10px;font-weight:500;color:var(--text-2);line-height:1.3}
-.kopf-feld-grafik{margin-top:auto;padding-top:7px}
+.kopf-feld-name{margin-top:4px;font-size:10px;font-weight:500;color:var(--text-2);line-height:1.3}
+.kopf-feld-grafik{margin-top:auto;padding-top:8px}
 .kopf-feld-grafik:empty{display:none}
 /* Acht Wochen bleiben schmale Balken, auch wenn das Feld breit wird */
 .mini-balken{display:block;width:100%;max-width:120px;height:22px}
@@ -173,21 +178,24 @@ button{font:inherit;color:inherit}
 .mini-balken-stab{fill:var(--akzent)}
 .kopf-feld .summe-flaeche{height:22px}
 /* Anteil über alle Läufe; ohne Befinden gestrichelt, damit es nicht wie ein Wert aussieht */
-.anteil{display:flex;gap:2px;height:7px;margin-bottom:7px}
+.anteil{display:flex;gap:4px;height:7px;margin-bottom:8px}
 .anteil-teil{flex:0 0 0;min-width:4px;border-radius:4px}
 .anteil--schmerz{background:var(--schmerz)}
 .anteil--ok{background:var(--ok)}
 .anteil--offen{border:1px dashed var(--offen)}
 
-.verlaufs-meldung{margin-top:18px}
+.ergebnis.verlaufs-meldung{margin-top:8px}
+/* Vom Seitenkopf zum ersten Inhalt 12 px; im Verlauf folgt er auf die Kopfkarte, dort 8 px */
+main > section > :first-child{margin-top:12px}
+#tab-verlauf > :first-child{margin-top:8px}
 .bef-notiz-link{margin-top:8px;display:inline-block}
-.formular--notiz{margin-top:10px}
+.formular--notiz{margin-top:8px}
 
 /* ---------- Reiterleiste: unten am Telefon, links am Rechner ---------- */
 
 .navleiste{
   position:fixed;left:0;right:0;bottom:0;z-index:50;
-  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--leiste-abstand) + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
   pointer-events:none;
 }
 .navleiste-marke{display:none}
@@ -316,7 +324,7 @@ button{font:inherit;color:inherit}
 .kal-zahl{font-size:.74rem;line-height:1;position:relative;z-index:1}
 .kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:700}
 /* Andere Einheit in vier Stufen nach Dauer; ohne Stufe (Legende) der mittlere Ton */
-.kal-tag--andere{background:var(--kal-andere-3);color:var(--text)}
+.kal-tag--andere{background:var(--kal-andere-3);color:var(--kal-andere-zahl)}
 .kal-andere-1{background:var(--kal-andere-1)}
 .kal-andere-2{background:var(--kal-andere-2)}
 .kal-andere-3{background:var(--kal-andere-3)}
@@ -396,15 +404,20 @@ button{font:inherit;color:inherit}
 .feld-name{margin-top:2px;font-size:11px;font-weight:500;color:var(--text-2);line-height:1.3}
 
 /* Zwei Kacheln nebeneinander: Beschwerden und Abdeckung */
-.stat-kacheln{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
-.stat-kacheln > .karte{margin-top:0;padding:14px}
+/* Gleicher Aufbau in beiden Kacheln: Zahl, Beschriftung, Balken unten; gleich hoch */
+.stat-kacheln{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:10px;margin-top:10px}
+.stat-kacheln > .karte{margin-top:0;padding:14px;display:flex;flex-direction:column}
+/* .karte + .karte setzt sonst 14 px Abstand oben, der im Gitter von der Höhe abgeht */
+.stat-kacheln > .karte + .karte{margin-top:0}
 .stat-kacheln > .karte:only-child{grid-column:1 / -1}
 .kachel-wert{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
 .kachel-wert.ist-schmerz{color:var(--schmerz)}
 .kachel-nenner{font-size:15px;font-weight:600;letter-spacing:0;color:var(--text-2)}
 .kachel-name{margin-top:4px;font-size:12px;font-weight:500;color:var(--text-2);line-height:1.35}
-.abdeckung-balken{height:6px;margin-top:10px;border-radius:3px;background:var(--erfassung-spur);overflow:hidden}
+.abdeckung-balken{height:6px;margin-top:auto;border-radius:3px;background:var(--erfassung-spur);overflow:hidden}
+.stat-kachel .kachel-name{margin-bottom:10px}
 .abdeckung-balken span{display:block;height:100%;border-radius:3px;background:var(--erfassung)}
+.abdeckung-balken .anteil-schmerz{background:var(--schmerz)}
 
 /* Umschalter: genau ein Diagramm zur Zeit */
 .diagramm-bereich{margin-top:22px}
@@ -486,10 +499,10 @@ button{font:inherit;color:inherit}
 /* ---------- Knöpfe ---------- */
 
 .knopf{
-  display:inline-flex;align-items:center;gap:6px;
+  display:inline-flex;align-items:center;gap:8px;
   border:1px solid var(--rand);
   background:var(--flaeche-tief);
-  border-radius:var(--radius);padding:9px 16px;
+  border-radius:var(--radius);padding:8px 16px;
   font-size:.89rem;font-weight:600;letter-spacing:-.005em;
   cursor:pointer;
   transition:background .16s var(--weich),border-color .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
@@ -507,7 +520,7 @@ button{font:inherit;color:inherit}
 .knopf--klein{padding:6px 12px;font-size:.82rem}
 
 .link{
-  background:none;border:0;padding:2px 4px;color:var(--akzent);
+  background:none;border:0;padding:0 4px;color:var(--akzent);
   font-size:.85rem;font-weight:600;cursor:pointer;
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;
   border-radius:5px;transition:color .16s var(--weich)
@@ -519,10 +532,10 @@ button{font:inherit;color:inherit}
 
 /* ---------- Chips und Felder ---------- */
 
-.chip-reihe{display:flex;flex-wrap:wrap;gap:7px}
+.chip-reihe{display:flex;flex-wrap:wrap;gap:8px}
 .chip{
   border:1px solid var(--rand);background:var(--flaeche-tief);
-  border-radius:var(--radius-klein);padding:7px 13px;font-size:.85rem;font-weight:500;color:var(--text-2);
+  border-radius:var(--radius-klein);padding:8px 12px;font-size:.85rem;font-weight:500;color:var(--text-2);
   cursor:pointer;
   transition:background .16s var(--weich),border-color .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
 }
@@ -576,7 +589,7 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 
 /* Monat über den Tagesgruppen – die Schiene nennt nur Tag und Wochentag */
 .monat-kopf{
-  margin:30px 0 -8px 46px;font-size:12px;font-weight:700;letter-spacing:.06em;
+  margin:16px 0 0 48px;font-size:12px;font-weight:700;letter-spacing:.06em;
   text-transform:uppercase;color:var(--text-2);
 }
 .nur-vorlesen{
@@ -584,8 +597,10 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
   overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
 }
 /* Tagesgruppe: links die Datumsschiene, rechts die Einträge des Tages */
-.tag{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;margin-top:22px}
-.tag-schiene{display:flex;flex-direction:column;align-items:center;padding-top:6px;position:relative}
+.tag{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;margin-top:16px}
+/* Unter der Monatszeile rückt die erste Gruppe näher heran */
+.monat-kopf + .tag{margin-top:8px}
+.tag-schiene{display:flex;flex-direction:column;align-items:center;padding-top:12px;position:relative}
 .tag-zahl{font-size:19px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .tag-wochentag{margin-top:4px;font-size:11px;font-weight:600;color:var(--text-2);letter-spacing:.04em;line-height:1.1}
 /* Durchgehend bis zum Ende der Gruppe */
@@ -596,15 +611,15 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
   background:var(--flaeche);
   border:1px solid var(--rand-lauf);
   border-radius:var(--radius-gross);
-  padding:14px;
+  padding:12px;
   box-shadow:var(--schatten-karte);
   position:relative;
 }
-.aktivitaet + .aktivitaet,.tag-befinden + .aktivitaet{margin-top:10px}
+.aktivitaet + .aktivitaet,.tag-befinden + .aktivitaet{margin-top:8px}
 
 /* Andere Einheit: dieselbe Kartenform, leiser */
 .aktivitaet--kompakt{background:var(--flaeche-sanft);border-color:var(--rand-sanft)}
-.akt-kopf{display:flex;align-items:flex-start;gap:11px}
+.akt-kopf{display:flex;align-items:flex-start;gap:12px}
 .akt-symbolfeld{
   flex:0 0 auto;display:flex;align-items:center;justify-content:center;
   width:30px;height:30px;border-radius:10px;
@@ -615,12 +630,12 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .kompakt-mitte{flex:1 1 0;min-width:0}
 .akt-titel{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3;overflow-wrap:anywhere}
 .akt-meta{
-  font-size:12px;font-weight:500;color:var(--akzent-meta);margin-top:2px;
+  font-size:12px;font-weight:500;color:var(--akzent-meta);margin-top:0;
   font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .aktivitaet--kompakt .akt-meta{color:var(--text-4)}
 .akt-distanz{
-  flex:0 0 auto;display:flex;align-items:baseline;gap:3px;
+  flex:0 0 auto;display:flex;align-items:baseline;gap:4px;
   font-size:25px;font-weight:800;letter-spacing:-.035em;line-height:1.05;
   color:var(--akzent);font-variant-numeric:tabular-nums;white-space:nowrap;
 }
@@ -628,17 +643,17 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .akt-distanz-einheit{font-size:12px;font-weight:600;letter-spacing:0;color:var(--akzent-meta)}
 .akt-rechts{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .akt-rechts-zeit{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3}
-.akt-rechts-hf{font-size:12px;font-weight:500;color:var(--text-4);margin-top:2px}
+.akt-rechts-hf{font-size:12px;font-weight:500;color:var(--text-4);margin-top:0}
 
 /* Unten: „alle Werte“ links, Einstufung und Löschen rechts in derselben Zeile */
-.akt-fuss{position:relative;min-height:30px;margin-top:10px}
+.akt-fuss{position:relative;min-height:30px;margin-top:8px}
 .akt-werkzeuge{position:absolute;top:0;right:0;display:flex;align-items:center;gap:4px}
 .akt-fuss details.alle{margin-top:0}
 .akt-fuss details.alle > summary{min-height:30px;margin-right:140px}
 
 .marke{
   border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text-2);
-  border-radius:var(--radius-innen);padding:4px 10px;font-size:.73rem;font-weight:600;letter-spacing:.01em;
+  border-radius:var(--radius-innen);padding:4px 8px;font-size:.73rem;font-weight:600;letter-spacing:.01em;
   cursor:pointer;white-space:nowrap;
   transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich),transform .08s var(--weich);
 }
@@ -647,61 +662,73 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .marke.ist-lauf{background:var(--akzent-sanft);color:var(--akzent);border-color:var(--akzent-rand)}
 .weg{
   border:0;background:transparent;color:var(--text-3);
-  font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:var(--radius-innen);cursor:pointer;
+  font-size:1.1rem;line-height:1;padding:4px 8px;border-radius:var(--radius-innen);cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
 .weg:hover{background:var(--kritisch-sanft);color:var(--kritisch)}
 .weg:active{transform:translateY(1px)}
 
 /* Drei Felder unter dem Kopf der Lauf-Karte */
-.kennzahlen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
-.kz{min-width:0;padding:8px 10px;border-radius:var(--radius-klein);background:var(--flaeche-tief)}
+.kennzahlen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.kz{min-width:0;padding:8px;border-radius:var(--radius-klein);background:var(--flaeche-tief)}
 .kz-wert{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.3;overflow-wrap:anywhere}
 .kz-wert--leer{color:var(--text-4);font-weight:500}
-.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-top:1px}
+.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-top:0}
 
 details.alle{margin-top:16px}
 details.alle > summary{
   cursor:pointer;font-size:.79rem;color:var(--text-4);font-weight:600;
-  padding:5px 0;list-style:none;display:inline-flex;align-items:center;gap:7px;border-radius:7px;
+  padding:4px 0;list-style:none;display:inline-flex;align-items:center;gap:8px;border-radius:7px;
   transition:color .16s var(--weich);
 }
 details.alle > summary::-webkit-details-marker{display:none}
 details.alle > summary::before{content:"\25B8";font-size:.72rem;display:inline-block;transition:transform .2s var(--weich)}
 details.alle[open] > summary::before{transform:rotate(90deg)}
 details.alle > summary:hover{color:var(--text)}
+/* „alle Werte“: gruppiert, zwei Spalten, Trennlinie nur zwischen den Zeilen */
 .werte{
-  display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:4px 18px;
-  margin:10px 0 0;padding:14px 16px;
+  margin:8px 0 0;padding:12px 16px;
   background:var(--flaeche-tief);border:1px solid var(--rand-fein);
   border-radius:var(--radius-klein);font-size:.82rem;
 }
-.werte dt{color:var(--text-4);min-width:0;overflow-wrap:anywhere}
-.werte dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
+.werte-gruppe + .werte-gruppe{margin-top:16px}
+.werte-titel{
+  margin-bottom:4px;font-size:10px;font-weight:600;line-height:1.4;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);
+}
+.werte-liste{margin:0}
+.werte-zeile{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:4px 0}
+.werte-zeile + .werte-zeile{border-top:1px solid var(--rand-fein)}
+.werte dt{flex:1 1 0;min-width:0;color:var(--text-4);overflow-wrap:anywhere}
+.werte dd{
+  flex:0 0 auto;max-width:60%;min-width:0;margin:0;
+  color:var(--text);text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+
 
 /* ---------- Befinden ---------- */
 
-.befinden{margin-top:10px}
+.befinden{margin-top:8px}
 /* Noch nicht erfasst: gestrichelt, damit es nicht wie ein Wert aussieht */
-.befinden.ist-offen{padding:11px 12px;border:1px dashed var(--offen);border-radius:var(--radius)}
+.befinden.ist-offen{padding:12px;border:1px dashed var(--offen);border-radius:var(--radius)}
 .bef-knoepfe{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600;width:100%;margin-bottom:2px}
+.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600;width:100%;margin-bottom:0}
 /* Erfasst: Fläche in der Kategorie, Punkt vorn, „Ändern“ rechts */
 .bef-fazit{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:10px 10px 10px 12px;border-radius:var(--radius);font-size:.89rem;
+  display:flex;align-items:flex-start;gap:8px;
+  padding:8px 8px 8px 12px;border-radius:var(--radius);font-size:.89rem;
   border:1px solid transparent;
 }
 .bef-fazit.ist-ok{background:var(--ok-flaeche);border-color:var(--ok-rand);--kategorie:var(--ok)}
 .bef-fazit.ist-schmerz{background:var(--schmerz-flaeche);border-color:var(--schmerz-rand);--kategorie:var(--schmerz)}
-.bef-punkt{flex:0 0 auto;width:8px;height:8px;margin-top:.5em;border-radius:50%;background:var(--kategorie)}
-.bef-inhalt{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding-top:1px}
+.bef-punkt{flex:0 0 auto;width:8px;height:8px;margin-top:12px;border-radius:50%;background:var(--kategorie)}
+.bef-inhalt{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;padding-top:4px}
 .bef-haupt{font-weight:600;color:var(--text)}
 .bef-ab{font-weight:500;font-size:.83rem;color:var(--text-2)}
 .bef-notiz{font-weight:400;font-size:.83rem;color:var(--text-2);overflow-wrap:anywhere}
 .bef-aendern{
   flex:0 0 auto;border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text);
-  border-radius:var(--radius-innen);padding:4px 11px;font-size:.78rem;font-weight:600;cursor:pointer;
+  border-radius:var(--radius-innen);padding:4px 12px;font-size:.78rem;font-weight:600;cursor:pointer;
   transition:border-color .16s var(--weich),background .16s var(--weich);
 }
 .bef-aendern:hover{border-color:var(--rand-stark);background:var(--flaeche-hoch)}
@@ -710,36 +737,36 @@ details.alle > summary:hover{color:var(--text)}
   margin-top:12px;background:var(--flaeche-tief);
   border:1px solid var(--rand-fein);border-radius:var(--radius);padding:16px;
 }
-.befinden.ist-offen .formular{margin-left:-1px;margin-right:-1px}
-.formular-fuss{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
+.befinden.ist-offen .formular{margin-left:0;margin-right:0}
+.formular-fuss{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:20px}
 
 /* ---------- Noch offen ---------- */
 
 /* Streifen links in --akzent: hier fehlt noch etwas */
 .offen-karte{
-  position:relative;overflow:hidden;margin-top:18px;padding-left:23px;
+  position:relative;overflow:hidden;margin-top:8px;padding-left:24px;
 }
 .offen-karte::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--akzent)}
 .offen-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .offen-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
 .offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600}
-.offen-zeile{border-top:1px solid var(--rand-fein);padding-top:14px;margin-top:14px}
+.offen-zeile{border-top:1px solid var(--rand-fein);padding-top:16px;margin-top:16px}
 .offen-info{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;font-size:.92rem}
 .offen-datum{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
 .offen-detail{color:var(--text-4);font-size:.85rem}
-.offen-zeile .bef-knoepfe{margin-top:11px}
-.offen-tag-kopf{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.offen-zeile .bef-knoepfe{margin-top:12px}
+.offen-tag-kopf{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
 .offen-wochentag{font-size:.82rem;color:var(--text-2)}
-.offen-eintrag{margin-top:11px}
+.offen-eintrag{margin-top:12px}
 .offen-eintrag + .offen-eintrag{margin-top:16px}
 .offen-eintrag .bef-fazit{margin-top:8px}
 .offen-marke{
   display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--text-4);font-weight:600;margin-bottom:5px;
+  color:var(--text-4);font-weight:600;margin-bottom:4px;
 }
 .offen-fuss{
-  border-top:1px solid var(--rand-fein);margin-top:16px;padding-top:14px;
-  display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+  border-top:1px solid var(--rand-fein);margin-top:16px;padding-top:16px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
 }
 .offen-fuss .link{text-align:left}
 .offen-fuss-text{font-size:.79rem;color:var(--text-4);line-height:1.5}
@@ -748,8 +775,8 @@ details.alle > summary:hover{color:var(--text)}
 
 /* Im Verlauf nur eine Zeile, kein Kasten – die Aktivitäten bleiben die Hauptsache */
 .tag-befinden{
-  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
-  margin-top:10px;padding:0 4px;font-size:.86rem;color:var(--text);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;
+  margin-top:8px;padding:0 4px;font-size:.86rem;color:var(--text);
 }
 .tag-befinden.ist-ok{--kategorie:var(--ok)}
 .tag-befinden.ist-schmerz{--kategorie:var(--schmerz)}
@@ -770,12 +797,12 @@ details.alle > summary:hover{color:var(--text)}
 
 /* ---------- Leiste und Filter ---------- */
 
-.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:22px}
+.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:8px}
 .zaehler{font-size:.79rem;color:var(--text-4);font-variant-numeric:tabular-nums;letter-spacing:.01em}
 /* Umschalter: Zeitraum, Filter, Auswahl – außen 12 px, innen 9 px */
-.schalter{display:flex;background:var(--flaeche-tief);border:1px solid var(--linie);border-radius:var(--radius);padding:3px}
+.schalter{display:flex;background:var(--flaeche-tief);border:1px solid var(--linie);border-radius:var(--radius);padding:4px}
 .schalter button{
-  border:0;background:transparent;padding:6px 14px;border-radius:var(--radius-innen);
+  border:0;background:transparent;padding:4px 12px;border-radius:var(--radius-innen);
   font-size:.82rem;font-weight:500;color:var(--text-2);cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
@@ -796,14 +823,14 @@ details.alle > summary:hover{color:var(--text)}
 
 .zusatz-tag{
   background:var(--flaeche-sanft);border:1px dashed var(--offen);
-  border-radius:var(--radius-gross);padding:13px 18px;font-size:.89rem;color:var(--text-2);
+  border-radius:var(--radius-gross);padding:12px 16px;font-size:.89rem;color:var(--text-2);
   display:flex;justify-content:space-between;align-items:center;gap:12px;
 }
-.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag,.tag-befinden + .zusatz-tag{margin-top:10px}
+.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag,.tag-befinden + .zusatz-tag{margin-top:8px}
 
 .hinweis-text{font-size:.88rem;color:var(--text-2);margin-top:10px;line-height:1.6}
 .ergebnis{
-  margin-top:16px;font-size:.88rem;padding:13px 16px;border-radius:var(--radius-klein);
+  margin-top:16px;font-size:.88rem;padding:12px 16px;border-radius:var(--radius-klein);
   background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--text);font-weight:500;
 }
 .ergebnis--fehler{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch)}
@@ -864,7 +891,7 @@ pre.ausgabe{
 }
 #toast.sichtbar{opacity:1;transform:translate(-50%,0)}
 /* Über der Reiterleiste, nicht darauf */
-@media (max-width:899px){#toast{bottom:calc(104px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:899px){#toast{bottom:calc(var(--leiste-abstand) + var(--leiste-hoehe) + 12px + env(safe-area-inset-bottom,0px))}}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.001ms !important;animation-duration:.001ms !important}
@@ -1048,6 +1075,17 @@ pre.ausgabe{
     { name: 'Ø Pace', spalten: ['Ø Pace'], nullVerbergen: true },
     { name: 'Ø HF', spalten: ['Ø Herzfrequenz'], nullVerbergen: true },
     { name: 'Zeit', spalten: ['Zeit', 'Zeit in Bewegung'], nullVerbergen: true }
+  ];
+  /*
+   * Gruppen für „alle Werte“, in Anzeigereihenfolge. Die Zuordnung sortiert nur:
+   * eine Spalte, die auf kein Muster passt, steht unter „Sonstiges“, keine fällt weg.
+   */
+  var WERTE_GRUPPEN = [
+    { name: 'Strecke', muster: /^distanz$|^zeit$|zeit in bewegung|verstrichene zeit|runde/ },
+    { name: 'Tempo', muster: /pace|geschwindigkeit|tempo/ },
+    { name: 'Herzfrequenz', muster: /herzfrequenz|\bhf\b|aerober te|anaerober te/ },
+    { name: 'Lauftechnik', muster: /schrittfrequenz|schrittlänge|schritte|vertikal|bodenkontakt|leistung|normalized power|\bsap\b/ },
+    { name: 'Höhe', muster: /anstieg|abstieg|höhe/ }
   ];
 
   /* ---------- kleine Helfer ---------- */
@@ -2064,12 +2102,32 @@ pre.ausgabe{
     var details = el('details', { class: 'alle' });
     if (offeneDetails[akt.id]) details.setAttribute('open', '');
     details.appendChild(el('summary', null, 'alle Werte (' + spalten.length + ')'));
-    var dl = el('dl', { class: 'werte' });
+    /* Dieselben Felder und Werte wie bisher, nur nach Gruppen sortiert; innerhalb der Gruppe in CSV-Reihenfolge */
+    var gruppen = WERTE_GRUPPEN.map(function (g) { return { name: g.name, muster: g.muster, spalten: [] }; });
+    var sonstiges = { name: 'Sonstiges', spalten: [] };
     spalten.forEach(function (sp) {
-      dl.appendChild(el('dt', { text: sp }));
-      dl.appendChild(el('dd', { text: akt.felder[sp] }));
+      var name = sp.toLowerCase(), ziel = sonstiges;
+      for (var i = 0; i < gruppen.length; i++) {
+        if (gruppen[i].muster.test(name)) { ziel = gruppen[i]; break; }
+      }
+      ziel.spalten.push(sp);
     });
-    details.appendChild(dl);
+    var liste = el('div', { class: 'werte' });
+    gruppen.concat([sonstiges]).forEach(function (g) {
+      if (!g.spalten.length) return;
+      var block = el('div', { class: 'werte-gruppe' });
+      block.appendChild(el('div', { class: 'werte-titel', text: g.name }));
+      var dl = el('dl', { class: 'werte-liste' });
+      g.spalten.forEach(function (sp) {
+        var zeile = el('div', { class: 'werte-zeile' });
+        zeile.appendChild(el('dt', { text: sp }));
+        zeile.appendChild(el('dd', { text: akt.felder[sp] }));
+        dl.appendChild(zeile);
+      });
+      block.appendChild(dl);
+      liste.appendChild(block);
+    });
+    details.appendChild(liste);
     details.addEventListener('toggle', function () {
       if (details.open) offeneDetails[akt.id] = true; else delete offeneDetails[akt.id];
     });
@@ -3449,6 +3507,12 @@ pre.ausgabe{
     beschwerden.appendChild(wert);
     beschwerden.appendChild(el('div', { class: 'kachel-name', text: 'Läufe mit Beschwerden' }));
     if (bewertet) beschwerden.setAttribute('title', mitSchmerz + ' von ' + bewertet + ' Läufen mit erfasstem Befinden');
+    /* Balken wie bei der Abdeckung: Anteil der Läufe mit Beschwerden an den bewerteten */
+    var anteil = el('div', { class: 'abdeckung-balken', 'aria-hidden': 'true' });
+    var fuellung = el('span', { class: 'anteil-schmerz' });
+    fuellung.style.width = (bewertet ? Math.round((mitSchmerz / bewertet) * 100) : 0) + '%';
+    anteil.appendChild(fuellung);
+    beschwerden.appendChild(anteil);
     kacheln.appendChild(beschwerden);
     var abdeckung = abdeckungsZeile();
     if (abdeckung) kacheln.appendChild(abdeckung);
@@ -4130,6 +4194,15 @@ pre.ausgabe{
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'mehr' }));
     legende.appendChild(skala);
 
+    /* Andere Einheiten: eigene Farbfamilie, gestuft nach Dauer */
+    var skalaAndere = el('span', { class: 'kal-legende-teil' });
+    skalaAndere.appendChild(el('span', { class: 'kal-skala-text', text: 'andere Einheit: kürzer' }));
+    [1, 2, 3, 4].forEach(function (stufe) {
+      skalaAndere.appendChild(probeZelle('kal-tag--andere kal-andere-' + stufe, false));
+    });
+    skalaAndere.appendChild(el('span', { class: 'kal-skala-text', text: 'länger' }));
+    legende.appendChild(skalaAndere);
+
     /* Dritte Ebene: das Befinden des Tages */
     function punktProbe(klasse) {
       var probe = el('span', { class: 'kal-probe kal-probe--punkt' });
@@ -4195,14 +4268,25 @@ pre.ausgabe{
       type: 'button', class: 'kal-pfeil', 'aria-label': 'Nächster Monat',
       disabled: index === monate.length - 1 ? true : null
     }, '›');
-    function wechsle(schritt) {
+    /*
+     * Nur diese Karte wird ersetzt. Das ganze Statistik-Panel neu zu zeichnen
+     * nahm die Karte kurz aus dem Dokument, und die Seite sprang nach oben.
+     */
+    function wechsle(schritt, pfeil) {
       var neu = index + schritt;
       if (neu < 0 || neu >= monate.length) return;
       statKalenderMonat = monate[neu];
-      zeichneStatistik();
+      if (!karte.parentNode) { zeichneStatistik(); return; }
+      var ersatz = kalenderDiagramm();
+      karte.parentNode.replaceChild(ersatz, karte);
+      /* Der Fokus bleibt auf dem Pfeil derselben Richtung, sonst ginge er mit der alten Karte verloren */
+      if (pfeil) {
+        var ziel = ersatz.querySelectorAll('.kal-pfeil')[schritt < 0 ? 0 : 1];
+        if (ziel && !ziel.disabled) ziel.focus({ preventScroll: true });
+      }
     }
-    zurueck.addEventListener('click', function () { wechsle(-1); });
-    vor.addEventListener('click', function () { wechsle(1); });
+    zurueck.addEventListener('click', function () { wechsle(-1, true); });
+    vor.addEventListener('click', function () { wechsle(1, true); });
 
     steuerung.appendChild(zurueck);
     steuerung.appendChild(el('span', {
