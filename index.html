@@ -163,7 +163,8 @@ button{font:inherit;color:inherit}
 .kopf-feld-name{margin-top:3px;font-size:10px;font-weight:500;color:var(--text-2);line-height:1.3}
 .kopf-feld-grafik{margin-top:auto;padding-top:7px}
 .kopf-feld-grafik:empty{display:none}
-.mini-balken{display:block;width:100%;height:22px}
+/* Acht Wochen bleiben schmale Balken, auch wenn das Feld breit wird */
+.mini-balken{display:block;width:100%;max-width:120px;height:22px}
 .mini-grund{stroke:var(--rand-fein);stroke-width:1;vector-effect:non-scaling-stroke}
 .mini-balken-stab{fill:var(--akzent)}
 .kopf-feld .summe-flaeche{height:22px}
