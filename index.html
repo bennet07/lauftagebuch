@@ -34,8 +34,8 @@
   /* Text in vier Abstufungen */
   --text:#FFFFFF;
   --text-2:#A3AEC0;
-  --text-3:#8695AA;
-  --text-4:#93A0B4;         /* inaktiver Reiter */
+  --text-3:#93A0B4;         /* inaktiver Reiter, mittlere Beschriftungen */
+  --text-4:#8695AA;         /* die kleinsten Beschriftungen */
 
   /* Ein Akzent für alles Interaktive */
   --akzent:#4D8DF0;
@@ -148,7 +148,7 @@ button{font:inherit;color:inherit}
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:16px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
 }
-.ring-name{font-size:9px;font-weight:600;color:var(--text-3);white-space:nowrap;line-height:1.2}
+.ring-name{font-size:9px;font-weight:600;color:var(--text-4);white-space:nowrap;line-height:1.2}
 .kopf-felder{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .kopf-feld{
   display:flex;flex-direction:column;min-width:0;
@@ -199,7 +199,7 @@ button{font:inherit;color:inherit}
 .reiter button{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
   border:0;background:transparent;padding:8px 2px 7px;border-radius:13px;
-  color:var(--text-4);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  color:var(--text-3);cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:background .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
 }
 .reiter button:focus-visible{outline-offset:1px}
@@ -251,14 +251,14 @@ button{font:inherit;color:inherit}
 /* ---------- Diagramme ---------- */
 .diagramm h2{font-size:1.06rem;letter-spacing:-.02em}
 .diagramm svg{display:block;width:100%;height:auto;margin-top:16px;overflow:visible}
-.diagramm .ax{fill:var(--text-3);font-size:11px;font-weight:600}
+.diagramm .ax{fill:var(--text-4);font-size:11px;font-weight:600}
 .diagramm .gitter{stroke:var(--rand-fein);stroke-width:1}
 .diagramm .achse{stroke:var(--rand-stark);stroke-width:1}
-.diagramm .linie{fill:none;stroke:var(--text-4);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.diagramm .linie{fill:none;stroke:var(--text-3);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .diagramm .punkt{cursor:pointer}
 .diagramm .punkt--ok{fill:var(--ok);stroke:var(--flaeche);stroke-width:1.5}
 .diagramm .punkt--schmerz{fill:var(--schmerz);stroke:var(--flaeche);stroke-width:1.5}
-.diagramm .punkt--offen{fill:none;stroke:var(--text-4);stroke-width:1.5;stroke-dasharray:2 2}
+.diagramm .punkt--offen{fill:none;stroke:var(--text-3);stroke-width:1.5;stroke-dasharray:2 2}
 .diagramm .balken{fill:var(--akzent)}
 .diagramm .balken-flaeche{fill:transparent;cursor:pointer}
 .diagramm .balken-flaeche:hover{fill:var(--hauch-schwach)}
@@ -284,14 +284,14 @@ button{font:inherit;color:inherit}
 .kal-pfeil:hover:not([disabled]){background:var(--flaeche-hoch);border-color:var(--rand-stark)}
 .kal-pfeil:active:not([disabled]){transform:translateY(1px)}
 .kal-pfeil[disabled]{opacity:.35;cursor:default}
-.kal-legende{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.75rem;color:var(--text-3);font-weight:600}
+.kal-legende{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.75rem;color:var(--text-4);font-weight:600}
 .kal-legende-teil{display:inline-flex;align-items:center;gap:6px}
 .kal-fuss{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:18px}
 .dialog.dialog--breit{max-width:780px;max-height:84vh;overflow-y:auto}
 .dialog-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
 .kal-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
 .kal-titel{font-size:.9rem;font-weight:700;letter-spacing:-.01em}
-.kal-summe{font-size:.72rem;color:var(--text-3);font-weight:600;font-variant-numeric:tabular-nums}
+.kal-summe{font-size:.72rem;color:var(--text-4);font-weight:600;font-variant-numeric:tabular-nums}
 .kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 5px}
 /* Jede Zelle eine Spalte: oben die Kachel, darunter der Platz für den Befinden-Punkt */
 .kal-zelle{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
@@ -305,7 +305,7 @@ button{font:inherit;color:inherit}
   position:relative;overflow:hidden;
   aspect-ratio:1;display:flex;align-items:center;justify-content:center;
   border-radius:var(--radius-innen);background:var(--kal-leer);border:1px solid transparent;
-  font-variant-numeric:tabular-nums;color:var(--text-3);
+  font-variant-numeric:tabular-nums;color:var(--text-4);
 }
 .kal-tag--leer{background:transparent}
 .kal-tag--zukunft{background:var(--kal-zukunft)}
@@ -345,18 +345,18 @@ button{font:inherit;color:inherit}
 .kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
 .kal-probe--punkt{background:var(--kal-leer);border:1px solid var(--rand)}
 .kal-probe--punkt .kal-punkt{bottom:50%;transform:translate(-50%,50%)}
-.kal-probe--luecke{background:transparent;border:1px dashed var(--text-3)}
+.kal-probe--luecke{background:transparent;border:1px dashed var(--text-4)}
 .kal-tag--heute{box-shadow:0 0 0 2px var(--akzent)}
 .kal-probe--heute{background:transparent;box-shadow:inset 0 0 0 2px var(--akzent)}
-.kal-skala-text{font-size:.72rem;color:var(--text-3);font-weight:600}
+.kal-skala-text{font-size:.72rem;color:var(--text-4);font-weight:600}
 .kal-probe{position:relative;overflow:hidden;width:18px;height:18px;border-radius:5px;flex:0 0 auto;display:inline-block}
 @media (max-width:560px){
   .kalender{gap:20px}
   .kal-monat{min-width:0;max-width:none;flex-basis:100%}
 }
 .stat-detail{margin-top:14px;font-size:.83rem;color:var(--text-2);line-height:1.55;min-height:2.6em}
-.stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-3);line-height:1.6}
-.stat-legende{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.76rem;color:var(--text-3);font-weight:600}
+.stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-4);line-height:1.6}
+.stat-legende{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.76rem;color:var(--text-4);font-weight:600}
 .stat-legende .legende-ok{color:var(--ok)}
 .stat-legende .legende-schmerz{color:var(--schmerz)}
 /* Kopf der Statistik: Zeitraum über die volle Breite, darunter Auswahl und Erklärung */
@@ -429,7 +429,7 @@ button{font:inherit;color:inherit}
   font-size:.82rem;line-height:1.55;color:var(--text-2);
 }
 .faktor-wahl{margin-top:16px;display:flex;flex-direction:column;gap:6px}
-.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:600}
+.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-4);font-weight:600}
 .faktor-wahl select{
   width:100%;max-width:100%;box-sizing:border-box;
   appearance:none;-webkit-appearance:none;
@@ -437,7 +437,7 @@ button{font:inherit;color:inherit}
   border:1px solid var(--rand);border-radius:var(--radius-klein);
   background-color:var(--flaeche-tief);color:var(--text);
   font-family:inherit;font-size:.9rem;font-weight:500;line-height:1.3;cursor:pointer;
-  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-4) 50%),linear-gradient(135deg,var(--text-4) 50%,transparent 50%);
   background-position:calc(100% - 17px) calc(50% + 1px),calc(100% - 12px) calc(50% + 1px);
   background-size:5px 5px,5px 5px;background-repeat:no-repeat;
   transition:border-color .16s var(--weich);
@@ -446,7 +446,7 @@ button{font:inherit;color:inherit}
 .faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-tief);color:var(--text)}
 /* Gleiche Anmutung wie der Untertitel der übrigen Diagramme */
 .faktor-erklaerung{margin-top:14px;font-size:.88rem;color:var(--text-2);line-height:1.6}
-.faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-3);line-height:1.55}
+.faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-4);line-height:1.55}
 .faktor-fuss span{display:block}
 .faktor-fuss span + span{margin-top:5px}
 .diagramm .faktor-linie{fill:none;stroke:var(--akzent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
@@ -505,7 +505,7 @@ button{font:inherit;color:inherit}
 }
 .link:hover{color:var(--akzent-hover)}
 .link:active{transform:translateY(1px)}
-.link--still{color:var(--text-3)}
+.link--still{color:var(--text-4)}
 .link--still:hover{color:var(--text-2)}
 
 /* ---------- Chips und Felder ---------- */
@@ -525,7 +525,7 @@ button{font:inherit;color:inherit}
 .feld-gruppe{margin-top:16px}
 .feld-gruppe .feld-titel{
   font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-3);font-weight:600;margin-bottom:8px;display:block;
+  color:var(--text-4);font-weight:600;margin-bottom:8px;display:block;
 }
 .fehlt .feld-titel{color:var(--kritisch)}
 .fehlt .chip-reihe{outline:1px dashed var(--kritisch-rand);outline-offset:6px;border-radius:12px}
@@ -561,7 +561,7 @@ input[type="file"]::-webkit-file-upload-button{
   background:var(--flaeche);color:var(--text);font:inherit;font-size:.84rem;font-weight:600;
 }
 textarea{min-height:130px;resize:vertical;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6}
-label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:600;margin-bottom:7px}
+label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600;margin-bottom:7px}
 
 /* ---------- Tag und Aktivität ---------- */
 
@@ -609,7 +609,7 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
   font-size:12px;font-weight:500;color:var(--akzent-meta);margin-top:2px;
   font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.aktivitaet--kompakt .akt-meta{color:var(--text-3)}
+.aktivitaet--kompakt .akt-meta{color:var(--text-4)}
 .akt-distanz{
   flex:0 0 auto;display:flex;align-items:baseline;gap:3px;
   font-size:25px;font-weight:800;letter-spacing:-.035em;line-height:1.05;
@@ -619,7 +619,7 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .akt-distanz-einheit{font-size:12px;font-weight:600;letter-spacing:0;color:var(--akzent-meta)}
 .akt-rechts{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .akt-rechts-zeit{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3}
-.akt-rechts-hf{font-size:12px;font-weight:500;color:var(--text-3);margin-top:2px}
+.akt-rechts-hf{font-size:12px;font-weight:500;color:var(--text-4);margin-top:2px}
 
 /* Unten: „alle Werte“ links, Einstufung und Löschen rechts in derselben Zeile */
 .akt-fuss{position:relative;min-height:30px;margin-top:10px}
@@ -637,7 +637,7 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .marke:active{transform:translateY(1px)}
 .marke.ist-lauf{background:var(--akzent-sanft);color:var(--akzent);border-color:var(--akzent-rand)}
 .weg{
-  border:0;background:transparent;color:var(--text-4);
+  border:0;background:transparent;color:var(--text-3);
   font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:var(--radius-innen);cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
@@ -648,12 +648,12 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
 .kennzahlen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
 .kz{min-width:0;padding:8px 10px;border-radius:var(--radius-klein);background:var(--flaeche-tief)}
 .kz-wert{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.3;overflow-wrap:anywhere}
-.kz-wert--leer{color:var(--text-3);font-weight:500}
-.kz-name{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-top:1px}
+.kz-wert--leer{color:var(--text-4);font-weight:500}
+.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-top:1px}
 
 details.alle{margin-top:16px}
 details.alle > summary{
-  cursor:pointer;font-size:.79rem;color:var(--text-3);font-weight:600;
+  cursor:pointer;font-size:.79rem;color:var(--text-4);font-weight:600;
   padding:5px 0;list-style:none;display:inline-flex;align-items:center;gap:7px;border-radius:7px;
   transition:color .16s var(--weich);
 }
@@ -667,7 +667,7 @@ details.alle > summary:hover{color:var(--text)}
   background:var(--flaeche-tief);border:1px solid var(--rand-fein);
   border-radius:var(--radius-klein);font-size:.82rem;
 }
-.werte dt{color:var(--text-3);min-width:0;overflow-wrap:anywhere}
+.werte dt{color:var(--text-4);min-width:0;overflow-wrap:anywhere}
 .werte dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
 
 /* ---------- Befinden ---------- */
@@ -676,7 +676,7 @@ details.alle > summary:hover{color:var(--text)}
 /* Noch nicht erfasst: gestrichelt, damit es nicht wie ein Wert aussieht */
 .befinden.ist-offen{padding:11px 12px;border:1px dashed var(--offen);border-radius:var(--radius)}
 .bef-knoepfe{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:600;width:100%;margin-bottom:2px}
+.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600;width:100%;margin-bottom:2px}
 /* Erfasst: Fläche in der Kategorie, Punkt vorn, „Ändern“ rechts */
 .bef-fazit{
   display:flex;align-items:flex-start;gap:10px;
@@ -713,11 +713,11 @@ details.alle > summary:hover{color:var(--text)}
 .offen-karte::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--akzent)}
 .offen-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .offen-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
-.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:600}
+.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600}
 .offen-zeile{border-top:1px solid var(--rand-fein);padding-top:14px;margin-top:14px}
 .offen-info{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;font-size:.92rem}
 .offen-datum{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
-.offen-detail{color:var(--text-3);font-size:.85rem}
+.offen-detail{color:var(--text-4);font-size:.85rem}
 .offen-zeile .bef-knoepfe{margin-top:11px}
 .offen-tag-kopf{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
 .offen-wochentag{font-size:.82rem;color:var(--text-2)}
@@ -726,14 +726,14 @@ details.alle > summary:hover{color:var(--text)}
 .offen-eintrag .bef-fazit{margin-top:8px}
 .offen-marke{
   display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--text-3);font-weight:600;margin-bottom:5px;
+  color:var(--text-4);font-weight:600;margin-bottom:5px;
 }
 .offen-fuss{
   border-top:1px solid var(--rand-fein);margin-top:16px;padding-top:14px;
   display:flex;flex-direction:column;align-items:flex-start;gap:7px;
 }
 .offen-fuss .link{text-align:left}
-.offen-fuss-text{font-size:.79rem;color:var(--text-3);line-height:1.5}
+.offen-fuss-text{font-size:.79rem;color:var(--text-4);line-height:1.5}
 
 /* ---------- Tages-Befinden ---------- */
 
@@ -747,12 +747,12 @@ details.alle > summary:hover{color:var(--text)}
 .tag-befinden .bef-punkt{margin-top:0;align-self:center}
 .tag-befinden-marke{
   font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--text-3);font-weight:600;
+  color:var(--text-4);font-weight:600;
 }
 .tag-befinden .bef-notiz{color:var(--text-2);font-style:italic}
 .bef-nachgetragen{
   font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
-  font-weight:600;color:var(--text-3);
+  font-weight:600;color:var(--text-4);
 }
 .tages-dialog{margin-top:16px}
 .tages-dialog .befinden{margin-top:0}
@@ -762,7 +762,7 @@ details.alle > summary:hover{color:var(--text)}
 /* ---------- Leiste und Filter ---------- */
 
 .leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:22px}
-.zaehler{font-size:.79rem;color:var(--text-3);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.zaehler{font-size:.79rem;color:var(--text-4);font-variant-numeric:tabular-nums;letter-spacing:.01em}
 /* Umschalter: Zeitraum, Filter, Auswahl – außen 12 px, innen 9 px */
 .schalter{display:flex;background:var(--flaeche-tief);border:1px solid var(--linie);border-radius:var(--radius);padding:3px}
 .schalter button{
@@ -798,7 +798,7 @@ details.alle > summary:hover{color:var(--text)}
   background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--text);font-weight:500;
 }
 .ergebnis--fehler{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch)}
-.sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-3);line-height:1.6}
+.sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-4);line-height:1.6}
 .sicherung-stand:empty{display:none}
 .sicherung-stand.ist-fehler{color:var(--kritisch)}
 .anleitung{margin:10px 0 0;padding-left:20px;font-size:.88rem;color:var(--text-2);line-height:1.65}
