@@ -334,10 +334,11 @@ button{font:inherit;color:inherit}
 .kal-punkt--ok{background:var(--ok)}
 /* Beschwerden: eine Farbe, kräftiger bei höherer Stärke */
 .kal-punkt--s1,.kal-punkt--s2,.kal-punkt--s3,.kal-punkt--s4,.kal-punkt--s5{background:var(--schmerz)}
-.kal-punkt--s1{opacity:.45}
-.kal-punkt--s2{opacity:.6}
-.kal-punkt--s3{opacity:.74}
-.kal-punkt--s4{opacity:.87}
+/* Auch die schwächste Stufe hält 3:1 gegen die Kartenfläche */
+.kal-punkt--s1{opacity:.6}
+.kal-punkt--s2{opacity:.7}
+.kal-punkt--s3{opacity:.8}
+.kal-punkt--s4{opacity:.9}
 .kal-tag--luecke{border-style:dashed;border-color:currentColor}
 .kal-tag[role="button"]{cursor:pointer}
 .kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
@@ -491,13 +492,13 @@ button{font:inherit;color:inherit}
 .knopf--ok:hover{background:var(--ok-flaeche);border-color:var(--ok)}
 .knopf--schmerz{background:var(--schmerz-flaeche);border-color:var(--schmerz-rand);color:var(--schmerz)}
 .knopf--schmerz:hover{background:var(--schmerz-flaeche);border-color:var(--schmerz)}
-.knopf--kritisch{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch);font-weight:620}
+.knopf--kritisch{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch);font-weight:700}
 .knopf--kritisch:hover{background:var(--kritisch-sanft);border-color:var(--kritisch)}
 .knopf--klein{padding:6px 12px;font-size:.82rem}
 
 .link{
   background:none;border:0;padding:2px 4px;color:var(--akzent);
-  font-size:.85rem;font-weight:560;cursor:pointer;
+  font-size:.85rem;font-weight:600;cursor:pointer;
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;
   border-radius:5px;transition:color .16s var(--weich)
 }
@@ -523,7 +524,7 @@ button{font:inherit;color:inherit}
 .feld-gruppe{margin-top:16px}
 .feld-gruppe .feld-titel{
   font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;margin-bottom:8px;display:block;
+  color:var(--text-3);font-weight:600;margin-bottom:8px;display:block;
 }
 .fehlt .feld-titel{color:var(--kritisch)}
 .fehlt .chip-reihe{outline:1px dashed var(--kritisch-rand);outline-offset:6px;border-radius:12px}
@@ -539,9 +540,27 @@ input[type="text"]:focus,input[type="password"]:focus,input[type="date"]:focus,t
   outline:none;border-color:var(--akzent);background:var(--flaeche-tief);
   box-shadow:0 0 0 3px var(--akzent-sanft);
 }
-input[type="file"]{font-size:.86rem;max-width:100%;color:var(--text-2)}
+/* Dateifeld: gestrichelter Rahmen auf --flaeche-tief, der Auswahlknopf als Sekundärknopf */
+input[type="file"]{
+  display:block;width:100%;max-width:100%;
+  padding:14px;border:1px dashed var(--flaeche-aktiv);border-radius:var(--radius);
+  background:var(--flaeche-tief);font:inherit;font-size:.86rem;color:var(--text-2);cursor:pointer;
+  transition:border-color .16s var(--weich);
+}
+input[type="file"]:hover{border-color:var(--akzent-rand)}
+input[type="file"]:focus-visible{outline:2px solid var(--akzent);outline-offset:3px}
+input[type="file"]::file-selector-button{
+  margin-right:12px;padding:7px 14px;cursor:pointer;
+  border:1px solid var(--rand);border-radius:var(--radius-innen);
+  background:var(--flaeche);color:var(--text);font:inherit;font-size:.84rem;font-weight:600;
+}
+input[type="file"]::-webkit-file-upload-button{
+  margin-right:12px;padding:7px 14px;cursor:pointer;
+  border:1px solid var(--rand);border-radius:var(--radius-innen);
+  background:var(--flaeche);color:var(--text);font:inherit;font-size:.84rem;font-weight:600;
+}
 textarea{min-height:130px;resize:vertical;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6}
-label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640;margin-bottom:7px}
+label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:600;margin-bottom:7px}
 
 /* ---------- Tag und Aktivität ---------- */
 
@@ -775,7 +794,7 @@ details.alle > summary:hover{color:var(--text)}
 .hinweis-text{font-size:.88rem;color:var(--text-2);margin-top:10px;line-height:1.6}
 .ergebnis{
   margin-top:16px;font-size:.88rem;padding:13px 16px;border-radius:var(--radius-klein);
-  background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--akzent);font-weight:560;
+  background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--text);font-weight:500;
 }
 .ergebnis--fehler{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch)}
 .sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-3);line-height:1.6}
@@ -783,11 +802,11 @@ details.alle > summary:hover{color:var(--text)}
 .sicherung-stand.ist-fehler{color:var(--kritisch)}
 .anleitung{margin:10px 0 0;padding-left:20px;font-size:.88rem;color:var(--text-2);line-height:1.65}
 .anleitung li{margin-bottom:6px}
-.anleitung strong{color:var(--text);font-weight:620}
+.anleitung strong{color:var(--text);font-weight:700}
 #gist-ablage:empty{display:none}
-.trenn{height:1px;background:var(--rand);margin:22px 0}
+.trenn{height:1px;background:var(--rand-fein);margin:22px 0}
 pre.ausgabe{
-  background:var(--flaeche-sanft);border:1px solid var(--rand);border-radius:var(--radius-klein);
+  background:var(--flaeche-tief);border:1px solid var(--rand-fein);border-radius:var(--radius);
   padding:16px;overflow-x:auto;font-size:.78rem;line-height:1.55;max-height:60vh;margin-top:18px;
   white-space:pre;color:var(--text-2);
   font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
@@ -829,7 +848,7 @@ pre.ausgabe{
   background:var(--flaeche-hoch);color:var(--text);
   border:1px solid var(--rand-stark);
   padding:12px 22px;border-radius:var(--radius);
-  font-size:.88rem;font-weight:560;opacity:0;pointer-events:none;
+  font-size:.88rem;font-weight:600;opacity:0;pointer-events:none;
   transition:opacity .22s var(--weich),transform .22s var(--weich);
   z-index:120;box-shadow:var(--schatten-hoch);max-width:90vw;text-align:center;
 }
