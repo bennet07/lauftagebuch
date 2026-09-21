@@ -40,6 +40,7 @@
   /* Ein Akzent für alles Interaktive */
   --akzent:#4D8DF0;
   --akzent-hover:#6BA1F4;
+  --akzent-hell:#8FBCFF;    /* nur Beschriftung des aktiven Reiters: 4,5:1 auf --akzent-sanft */
   --akzent-sanft:rgba(77,141,240,.18);
   --akzent-flaeche:rgba(77,141,240,.16);
   --akzent-rand:rgba(77,141,240,.38);
@@ -57,7 +58,7 @@
   --schmerz-flaeche:#1D1810;
   --schmerz-rand:#453724;
 
-  --offen:#4C5A71;          /* gestrichelt: nicht erfasst */
+  --offen:#66738A;          /* gestrichelt: nicht erfasst – hält 3:1 auf allen Flächen */
 
   --andere-symbol-flaeche:#232C3A;
   --andere-symbol:#93A6BE;
@@ -67,7 +68,10 @@
   --kal-2:#2C4A72;
   --kal-3:#3C6BA8;
   --kal-4:#4D8DF0;
-  --kal-andere:#2A3441;
+  --kal-andere-1:#1F2731;   /* andere Einheit: vier Stufen nach Dauer, Stahlton */
+  --kal-andere-2:#262F3B;
+  --kal-andere-3:#2A3441;
+  --kal-andere-4:#333E4D;
   --kal-leer:#141A24;
   --kal-zukunft:#0F141C;
 
@@ -212,7 +216,7 @@ button{font:inherit;color:inherit}
   display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   font-size:10px;font-weight:500;letter-spacing:-.01em;line-height:1.2;
 }
-.reiter button[aria-selected="true"] .reiter-text{font-weight:700}
+.reiter button[aria-selected="true"] .reiter-text{font-weight:700;color:var(--akzent-hell)}
 /* Offene Tage: nur ein Punkt, die genaue Zahl steht im aria-label.
    Im DOM hinter der Beschriftung, damit der Reiter weiter „Verlauf …“ heißt;
    optisch sitzt er oben rechts am Symbol. */
@@ -311,7 +315,12 @@ button{font:inherit;color:inherit}
 .kal-tag--zukunft{background:var(--kal-zukunft)}
 .kal-zahl{font-size:.74rem;line-height:1;position:relative;z-index:1}
 .kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:700}
-.kal-tag--andere{background:var(--kal-andere);color:var(--text)}
+/* Andere Einheit in vier Stufen nach Dauer; ohne Stufe (Legende) der mittlere Ton */
+.kal-tag--andere{background:var(--kal-andere-3);color:var(--text)}
+.kal-andere-1{background:var(--kal-andere-1)}
+.kal-andere-2{background:var(--kal-andere-2)}
+.kal-andere-3{background:var(--kal-andere-3)}
+.kal-andere-4{background:var(--kal-andere-4)}
 /* Lauf in vier Stufen nach Umfang; die Schriftfarbe mit dem höheren Kontrast je Stufe */
 .kal-stufe-1{background:var(--kal-1);color:var(--text)}
 .kal-stufe-2{background:var(--kal-2);color:var(--text)}
@@ -3950,8 +3959,8 @@ pre.ausgabe{
 
   /*
    * Die Farben stehen als Klassen im Stylesheet (--kal-1 bis --kal-4,
-   * --kal-andere). Ein Lauftag färbt die Kachel in vier Stufen nach Umfang,
-   * ein Tag nur mit anderer Einheit trägt eine eigene, gleichbleibende Fläche.
+   * --kal-andere-1 bis -4). Ein Lauftag färbt die Kachel in vier Stufen nach
+   * Distanz, ein Tag nur mit anderer Einheit in vier Stufen nach Dauer.
    * Die Schriftfarbe je Stufe ist die mit dem höheren Kontrast.
    */
   function stufeAus(wert, groesste) {
@@ -4007,7 +4016,7 @@ pre.ausgabe{
     return liste;
   }
 
-  function monatsBlock(eintrag, tage, maxKm) {
+  function monatsBlock(eintrag, tage, maxKm, maxDauer) {
     var block = el('div', { class: 'kal-monat' });
     var anzahlTage = new Date(Date.UTC(eintrag.jahr, eintrag.monat, 0)).getUTCDate();
     var aktiveTage = 0, d;
@@ -4048,6 +4057,7 @@ pre.ausgabe{
         else if (tag.hatLauf) klasse += ' kal-tag--lauf';
         else klasse += ' kal-tag--andere';
         if (tag.hatLauf) klasse += ' kal-stufe-' + stufeAus(tag.km, maxKm);
+        else klasse += ' kal-andere-' + stufeAus(tag.dauer, maxDauer);
       } else if (datum > heute) {
         klasse += ' kal-tag--zukunft';
       }
@@ -4160,9 +4170,10 @@ pre.ausgabe{
       return karte;
     }
 
-    var maxKm = 0;
+    var maxKm = 0, maxDauer = 0;
     Object.keys(tage).forEach(function (datum) {
       if (tage[datum].km > maxKm) maxKm = tage[datum].km;
+      if (tage[datum].dauer > maxDauer) maxDauer = tage[datum].dauer;
     });
 
     /* Standardmäßig der jüngste Monat mit Daten */
@@ -4201,7 +4212,7 @@ pre.ausgabe{
     steuerung.appendChild(vor);
     karte.appendChild(steuerung);
 
-    var block = monatsBlock(monate[index], tage, maxKm);
+    var block = monatsBlock(monate[index], tage, maxKm, maxDauer);
     block.classList.add('kal-monat--einzeln');
     /* Auf Berührungsgeräten zusätzlich wischen */
     var startX = null;
@@ -4223,19 +4234,19 @@ pre.ausgabe{
 
     var fuss = el('div', { class: 'kal-fuss' });
     var alle = el('button', { type: 'button', class: 'knopf knopf--klein' }, 'Alle Monate');
-    alle.addEventListener('click', function () { zeigeMonatsUebersicht(monate, tage, maxKm); });
+    alle.addEventListener('click', function () { zeigeMonatsUebersicht(monate, tage, maxKm, maxDauer); });
     fuss.appendChild(alle);
     fuss.appendChild(el('span', { class: 'kal-skala-text', text: monate.length + (monate.length === 1 ? ' Monat mit Daten' : ' Monate mit Daten') }));
     karte.appendChild(fuss);
     return karte;
   }
 
-  function zeigeMonatsUebersicht(monate, tage, maxKm) {
+  function zeigeMonatsUebersicht(monate, tage, maxKm, maxDauer) {
     var inhalt = document.getElementById('uebersicht-inhalt');
     leeren(inhalt);
     var raster = el('div', { class: 'kalender' });
     monate.forEach(function (eintrag) {
-      raster.appendChild(monatsBlock(eintrag, tage, maxKm));
+      raster.appendChild(monatsBlock(eintrag, tage, maxKm, maxDauer));
     });
     inhalt.appendChild(raster);
     inhalt.appendChild(kalenderLegende());
