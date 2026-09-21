@@ -92,10 +92,12 @@
   --radius-innen:9px;       /* Umschalter innen, Kalenderkachel */
 
   --schatten-karte:inset 0 1px 0 var(--hauch),0 16px 30px -22px rgba(0,0,0,1);
-  /* Reiterleiste am Telefon: gemessene Kachelhöhe (1+6+8+21+4+12+7+6+1) und Abstand zum Rand */
-  --leiste-hoehe:66px;
-  --leiste-abstand:12px;
-  --schatten-leiste:0 20px 40px -18px rgba(0,0,0,1);
+  /* Reiterleiste am Telefon: gemessene Höhe der Pille (1+5+9+21+4+12+7+5+1) */
+  --leiste-hoehe:65px;
+  /* Abstand unter der Pille: die Safe-Area selbst, mindestens 10 px – nicht beides addiert */
+  --leiste-unten:max(10px,env(safe-area-inset-bottom,0px));
+  --bg-klar:rgba(10,14,20,0);   /* --bg mit Alpha 0: Verlauf ohne Graustich */
+  --schatten-leiste:0 8px 28px -10px rgba(0,0,0,.9);
   --schatten-hoch:0 2px 4px var(--schatten-tief),0 30px 60px -22px rgba(0,0,0,.95);
 
   --schrift:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI Variable Text","Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -121,10 +123,10 @@ body{
 /* Unten Platz für die feste Reiterleiste, seitlich für die Aussparung im Querformat */
 .huelle{
   max-width:840px;margin:0 auto;position:relative;
-  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(var(--leiste-abstand) + var(--leiste-hoehe) + 12px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));
+  padding:0 max(24px,env(safe-area-inset-right,0px)) calc(var(--leiste-unten) + var(--leiste-hoehe) + 16px) max(24px,env(safe-area-inset-left,0px));
 }
 @media (max-width:560px){
-  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--leiste-abstand) + var(--leiste-hoehe) + 12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--leiste-unten) + var(--leiste-hoehe) + 16px) max(16px,env(safe-area-inset-left,0px))}
 }
 
 h1,h2,h3{margin:0;font-weight:700}
@@ -195,22 +197,24 @@ main > section > :first-child{margin-top:12px}
 
 .navleiste{
   position:fixed;left:0;right:0;bottom:0;z-index:50;
-  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--leiste-abstand) + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  padding:0 max(14px,env(safe-area-inset-right,0px)) var(--leiste-unten) max(14px,env(safe-area-inset-left,0px));
+  /* Deckt den Bereich um und unter der Pille ab; der Inhalt blendet auf 30 px in den Grund aus */
+  background:linear-gradient(to bottom,var(--bg-klar) 0,var(--bg) 30px);
   pointer-events:none;
 }
 .navleiste-marke{display:none}
 /* Die Reiterleiste ist eine eigene Kachel: deckend, ohne Weichzeichner */
 .reiter{
   display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
-  max-width:560px;margin:0 auto;padding:6px 5px;
-  border-radius:var(--radius-gross);border:1px solid var(--rand);
+  max-width:560px;margin:0 auto;padding:5px;
+  border-radius:26px;border:1px solid var(--rand);
   background:var(--flaeche);
   box-shadow:var(--schatten-leiste);
   pointer-events:auto;
 }
 .reiter button{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
-  border:0;background:transparent;padding:8px 2px 7px;border-radius:13px;
+  border:0;background:transparent;padding:9px 2px 7px;border-radius:19px;
   color:var(--text-3);cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:background .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
 }
@@ -229,7 +233,7 @@ main > section > :first-child{margin-top:12px}
    Im DOM hinter der Beschriftung, damit der Reiter weiter „Verlauf …“ heißt;
    optisch sitzt er oben rechts am Symbol. */
 .reiter-zahl{
-  position:absolute;top:6px;left:calc(50% + 6.5px);
+  position:absolute;top:7px;left:calc(50% + 6.5px);
   width:7px;height:7px;border-radius:50%;
   background:var(--akzent);box-shadow:0 0 0 2px var(--flaeche);
 }
@@ -891,7 +895,7 @@ pre.ausgabe{
 }
 #toast.sichtbar{opacity:1;transform:translate(-50%,0)}
 /* Über der Reiterleiste, nicht darauf */
-@media (max-width:899px){#toast{bottom:calc(var(--leiste-abstand) + var(--leiste-hoehe) + 12px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:899px){#toast{bottom:calc(var(--leiste-unten) + var(--leiste-hoehe) + 12px)}}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.001ms !important;animation-duration:.001ms !important}
