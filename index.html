@@ -136,41 +136,6 @@ button{font:inherit;color:inherit}
 }
 .wortmarke{flex:0 0 auto;width:20px;height:20px;color:var(--akzent)}
 
-.kopfzahlen{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:1px;
-  margin-top:30px;
-  background:var(--rand);
-  border:1px solid var(--rand);
-  border-radius:var(--radius);
-  overflow:hidden;
-  box-shadow:var(--schatten-karte);
-}
-@media (max-width:600px){
-  /* Auf schmalen Bildschirmen als Zeilen: Bezeichnung links, Wert rechts */
-  .kopfzahlen{grid-template-columns:1fr}
-  .kopfzahl{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:13px 18px}
-  .kopfzahl-name{order:-1;margin-top:0;flex:1 1 auto}
-  .kopfzahl-wert{font-size:1.4rem;text-align:right;flex:0 0 auto}
-  .kopfzahl-wert.ist-text{font-size:1rem;padding:0}
-}
-.kopfzahl{
-  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 70%),var(--flaeche);
-  padding:16px 18px;
-}
-.kopfzahl-wert{
-  font-size:1.7rem;font-weight:680;letter-spacing:-.03em;line-height:1.1;
-  font-variant-numeric:tabular-nums;
-}
-.kopfzahl-wert.ist-text{font-size:1.02rem;font-weight:620;letter-spacing:-.015em;padding-top:9px;padding-bottom:8px}
-.kopfzahl-wert.ist-ok{color:var(--ok)}
-.kopfzahl-wert.ist-schmerz{color:var(--schmerz)}
-.kopfzahl-name{
-  font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;margin-top:6px;
-}
-
 /* ---------- Kopfkarte im Verlauf: links der Erfassungsring, rechts drei Felder ---------- */
 .kopfkarte{display:flex;align-items:stretch;gap:11px;padding:12px;margin-top:18px;min-height:100px}
 .ring{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
@@ -285,8 +250,8 @@ button{font:inherit;color:inherit}
 /* ---------- Diagramme ---------- */
 .diagramm h2{font-size:1.06rem;letter-spacing:-.02em}
 .diagramm svg{display:block;width:100%;height:auto;margin-top:16px;overflow:visible}
-.diagramm .ax{fill:var(--text-4);font-size:11px;font-weight:600}
-.diagramm .gitter{stroke:var(--rand);stroke-width:1}
+.diagramm .ax{fill:var(--text-3);font-size:11px;font-weight:600}
+.diagramm .gitter{stroke:var(--rand-fein);stroke-width:1}
 .diagramm .achse{stroke:var(--rand-stark);stroke-width:1}
 .diagramm .linie{fill:none;stroke:var(--text-4);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .diagramm .punkt{cursor:pointer}
@@ -296,7 +261,7 @@ button{font:inherit;color:inherit}
 .diagramm .balken{fill:var(--akzent)}
 .diagramm .balken-flaeche{fill:transparent;cursor:pointer}
 .diagramm .balken-flaeche:hover{fill:var(--hauch-schwach)}
-.diagramm .streifen{fill:var(--text-4);opacity:.75}
+.diagramm .streifen{fill:var(--andere-symbol)}
 .diagramm .punkt:focus-visible,.diagramm .balken-flaeche:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
 
 /* ---------- Aktivitätskalender ---------- */
@@ -304,47 +269,55 @@ button{font:inherit;color:inherit}
 .kal-monat{flex:1 1 240px;min-width:220px;max-width:320px}
 .kal-monat--einzeln{flex:1 1 100%;max-width:420px;margin:0 auto}
 .kal-monat--einzeln .kal-tag{font-size:.74rem}
-/* Der Monatsname steht in der Einzelansicht schon in der Steuerung */
+/* Der Monatsname steht in der Einzelansicht schon in der Steuerung, die Summe mittig darunter */
 .kal-monat--einzeln .kal-titel{display:none}
-.kal-monat--einzeln .kal-kopf{justify-content:flex-end}
-.kal-steuerung{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
-.kal-monat-name{font-size:1rem;font-weight:640;letter-spacing:-.015em;min-width:9.5em;text-align:center}
+.kal-monat--einzeln .kal-kopf{justify-content:center;margin:4px 0 14px}
+.kal-monat--einzeln .kal-summe{font-size:13px;font-weight:500;color:var(--text-2)}
+.kal-steuerung{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px}
+.kal-monat-name{font-size:17px;font-weight:700;letter-spacing:-.02em;text-align:center;flex:1 1 auto}
 .kal-pfeil{
-  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);color:var(--text-2);
-  width:34px;height:34px;border-radius:50%;font-size:1.15rem;line-height:1;cursor:pointer;
+  flex:0 0 auto;border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text);
+  width:32px;height:32px;border-radius:var(--radius-klein);font-size:1.15rem;line-height:1;cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich);
 }
-.kal-pfeil:hover:not([disabled]){background:#272d38;color:var(--text);border-color:var(--text-4)}
+.kal-pfeil:hover:not([disabled]){background:var(--flaeche-hoch);border-color:var(--rand-stark)}
 .kal-pfeil:active:not([disabled]){transform:translateY(1px)}
 .kal-pfeil[disabled]{opacity:.35;cursor:default}
-.kal-legende{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.75rem;color:var(--text-4);font-weight:600}
+.kal-legende{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.75rem;color:var(--text-3);font-weight:600}
 .kal-legende-teil{display:inline-flex;align-items:center;gap:6px}
 .kal-fuss{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:18px}
 .dialog.dialog--breit{max-width:780px;max-height:84vh;overflow-y:auto}
 .dialog-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
 .kal-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
-.kal-titel{font-size:.9rem;font-weight:620;letter-spacing:-.01em}
-.kal-summe{font-size:.72rem;color:var(--text-4);font-weight:600}
-.kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px}
+.kal-titel{font-size:.9rem;font-weight:700;letter-spacing:-.01em}
+.kal-summe{font-size:.72rem;color:var(--text-3);font-weight:600;font-variant-numeric:tabular-nums}
+.kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 5px}
 /* Jede Zelle eine Spalte: oben die Kachel, darunter der Platz für den Befinden-Punkt */
 .kal-zelle{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .kal-zelle > .kal-tag{align-self:stretch}
 .kal-wochentag{
-  font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;
-  color:var(--text-4);font-weight:640;text-align:center;padding-bottom:2px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--text-2);font-weight:600;text-align:center;padding-bottom:2px;
 }
+/* Kachel: quadratisch; die Farbe trägt den Umfang, nie eine Wertung */
 .kal-tag{
   position:relative;overflow:hidden;
   aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-  border-radius:6px;background:var(--flaeche-sanft);border:1px solid var(--rand);
+  border-radius:var(--radius-innen);background:var(--kal-leer);border:1px solid transparent;
   font-variant-numeric:tabular-nums;color:var(--text-3);
 }
-.kal-tag--leer{background:transparent;border-color:transparent}
+.kal-tag--leer{background:transparent}
+.kal-tag--zukunft{background:var(--kal-zukunft)}
 .kal-zahl{font-size:.74rem;line-height:1;position:relative;z-index:1}
-.kal-tag--lauf,.kal-tag--andere,.kal-tag--beides{border-color:transparent}
-.kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:640}
+.kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:700}
+.kal-tag--andere{background:var(--kal-andere);color:var(--text)}
+/* Lauf in vier Stufen nach Umfang; die Schriftfarbe mit dem höheren Kontrast je Stufe */
+.kal-stufe-1{background:var(--kal-1);color:var(--text)}
+.kal-stufe-2{background:var(--kal-2);color:var(--text)}
+.kal-stufe-3{background:var(--kal-3);color:var(--text)}
+.kal-stufe-4{background:var(--kal-4);color:var(--bg)}
 /* Die weitere Einheit als schmaler Balken am unteren Rand */
-.kal-balken{position:absolute;left:0;right:0;bottom:0;height:5px}
+.kal-balken{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--andere-symbol)}
 /*
  * Dritte Ebene: das Befinden. Ein Punkt statt einer Farbfläche, damit er sich
  * nicht mit Aktivitätsart und Umfang vermischt. Der fein gestrichelte Rahmen
@@ -358,69 +331,72 @@ button{font:inherit;color:inherit}
 /* Im Kalender unter der Kachel, auf dem dunklen Grund; ohne Eintrag ein leerer Platz */
 .kal-zelle > .kal-punkt{position:static;transform:none;flex:0 0 auto}
 .kal-punkt--leer{background:transparent}
-.kal-tag--luecke{border-style:dashed;border-color:currentColor;opacity:.98}
+.kal-punkt--ok{background:var(--ok)}
+/* Beschwerden: eine Farbe, kräftiger bei höherer Stärke */
+.kal-punkt--s1,.kal-punkt--s2,.kal-punkt--s3,.kal-punkt--s4,.kal-punkt--s5{background:var(--schmerz)}
+.kal-punkt--s1{opacity:.45}
+.kal-punkt--s2{opacity:.6}
+.kal-punkt--s3{opacity:.74}
+.kal-punkt--s4{opacity:.87}
+.kal-tag--luecke{border-style:dashed;border-color:currentColor}
 .kal-tag[role="button"]{cursor:pointer}
 .kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
-.kal-probe--punkt{background:var(--flaeche-hoch);border:1px solid var(--rand)}
+.kal-probe--punkt{background:var(--kal-leer);border:1px solid var(--rand)}
 .kal-probe--punkt .kal-punkt{bottom:50%;transform:translate(-50%,50%)}
 .kal-probe--luecke{background:transparent;border:1px dashed var(--text-3)}
-.kal-tag--heute{box-shadow:0 0 0 2px var(--akzent);border-color:var(--akzent)}
+.kal-tag--heute{box-shadow:0 0 0 2px var(--akzent)}
 .kal-probe--heute{background:transparent;box-shadow:inset 0 0 0 2px var(--akzent)}
-.kal-skala-text{font-size:.72rem;color:var(--text-4);font-weight:600}
-.kal-probe{position:relative;overflow:hidden;width:18px;height:18px;border-radius:4px;flex:0 0 auto;display:inline-block}
+.kal-skala-text{font-size:.72rem;color:var(--text-3);font-weight:600}
+.kal-probe{position:relative;overflow:hidden;width:18px;height:18px;border-radius:5px;flex:0 0 auto;display:inline-block}
 @media (max-width:560px){
   .kalender{gap:20px}
   .kal-monat{min-width:0;max-width:none;flex-basis:100%}
 }
 .stat-detail{margin-top:14px;font-size:.83rem;color:var(--text-2);line-height:1.55;min-height:2.6em}
 .stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-3);line-height:1.6}
-.stat-legende{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.76rem;color:var(--text-4);font-weight:600}
+.stat-legende{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.76rem;color:var(--text-3);font-weight:600}
 .stat-legende .legende-ok{color:var(--ok)}
 .stat-legende .legende-schmerz{color:var(--schmerz)}
-/* Kopfzeile der Statistik: keine Karte, nur Überschrift und Pillenreihen.
-   Passt der Zeitraum nicht neben die Überschrift, rückt er in eine eigene Zeile. */
+/* Kopf der Statistik: Zeitraum über die volle Breite, darunter Auswahl und Erklärung */
 .stat-kopf{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
-.stat-kopf-zeile{align-self:stretch;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px}
-.stat-titel{font-size:17px;font-weight:660;letter-spacing:-.025em;line-height:1.2}
 .stat-kopf .schalter{max-width:100%}
 .stat-kopf .schalter button{white-space:nowrap}
+.stat-kopf .schalter--zeitraum{align-self:stretch;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.stat-kopf .schalter--zeitraum button{padding:7px 4px}
 .stat-kopf details.stat-erklaerung{margin-top:-4px}
 .stat-erklaerung .hinweis-text{margin-top:4px;max-width:60ch}
-.stat-kennzahlen{margin-top:14px}
-/* Summenkarte der Statistik: Kilometer führend, darunter vier Kacheln im 2×2-Raster.
-   Nur über .stat-kennzahlen – die Kopfzahlen im Verlauf bleiben unberührt. */
-.kopfzahlen.stat-kennzahlen{
-  grid-template-columns:1fr 1fr;gap:8px;
-  background:none;border:0;border-radius:0;overflow:visible;box-shadow:none;
+
+/* Summenkarte: Kilometer groß, Wochenkurve über die volle Breite, darunter drei Felder */
+.summenkarte{margin-top:14px;padding:18px 16px 14px}
+.summe-zahl{display:flex;align-items:baseline;gap:6px}
+.summe-wert{
+  font-size:40px;font-weight:800;letter-spacing:-.045em;line-height:1;
+  color:var(--akzent);font-variant-numeric:tabular-nums;
 }
-.stat-kennzahlen .kopfzahl{
-  display:block;padding:12px 14px;
-  border-radius:var(--radius);border:1px solid var(--rand);
-}
-.stat-kennzahlen .kopfzahl-wert{font-size:22px;font-weight:680;text-align:left}
-.stat-kennzahlen .kopfzahl-wert.ist-text{font-size:17px;padding:3px 0 2px}
-.stat-kennzahlen .kopfzahl-name{order:0;margin-top:4px}
-.stat-kennzahlen .kopfzahl--summe{
-  grid-column:1 / -1;padding:0;overflow:hidden;
-  border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
-  background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
-}
-.summe-text{padding:16px 18px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-.summe-haupt{min-width:0}
-.summe-zahl{display:flex;align-items:baseline;gap:5px}
-.stat-kennzahlen .kopfzahl--summe .kopfzahl-wert{font-size:33px;font-weight:700;letter-spacing:-.045em;line-height:1}
 .summe-einheit{font-size:15px;font-weight:600;color:var(--text-2)}
-.summe-neben{display:flex;flex-direction:column;gap:8px;text-align:right;flex:0 0 auto}
-.stat-kennzahlen .kopfzahl--summe .summe-neben .kopfzahl-wert{
-  font-size:16px;font-weight:660;letter-spacing:-.02em;line-height:1.2;text-align:right;
-}
-.summe-neben .kopfzahl-name{margin-top:2px}
+.summe-name{margin-top:4px;font-size:13px;font-weight:500;color:var(--text-2)}
 .summe-flaeche{display:block;width:100%;height:40px}
-.summe-flaeche-grund{fill:rgba(91,156,248,.17)}
+.summenkarte .summe-flaeche{margin-top:12px;height:48px}
+.summe-flaeche-grund{fill:var(--akzent-flaeche)}
 .summe-flaeche-linie{fill:none;stroke:var(--akzent);stroke-width:1.8;stroke-linejoin:round}
+.summe-felder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.summe-feld{min-width:0;padding:9px 10px;border-radius:var(--radius);background:var(--flaeche-tief)}
+.feld-wert{font-size:17px;font-weight:700;letter-spacing:-.02em;line-height:1.2;font-variant-numeric:tabular-nums}
+.feld-name{margin-top:2px;font-size:11px;font-weight:500;color:var(--text-2);line-height:1.3}
+
+/* Zwei Kacheln nebeneinander: Beschwerden und Abdeckung */
+.stat-kacheln{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.stat-kacheln > .karte{margin-top:0;padding:14px}
+.stat-kacheln > .karte:only-child{grid-column:1 / -1}
+.kachel-wert{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kachel-wert.ist-schmerz{color:var(--schmerz)}
+.kachel-nenner{font-size:15px;font-weight:600;letter-spacing:0;color:var(--text-2)}
+.kachel-name{margin-top:4px;font-size:12px;font-weight:500;color:var(--text-2);line-height:1.35}
+.abdeckung-balken{height:6px;margin-top:10px;border-radius:3px;background:var(--erfassung-spur);overflow:hidden}
+.abdeckung-balken span{display:block;height:100%;border-radius:3px;background:var(--erfassung)}
 
 /* Umschalter: genau ein Diagramm zur Zeit */
-.diagramm-bereich{margin-top:24px}
+.diagramm-bereich{margin-top:22px}
 .diagramm-wahl{
   display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
   padding:3px;border-radius:var(--radius);
@@ -437,7 +413,7 @@ button{font:inherit;color:inherit}
 .diagramm-wahl button[aria-selected="true"]{background:var(--flaeche-aktiv);color:var(--text);font-weight:600}
 .diagramm-wahl button:focus-visible{outline:2px solid var(--akzent);outline-offset:1px;border-radius:var(--radius-innen)}
 #diagramm-feld > .karte{margin-top:10px}
-.diagramm-bereich + .karte{margin-top:16px}
+.diagramm-bereich + .karte{margin-top:14px}
 @media (max-width:560px){
   .diagramm .ax{font-size:10px}
 }
@@ -446,29 +422,29 @@ button{font:inherit;color:inherit}
 /* Der Hinweis zu Scheinzusammenhängen steht bewusst offen über der Auswahl */
 .stat-warnung{
   margin-top:14px;padding:11px 13px;
-  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
-  background:var(--flaeche-sanft);
+  border:1px solid var(--rand-fein);border-radius:var(--radius-klein);
+  background:var(--flaeche-tief);
   font-size:.82rem;line-height:1.55;color:var(--text-2);
 }
 .faktor-wahl{margin-top:16px;display:flex;flex-direction:column;gap:6px}
-.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-4);font-weight:640}
+.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:600}
 .faktor-wahl select{
   width:100%;max-width:100%;box-sizing:border-box;
   appearance:none;-webkit-appearance:none;
   padding:10px 34px 10px 12px;
-  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
-  background-color:var(--flaeche-hoch);color:var(--text);
-  font-family:inherit;font-size:.9rem;font-weight:560;line-height:1.3;cursor:pointer;
+  border:1px solid var(--rand);border-radius:var(--radius-klein);
+  background-color:var(--flaeche-tief);color:var(--text);
+  font-family:inherit;font-size:.9rem;font-weight:500;line-height:1.3;cursor:pointer;
   background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
   background-position:calc(100% - 17px) calc(50% + 1px),calc(100% - 12px) calc(50% + 1px);
   background-size:5px 5px,5px 5px;background-repeat:no-repeat;
   transition:border-color .16s var(--weich);
 }
-.faktor-wahl select:hover{border-color:var(--text-4)}
-.faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-hoch);color:var(--text)}
+.faktor-wahl select:hover{border-color:var(--rand-stark)}
+.faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-tief);color:var(--text)}
 /* Gleiche Anmutung wie der Untertitel der übrigen Diagramme */
 .faktor-erklaerung{margin-top:14px;font-size:.88rem;color:var(--text-2);line-height:1.6}
-.faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-4);line-height:1.55}
+.faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-3);line-height:1.55}
 .faktor-fuss span{display:block}
 .faktor-fuss span + span{margin-top:5px}
 .diagramm .faktor-linie{fill:none;stroke:var(--akzent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
@@ -762,10 +738,6 @@ details.alle > summary:hover{color:var(--text)}
 .tages-dialog .befinden{margin-top:0}
 .tages-dialog .hinweis-text{margin-top:0}
 #dialog-inhalt:empty{display:none}
-.stat-abdeckung{
-  margin-top:14px;font-size:.83rem;color:var(--text-3);
-  font-variant-numeric:tabular-nums;
-}
 
 /* ---------- Leiste und Filter ---------- */
 
@@ -3399,8 +3371,8 @@ pre.ausgabe{
     });
     var minuten = Math.round(sekunden / 60);
 
-    /* Rechts in der führenden Karte, untereinander */
-    var neben = [
+    /* Unter der Kurve, nebeneinander */
+    var felder = [
       {
         wert: mitZeit ? Math.floor(minuten / 60) + ':' + pad2(minuten % 60) : '–',
         name: 'Stunden'
@@ -3410,49 +3382,49 @@ pre.ausgabe{
         name: statNurLaeufe
           ? (gefiltert.length === 1 ? 'Lauf' : 'Läufe')
           : (gefiltert.length === 1 ? 'Aktivität' : 'Aktivitäten')
-      }
-    ];
-
-    var kacheln = [
-      {
-        wert: bewertet ? mitSchmerz + ' von ' + bewertet : '–',
-        name: 'mit Beschwerden',
-        klasse: ' ist-text' + (mitSchmerz ? ' ist-schmerz' : '')
       },
-      { wert: String(wochen), name: wochen === 1 ? 'Woche erfasst' : 'Wochen erfasst', klasse: '' }
+      { wert: String(wochen), name: wochen === 1 ? 'Woche erfasst' : 'Wochen erfasst' }
     ];
 
-    /* Führend: links die Kilometer, rechts Stunden und Anzahl, am unteren Rand der Wochenumfang */
-    var leiste = el('div', { class: 'kopfzahlen stat-kennzahlen' });
-    var fuehrend = el('div', { class: 'kopfzahl kopfzahl--summe' });
-    var text = el('div', { class: 'summe-text' });
-    var haupt = el('div', { class: 'summe-haupt' });
-    var zahl = el('div', { class: 'summe-zahl' });
-    zahl.appendChild(el('span', { class: 'kopfzahl-wert', text: zahlText(km, 1) }));
-    zahl.appendChild(el('span', { class: 'summe-einheit', text: 'km' }));
-    haupt.appendChild(zahl);
-    haupt.appendChild(el('div', { class: 'kopfzahl-name', text: 'gelaufen' }));
-    text.appendChild(haupt);
-    var seite = el('div', { class: 'summe-neben' });
-    neben.forEach(function (n) {
-      var block = el('div');
-      block.appendChild(el('div', { class: 'kopfzahl-wert', text: n.wert }));
-      block.appendChild(el('div', { class: 'kopfzahl-name', text: n.name }));
-      seite.appendChild(block);
-    });
-    text.appendChild(seite);
-    fuehrend.appendChild(text);
-    var flaeche = wochenFlaeche(wochenUmfang());
-    if (flaeche) fuehrend.appendChild(flaeche);
-    leiste.appendChild(fuehrend);
+    var bereich = el('div', { class: 'stat-kennzahlen' });
 
-    kacheln.forEach(function (k) {
-      var block = el('div', { class: 'kopfzahl' });
-      block.appendChild(el('div', { class: 'kopfzahl-wert' + k.klasse, text: k.wert }));
-      block.appendChild(el('div', { class: 'kopfzahl-name', text: k.name }));
-      leiste.appendChild(block);
+    /* Summenkarte: die Kilometer groß, darunter der Wochenumfang und die drei Felder */
+    var summe = el('div', { class: 'karte summenkarte' });
+    var zahl = el('div', { class: 'summe-zahl' });
+    zahl.appendChild(el('span', { class: 'summe-wert', text: zahlText(km, 1) }));
+    zahl.appendChild(el('span', { class: 'summe-einheit', text: 'km' }));
+    summe.appendChild(zahl);
+    summe.appendChild(el('div', { class: 'summe-name', text: 'gelaufen' }));
+    var flaeche = wochenFlaeche(wochenUmfang());
+    if (flaeche) summe.appendChild(flaeche);
+    var reihe = el('div', { class: 'summe-felder' });
+    felder.forEach(function (f) {
+      var block = el('div', { class: 'summe-feld' });
+      block.appendChild(el('div', { class: 'feld-wert', text: f.wert }));
+      block.appendChild(el('div', { class: 'feld-name', text: f.name }));
+      reihe.appendChild(block);
     });
-    return leiste;
+    summe.appendChild(reihe);
+    bereich.appendChild(summe);
+
+    /* Zwei Kacheln: Beschwerden von den bewerteten Läufen, daneben die Abdeckung */
+    var kacheln = el('div', { class: 'stat-kacheln' });
+    var beschwerden = el('div', { class: 'karte stat-kachel' });
+    var wert = el('div', { class: 'kachel-wert' + (mitSchmerz ? ' ist-schmerz' : '') });
+    if (bewertet) {
+      wert.appendChild(document.createTextNode(String(mitSchmerz)));
+      wert.appendChild(el('span', { class: 'kachel-nenner', text: ' / ' + bewertet }));
+    } else {
+      wert.textContent = '–';
+    }
+    beschwerden.appendChild(wert);
+    beschwerden.appendChild(el('div', { class: 'kachel-name', text: 'Läufe mit Beschwerden' }));
+    if (bewertet) beschwerden.setAttribute('title', mitSchmerz + ' von ' + bewertet + ' Läufen mit erfasstem Befinden');
+    kacheln.appendChild(beschwerden);
+    var abdeckung = abdeckungsZeile();
+    if (abdeckung) kacheln.appendChild(abdeckung);
+    bereich.appendChild(kacheln);
+    return bereich;
   }
 
   /* Wochen-km als schmale Fläche, rein zur Anmutung; die Werte stehen im Diagramm */
@@ -3505,9 +3477,17 @@ pre.ausgabe{
     if (!abdeckung) return null;
     var gesamt = abdeckung.gesamt, erfasst = abdeckung.erfasst;
 
-    return el('p', { class: 'stat-abdeckung' },
-      'Erfassung: ' + Math.round((erfasst / gesamt) * 100) + ' % der Tage (' +
-      erfasst + ' von ' + gesamt + ')');
+    /* Als Kachel neben den Beschwerden: Anteil groß, Balken in --erfassung, Zählung darunter */
+    var kachel = el('div', { class: 'karte stat-kachel stat-abdeckung' });
+    kachel.appendChild(el('div', { class: 'kachel-wert', text: abdeckung.prozent + ' %' }));
+    kachel.appendChild(el('div', { class: 'kachel-name' },
+      'der Tage mit Tagesbefinden erfasst (' + erfasst + ' von ' + gesamt + ')'));
+    var balken = el('div', { class: 'abdeckung-balken', 'aria-hidden': 'true' });
+    var fuellung = el('span');
+    fuellung.style.width = abdeckung.prozent + '%';
+    balken.appendChild(fuellung);
+    kachel.appendChild(balken);
+    return kachel;
   }
 
   /* ---------- Statistik: Schmerzverlauf ---------- */
@@ -3949,49 +3929,11 @@ pre.ausgabe{
   /* ---------- Statistik: Aktivitätskalender ---------- */
 
   /*
-   * Vier deckende Stufen je Farbfamilie, bewusst weit auseinander: die beiden
-   * unteren tragen hellen Text, die beiden oberen dunklen. Blau und Bernstein
-   * bleiben auch bei Rot-Grün-Schwäche auseinanderzuhalten.
+   * Die Farben stehen als Klassen im Stylesheet (--kal-1 bis --kal-4,
+   * --kal-andere). Ein Lauftag färbt die Kachel in vier Stufen nach Umfang,
+   * ein Tag nur mit anderer Einheit trägt eine eigene, gleichbleibende Fläche.
+   * Die Schriftfarbe je Stufe ist die mit dem höheren Kontrast.
    */
-  var LAUF_FARBEN = ['rgb(56,104,185)', 'rgb(75,140,235)', 'rgb(130,180,250)', 'rgb(185,214,252)'];
-  var ANDERE_FARBEN = ['rgb(158,97,17)', 'rgb(200,130,30)', 'rgb(230,170,70)', 'rgb(246,210,140)'];
-  var TEXT_DUNKEL = 'rgb(16,20,26)';
-  var TEXT_HELL = 'rgb(244,247,251)';
-
-  function farbeLauf(stufe) { return LAUF_FARBEN[stufe - 1]; }
-  function farbeAndere(stufe) { return ANDERE_FARBEN[stufe - 1]; }
-
-  function relativeHelligkeit(r, g, b) {
-    var teile = [r, g, b].map(function (wert) {
-      var anteil = wert / 255;
-      return anteil <= 0.03928 ? anteil / 12.92 : Math.pow((anteil + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * teile[0] + 0.7152 * teile[1] + 0.0722 * teile[2];
-  }
-
-  function kontrastVerhaeltnis(a, b) {
-    var hell = Math.max(a, b), dunkel = Math.min(a, b);
-    return (hell + 0.05) / (dunkel + 0.05);
-  }
-
-  function helligkeitAus(farbe) {
-    var teile = String(farbe).match(/\d+/g);
-    if (!teile || teile.length < 3) return null;
-    return relativeHelligkeit(Number(teile[0]), Number(teile[1]), Number(teile[2]));
-  }
-
-  /*
-   * Textfarbe aus der tatsächlich gesetzten Füllfarbe: es gewinnt die Variante
-   * mit dem höheren Kontrast, nicht eine fest gesetzte Schwelle.
-   */
-  function textFarbeFuer(farbe) {
-    var grund = helligkeitAus(farbe);
-    if (grund === null) return TEXT_HELL;
-    var mitHell = kontrastVerhaeltnis(grund, helligkeitAus(TEXT_HELL));
-    var mitDunkel = kontrastVerhaeltnis(grund, helligkeitAus(TEXT_DUNKEL));
-    return mitDunkel >= mitHell ? TEXT_DUNKEL : TEXT_HELL;
-  }
-
   function stufeAus(wert, groesste) {
     if (!groesste || !wert) return 1;
     return Math.min(4, Math.max(1, Math.ceil((wert / groesste) * 4)));
@@ -4000,19 +3942,13 @@ pre.ausgabe{
   /*
    * Dritte Ebene im Kalender: das Befinden als Punkt. Bewusst ein anderes
    * visuelles Mittel als die Fläche, damit sich Aktivitätsart und Befinden
-   * nicht vermischen. Grün für keine Beschwerden, Rot nach Stärke 1 bis 5.
+   * nicht vermischen. --ok für keine Beschwerden, --schmerz kräftiger nach
+   * Stärke 1 bis 5 – eine Kategorie, kein Rot.
    */
-  var BEFINDEN_OK_FARBE = 'rgb(116,185,141)';
-  var BEFINDEN_SCHMERZ_FARBEN = [
-    'rgb(230,186,158)', 'rgb(223,158,120)', 'rgb(217,130,92)',
-    'rgb(214,101,80)', 'rgb(201,68,58)'
-  ];
-
-  function befindenPunktFarbe(b) {
-    if (!b) return null;
-    if (b.art === 'keine') return BEFINDEN_OK_FARBE;
-    var stufe = Math.min(5, Math.max(1, b.staerke || 1));
-    return BEFINDEN_SCHMERZ_FARBEN[stufe - 1];
+  function befindenPunktKlasse(b) {
+    if (!b) return 'kal-punkt--leer';
+    if (b.art === 'keine') return 'kal-punkt--ok';
+    return 'kal-punkt--s' + Math.min(5, Math.max(1, b.staerke || 1));
   }
 
   function kalenderTage() {
@@ -4051,7 +3987,7 @@ pre.ausgabe{
     return liste;
   }
 
-  function monatsBlock(eintrag, tage, maxKm, maxDauer) {
+  function monatsBlock(eintrag, tage, maxKm) {
     var block = el('div', { class: 'kal-monat' });
     var anzahlTage = new Date(Date.UTC(eintrag.jahr, eintrag.monat, 0)).getUTCDate();
     var aktiveTage = 0, d;
@@ -4087,9 +4023,13 @@ pre.ausgabe{
       var istLuecke = !befindenTag && !!beginn && datum >= beginn && datum <= heute;
       var klasse = 'kal-tag';
       if (tag) {
+        /* Der Lauf färbt die ganze Fläche nach Umfang, die weitere Einheit steht als Balken unten */
         if (tag.hatLauf && tag.hatAndere) klasse += ' kal-tag--beides';
         else if (tag.hatLauf) klasse += ' kal-tag--lauf';
         else klasse += ' kal-tag--andere';
+        if (tag.hatLauf) klasse += ' kal-stufe-' + stufeAus(tag.km, maxKm);
+      } else if (datum > heute) {
+        klasse += ' kal-tag--zukunft';
       }
       if (istLuecke) klasse += ' kal-tag--luecke';
       if (datum === heute) klasse += ' kal-tag--heute';
@@ -4102,22 +4042,10 @@ pre.ausgabe{
        */
       var spalte = el('span', { class: 'kal-zelle' });
       spalte.appendChild(zelle);
-      var punkt = el('span', { class: befindenTag ? 'kal-punkt' : 'kal-punkt kal-punkt--leer', 'aria-hidden': 'true' });
-      if (befindenTag) punkt.style.background = befindenPunktFarbe(befindenTag);
-      spalte.appendChild(punkt);
+      spalte.appendChild(el('span', { class: 'kal-punkt ' + befindenPunktKlasse(befindenTag), 'aria-hidden': 'true' }));
 
       if (tag) {
-        var stufeL = tag.hatLauf ? stufeAus(tag.km, maxKm) : 0;
-        var stufeA = tag.hatAndere ? stufeAus(tag.dauer, maxDauer) : 0;
-        /* Der Lauf färbt die ganze Fläche, die weitere Einheit steht als Balken unten */
-        var fuellung = tag.hatLauf ? farbeLauf(stufeL) : farbeAndere(stufeA);
-        zelle.style.background = fuellung;
-        zelle.style.color = textFarbeFuer(fuellung);
-        if (tag.hatLauf && tag.hatAndere) {
-          var balken = el('span', { class: 'kal-balken' });
-          balken.style.background = farbeAndere(stufeA);
-          zelle.appendChild(balken);
-        }
+        if (tag.hatLauf && tag.hatAndere) zelle.appendChild(el('span', { class: 'kal-balken' }));
         zelle.setAttribute('title', datumLang(datum) + ': ' + tag.anzahl +
           (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
           (tag.hatLauf && tag.km ? ', ' + zahlText(tag.km, 2) + ' km' : '') +
@@ -4147,24 +4075,19 @@ pre.ausgabe{
   function kalenderLegende() {
     var legende = el('div', { class: 'kal-legende' });
 
-    function probeZelle(farbe, mitBalken) {
-      var probe = el('span', { class: 'kal-probe' });
-      probe.style.background = farbe;
-      if (mitBalken) {
-        var balken = el('span', { class: 'kal-balken' });
-        balken.style.background = farbeAndere(3);
-        probe.appendChild(balken);
-      }
+    function probeZelle(klasse, mitBalken) {
+      var probe = el('span', { class: 'kal-probe ' + klasse });
+      if (mitBalken) probe.appendChild(el('span', { class: 'kal-balken' }));
       return probe;
     }
 
     [
-      { text: 'Lauf', farbe: farbeLauf(3), balken: false },
-      { text: 'Andere Aktivität', farbe: farbeAndere(3), balken: false },
-      { text: 'Lauf und weitere Einheit: Balken unten', farbe: farbeLauf(3), balken: true }
+      { text: 'Lauf', klasse: 'kal-stufe-3', balken: false },
+      { text: 'Andere Aktivität', klasse: 'kal-tag--andere', balken: false },
+      { text: 'Lauf und weitere Einheit: Balken unten', klasse: 'kal-stufe-3', balken: true }
     ].forEach(function (eintrag) {
       var zeile = el('span', { class: 'kal-legende-teil' });
-      zeile.appendChild(probeZelle(eintrag.farbe, eintrag.balken));
+      zeile.appendChild(probeZelle(eintrag.klasse, eintrag.balken));
       zeile.appendChild(el('span', { text: eintrag.text }));
       legende.appendChild(zeile);
     });
@@ -4172,26 +4095,24 @@ pre.ausgabe{
     var skala = el('span', { class: 'kal-legende-teil' });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'weniger Umfang' }));
     [1, 2, 3, 4].forEach(function (stufe) {
-      skala.appendChild(probeZelle(farbeLauf(stufe), false));
+      skala.appendChild(probeZelle('kal-stufe-' + stufe, false));
     });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'mehr' }));
     legende.appendChild(skala);
 
     /* Dritte Ebene: das Befinden des Tages */
-    function punktProbe(farbe) {
+    function punktProbe(klasse) {
       var probe = el('span', { class: 'kal-probe kal-probe--punkt' });
-      var punkt = el('span', { class: 'kal-punkt' });
-      punkt.style.background = farbe;
-      probe.appendChild(punkt);
+      probe.appendChild(el('span', { class: 'kal-punkt ' + klasse }));
       return probe;
     }
 
     [
-      { text: 'Punkt: keine Beschwerden', farbe: BEFINDEN_OK_FARBE },
-      { text: 'Punkt: Beschwerden, kräftiger bei höherer Stärke', farbe: BEFINDEN_SCHMERZ_FARBEN[3] }
+      { text: 'Punkt: keine Beschwerden', klasse: 'kal-punkt--ok' },
+      { text: 'Punkt: Beschwerden, kräftiger bei höherer Stärke', klasse: 'kal-punkt--s4' }
     ].forEach(function (eintrag) {
       var zeile = el('span', { class: 'kal-legende-teil' });
-      zeile.appendChild(punktProbe(eintrag.farbe));
+      zeile.appendChild(punktProbe(eintrag.klasse));
       zeile.appendChild(el('span', { text: eintrag.text }));
       legende.appendChild(zeile);
     });
@@ -4219,10 +4140,9 @@ pre.ausgabe{
       return karte;
     }
 
-    var maxKm = 0, maxDauer = 0;
+    var maxKm = 0;
     Object.keys(tage).forEach(function (datum) {
       if (tage[datum].km > maxKm) maxKm = tage[datum].km;
-      if (tage[datum].dauer > maxDauer) maxDauer = tage[datum].dauer;
     });
 
     /* Standardmäßig der jüngste Monat mit Daten */
@@ -4261,7 +4181,7 @@ pre.ausgabe{
     steuerung.appendChild(vor);
     karte.appendChild(steuerung);
 
-    var block = monatsBlock(monate[index], tage, maxKm, maxDauer);
+    var block = monatsBlock(monate[index], tage, maxKm);
     block.classList.add('kal-monat--einzeln');
     /* Auf Berührungsgeräten zusätzlich wischen */
     var startX = null;
@@ -4283,19 +4203,19 @@ pre.ausgabe{
 
     var fuss = el('div', { class: 'kal-fuss' });
     var alle = el('button', { type: 'button', class: 'knopf knopf--klein' }, 'Alle Monate');
-    alle.addEventListener('click', function () { zeigeMonatsUebersicht(monate, tage, maxKm, maxDauer); });
+    alle.addEventListener('click', function () { zeigeMonatsUebersicht(monate, tage, maxKm); });
     fuss.appendChild(alle);
     fuss.appendChild(el('span', { class: 'kal-skala-text', text: monate.length + (monate.length === 1 ? ' Monat mit Daten' : ' Monate mit Daten') }));
     karte.appendChild(fuss);
     return karte;
   }
 
-  function zeigeMonatsUebersicht(monate, tage, maxKm, maxDauer) {
+  function zeigeMonatsUebersicht(monate, tage, maxKm) {
     var inhalt = document.getElementById('uebersicht-inhalt');
     leeren(inhalt);
     var raster = el('div', { class: 'kalender' });
     monate.forEach(function (eintrag) {
-      raster.appendChild(monatsBlock(eintrag, tage, maxKm, maxDauer));
+      raster.appendChild(monatsBlock(eintrag, tage, maxKm));
     });
     inhalt.appendChild(raster);
     inhalt.appendChild(kalenderLegende());
@@ -4898,17 +4818,14 @@ pre.ausgabe{
   /* Kopfzeile der Statistik: Überschrift, beide Umschalter, Erklärtext zum Aufklappen */
   function statFilter() {
     var kopf = el('div', { class: 'stat-kopf' });
-    var reihe = el('div', { class: 'stat-kopf-zeile' });
-    reihe.appendChild(el('h2', { class: 'stat-titel', text: 'Statistik' }));
-
-    var zeitraum = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Zeitraum' });
+    /* Die Überschrift „Statistik“ steht groß im Kopf der Seite */
+    var zeitraum = el('div', { class: 'schalter schalter--zeitraum', role: 'group', 'aria-label': 'Zeitraum' });
     ZEITRAEUME.forEach(function (z) {
       var knopf = el('button', { type: 'button', 'aria-pressed': statZeitraum === z.wert ? 'true' : 'false' }, z.text);
       knopf.addEventListener('click', function () { statZeitraum = z.wert; zeichneStatistik(); });
       zeitraum.appendChild(knopf);
     });
-    reihe.appendChild(zeitraum);
-    kopf.appendChild(reihe);
+    kopf.appendChild(zeitraum);
 
     var auswahl = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Auswahl' });
     [[true, 'Nur Läufe'], [false, 'Alle Aktivitäten']].forEach(function (paar) {
@@ -5000,9 +4917,8 @@ pre.ausgabe{
     }
 
     ziel.appendChild(statFilter());
+    /* Enthält auch die Abdeckung als Kachel neben den Beschwerden */
     ziel.appendChild(statKennzahlen());
-    var abdeckung = abdeckungsZeile();
-    if (abdeckung) ziel.appendChild(abdeckung);
 
     if (!statAktivitaeten(false).length) {
       var hinweisKarte = el('div', { class: 'karte' });
