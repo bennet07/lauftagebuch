@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Lauftagebuch">
-<meta name="theme-color" content="#15181d">
+<meta name="theme-color" content="#0A0E14">
 <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
 <title>Lauftagebuch</title>
 <style>
@@ -16,46 +16,83 @@
 :root{
   color-scheme:dark;
 
-  /* Grundflächen – sehr dunkles, leicht kühles Grau, kein reines Schwarz */
-  --bg:#15181d;
-  --bg-tief:#111419;
-  --flaeche:#1c2027;
-  --flaeche-hoch:#232832;
-  --flaeche-sanft:#1a1e25;
-  --rand:#2b313b;
-  --rand-stark:#3b4351;
+  /* Grundflächen – flach, ohne Verlauf */
+  --bg-tief:#070A0F;
+  --bg:#0A0E14;
+  --flaeche:#19202C;        /* Karte */
+  --flaeche-sanft:#161B24;  /* Karte einer anderen Einheit */
+  --flaeche-tief:#111722;   /* Feld innerhalb einer Karte */
+  --flaeche-hoch:#222B3A;   /* Überfahren, Rückmeldung */
+  --flaeche-aktiv:#32405A;  /* aktives Feld im Umschalter, Rahmen der Dateifelder */
+  --rand:#2B3547;
+  --rand-sanft:#252E3C;
+  --rand-lauf:#2E3D55;
+  --rand-fein:#242E3D;      /* Trennlinie in einer Karte */
+  --rand-stark:#32405A;
+  --linie:#222B3A;          /* Rahmen der Umschalter, Datumsschiene */
 
   /* Text in vier Abstufungen */
-  --text:#eef1f6;
-  --text-2:#a9b2bf;
-  --text-3:#979faa;
-  --text-4:#868f9d;
+  --text:#FFFFFF;
+  --text-2:#A3AEC0;
+  --text-3:#93A0B4;         /* inaktiver Reiter, mittlere Beschriftungen */
+  --text-4:#8695AA;         /* die kleinsten Beschriftungen */
 
   /* Ein Akzent für alles Interaktive */
-  --akzent:#5b9cf8;
-  --akzent-sanft:rgba(91,156,248,.14);
-  --akzent-rand:rgba(91,156,248,.38);
-  --akzent-text:#0b1626;
+  --akzent:#4D8DF0;
+  --akzent-hover:#6BA1F4;
+  --akzent-hell:#8FBCFF;    /* nur Beschriftung des aktiven Reiters: 4,5:1 auf --akzent-sanft */
+  --akzent-sanft:rgba(77,141,240,.18);
+  --akzent-flaeche:rgba(77,141,240,.16);
+  --akzent-rand:rgba(77,141,240,.38);
+  --akzent-meta:#7FA6D8;    /* Metazeile einer Lauf-Karte */
 
-  /* Zwei Statusfarben, gedeckt */
-  --ok:#74b98d;
-  --ok-sanft:rgba(116,185,141,.13);
-  --ok-rand:rgba(116,185,141,.34);
-  --schmerz:#d9926a;
-  --schmerz-sanft:rgba(217,146,106,.13);
-  --schmerz-rand:rgba(217,146,106,.34);
+  /* Erfassung: nur der Ring und der Abdeckungsbalken */
+  --erfassung:#4FD1C5;
+  --erfassung-spur:#222D3E;
 
-  /* Kritische Aktion */
+  /* Zwei Statusfarben – Kategorien, keine Wertung */
+  --ok:#5BD68F;
+  --ok-flaeche:#101C18;
+  --ok-rand:#1E3329;
+  --schmerz:#F5A524;
+  --schmerz-flaeche:#1D1810;
+  --schmerz-rand:#453724;
+
+  --offen:#66738A;          /* gestrichelt: nicht erfasst – hält 3:1 auf allen Flächen */
+
+  --andere-symbol-flaeche:#232C3A;
+  --andere-symbol:#93A6BE;
+
+  /* Kalender: Umfang in vier Stufen */
+  --kal-1:#1E2E45;
+  --kal-2:#2C4A72;
+  --kal-3:#3C6BA8;
+  --kal-4:#4D8DF0;
+  --kal-andere-1:#1F2731;   /* andere Einheit: vier Stufen nach Dauer, Stahlton */
+  --kal-andere-2:#262F3B;
+  --kal-andere-3:#2A3441;
+  --kal-andere-4:#333E4D;
+  --kal-leer:#141A24;
+  --kal-zukunft:#0F141C;
+
+  /* Kritische Aktion: Löschen, Ersetzen, Fehlermeldung – nie für Messwerte */
   --kritisch:#e06f5f;
   --kritisch-sanft:rgba(224,111,95,.14);
   --kritisch-rand:rgba(224,111,95,.4);
 
-  --radius-gross:20px;
-  --radius:16px;
-  --radius-klein:11px;
+  --hauch:rgba(255,255,255,.04);
+  --hauch-schwach:rgba(255,255,255,.03);
+  --schirm:rgba(7,10,15,.78);
+  --schatten-tief:rgba(0,0,0,.4);
 
-  --schatten-karte:0 1px 1px rgba(0,0,0,.5),0 14px 30px -18px rgba(0,0,0,.9);
-  --schatten-hoch:0 2px 4px rgba(0,0,0,.4),0 30px 60px -22px rgba(0,0,0,.95);
+  --radius-gross:18px;      /* Karte, Reiterleiste */
+  --radius:12px;            /* Feld in der Karte, Umschalter außen */
+  --radius-klein:11px;
+  --radius-innen:9px;       /* Umschalter innen, Kalenderkachel */
+
+  --schatten-karte:inset 0 1px 0 var(--hauch),0 16px 30px -22px rgba(0,0,0,1);
+  --schatten-leiste:0 20px 40px -18px rgba(0,0,0,1);
+  --schatten-hoch:0 2px 4px var(--schatten-tief),0 30px 60px -22px rgba(0,0,0,.95);
 
   --schrift:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI Variable Text","Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
 
@@ -66,7 +103,8 @@ html{-webkit-text-size-adjust:100%}
 
 body{
   margin:0;
-  background:var(--bg-tief);
+  /* Der Grund ist flach: kein Verlauf, keine Textur */
+  background:var(--bg);
   color:var(--text);
   font-family:var(--schrift);
   font-size:16px;
@@ -74,20 +112,6 @@ body{
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
   min-height:100vh;
-}
-
-/* Ruhiger Verlauf und feines Rauschen, damit die Ränder nicht leer wirken */
-body::before{
-  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
-  background:
-    radial-gradient(1200px 640px at 8% -10%,rgba(91,156,248,.13),transparent 62%),
-    radial-gradient(1000px 700px at 104% 4%,rgba(116,185,141,.075),transparent 60%),
-    radial-gradient(1100px 780px at 46% 118%,rgba(217,146,106,.06),transparent 64%),
-    var(--bg);
-}
-body::after{
-  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23r)' opacity='.22'/%3E%3C/svg%3E");
 }
 
 /* Unten Platz für die feste Reiterleiste, seitlich für die Aussparung im Querformat */
@@ -99,84 +123,63 @@ body::after{
   .huelle{padding:0 max(16px,env(safe-area-inset-right,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 }
 
-h1,h2,h3{margin:0;font-weight:640}
+h1,h2,h3{margin:0;font-weight:700}
 p{margin:0}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--akzent);outline-offset:3px;border-radius:6px}
 
 /* ---------- Kopfbereich ---------- */
 
-.kopf{padding:calc(26px + env(safe-area-inset-top,0px)) 0 18px}
-.kopf-zeile{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px}
-.kopf h1{
-  display:flex;align-items:center;gap:8px;
-  font-size:17px;
-  font-weight:660;
-  letter-spacing:-.025em;
-  line-height:1.2;
+/* Große Überschrift des Reiters, darunter der erfasste Zeitraum */
+.kopf{padding:calc(24px + env(safe-area-inset-top,0px)) 0 18px}
+.kopf-titel{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.kopf-zeitraum{
+  display:block;margin-top:5px;min-height:20px;
+  font-size:13px;font-weight:500;color:var(--text-2);line-height:1.5;
+  font-variant-numeric:tabular-nums;
 }
 .wortmarke{flex:0 0 auto;width:20px;height:20px;color:var(--akzent)}
-.kopf-zeitraum{
-  margin-left:auto;text-align:right;white-space:nowrap;
-  font-size:11px;font-weight:600;color:var(--text-4);
-  font-variant-numeric:tabular-nums;
-}
 
-.kopfzahlen{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:1px;
-  margin-top:30px;
-  background:var(--rand);
-  border:1px solid var(--rand);
-  border-radius:var(--radius);
-  overflow:hidden;
-  box-shadow:var(--schatten-karte);
+/* ---------- Kopfkarte im Verlauf: links der Erfassungsring, rechts drei Felder ---------- */
+.kopfkarte{display:flex;align-items:stretch;gap:11px;padding:12px;margin-top:18px;min-height:100px}
+.ring{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.ring-kreis{position:relative;width:58px;height:58px}
+/* Um 90° gegen den Uhrzeigersinn gedreht: der Bogen beginnt oben */
+.ring-bild{display:block;width:58px;height:58px;transform:rotate(-90deg)}
+.ring-spur{fill:none;stroke:var(--erfassung-spur);stroke-width:6}
+.ring-bogen{fill:none;stroke:var(--erfassung);stroke-width:6;stroke-linecap:round}
+.ring-zahl{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
 }
-@media (max-width:600px){
-  /* Auf schmalen Bildschirmen als Zeilen: Bezeichnung links, Wert rechts */
-  .kopfzahlen{grid-template-columns:1fr}
-  .kopfzahl{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:13px 18px}
-  .kopfzahl-name{order:-1;margin-top:0;flex:1 1 auto}
-  .kopfzahl-wert{font-size:1.4rem;text-align:right;flex:0 0 auto}
-  .kopfzahl-wert.ist-text{font-size:1rem;padding:0}
+.ring-name{font-size:9px;font-weight:600;color:var(--text-4);white-space:nowrap;line-height:1.2}
+.kopf-felder{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.kopf-feld{
+  display:flex;flex-direction:column;min-width:0;
+  padding:9px 10px;border-radius:var(--radius);background:var(--flaeche-tief);
 }
-.kopfzahl{
-  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 70%),var(--flaeche);
-  padding:16px 18px;
+.kopf-feld-zahl{
+  font-size:21px;font-weight:800;letter-spacing:-.03em;line-height:1.05;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
 }
-.kopfzahl-wert{
-  font-size:1.7rem;font-weight:680;letter-spacing:-.03em;line-height:1.1;
-  font-variant-numeric:tabular-nums;
-}
-.kopfzahl-wert.ist-text{font-size:1.02rem;font-weight:620;letter-spacing:-.015em;padding-top:9px;padding-bottom:8px}
-.kopfzahl-wert.ist-ok{color:var(--ok)}
-.kopfzahl-wert.ist-schmerz{color:var(--schmerz)}
-.kopfzahl-name{
-  font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;margin-top:6px;
-}
+.kopf-feld-zahl.ist-schmerz{color:var(--schmerz)}
+.kopf-feld-nenner{font-size:13px;font-weight:600;letter-spacing:0;color:var(--text-2)}
+.kopf-feld-name{margin-top:3px;font-size:10px;font-weight:500;color:var(--text-2);line-height:1.3}
+.kopf-feld-grafik{margin-top:auto;padding-top:7px}
+.kopf-feld-grafik:empty{display:none}
+/* Acht Wochen bleiben schmale Balken, auch wenn das Feld breit wird */
+.mini-balken{display:block;width:100%;max-width:120px;height:22px}
+.mini-grund{stroke:var(--rand-fein);stroke-width:1;vector-effect:non-scaling-stroke}
+.mini-balken-stab{fill:var(--akzent)}
+.kopf-feld .summe-flaeche{height:22px}
+/* Anteil über alle Läufe; ohne Befinden gestrichelt, damit es nicht wie ein Wert aussieht */
+.anteil{display:flex;gap:2px;height:7px;margin-bottom:7px}
+.anteil-teil{flex:0 0 0;min-width:4px;border-radius:4px}
+.anteil--schmerz{background:var(--schmerz)}
+.anteil--ok{background:var(--ok)}
+.anteil--offen{border:1px dashed var(--offen)}
 
-/* Kopfzahlen oben: eine führende Karte, zwei begleitende. Die Statistik nutzt
-   .kopfzahlen ebenfalls und bleibt davon unberührt. */
-.kopfzahlen--kopf{
-  grid-template-columns:1fr 1fr;gap:8px;
-  background:none;border:0;border-radius:0;overflow:visible;box-shadow:none;
-}
-.kopfzahlen--kopf .kopfzahl{display:block;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--rand)}
-.kopfzahlen--kopf .kopfzahl-wert{font-size:22px;font-weight:680;text-align:left}
-.kopfzahlen--kopf .kopfzahl-name{order:0;margin-top:4px;color:var(--text-2)}
-.kopfzahlen--kopf .kopfzahl--fuehrend{
-  grid-column:1 / -1;
-  padding:16px 18px;
-  border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
-  background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
-}
-.kopfzahlen--kopf .kopfzahl--fuehrend .kopfzahl-wert{font-size:38px;font-weight:700;letter-spacing:-.045em;line-height:1}
-.kopfzahlen--kopf .kopfzahl--ok{border-color:var(--ok-rand);background:rgba(116,185,141,.09)}
-.kopfzahlen--kopf .kopfzahl--schmerz{border-color:var(--schmerz-rand);background:rgba(217,146,106,.09)}
-
-.verlaufs-meldung{margin-top:24px}
+.verlaufs-meldung{margin-top:18px}
 .bef-notiz-link{margin-top:8px;display:inline-block}
 .formular--notiz{margin-top:10px}
 
@@ -184,23 +187,22 @@ button{font:inherit;color:inherit}
 
 .navleiste{
   position:fixed;left:0;right:0;bottom:0;z-index:50;
-  padding:0 max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
   pointer-events:none;
 }
 .navleiste-marke{display:none}
+/* Die Reiterleiste ist eine eigene Kachel: deckend, ohne Weichzeichner */
 .reiter{
   display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
-  max-width:560px;margin:0 auto;padding:7px 6px;
-  border-radius:22px;border:1px solid var(--rand);
-  background:rgba(28,32,39,.93);
-  -webkit-backdrop-filter:blur(14px) saturate(140%);
-  backdrop-filter:blur(14px) saturate(140%);
-  box-shadow:var(--schatten-hoch);
+  max-width:560px;margin:0 auto;padding:6px 5px;
+  border-radius:var(--radius-gross);border:1px solid var(--rand);
+  background:var(--flaeche);
+  box-shadow:var(--schatten-leiste);
   pointer-events:auto;
 }
 .reiter button{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
-  border:0;background:transparent;padding:9px 2px 8px;border-radius:16px;
+  border:0;background:transparent;padding:8px 2px 7px;border-radius:13px;
   color:var(--text-3);cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:background .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
 }
@@ -212,16 +214,16 @@ button{font:inherit;color:inherit}
 .reiter-symbol svg{display:block;width:21px;height:21px}
 .reiter-text{
   display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-size:10px;font-weight:560;letter-spacing:-.01em;line-height:1.2;
+  font-size:10px;font-weight:500;letter-spacing:-.01em;line-height:1.2;
 }
-.reiter button[aria-selected="true"] .reiter-text{font-weight:640}
+.reiter button[aria-selected="true"] .reiter-text{font-weight:700;color:var(--akzent-hell)}
 /* Offene Tage: nur ein Punkt, die genaue Zahl steht im aria-label.
    Im DOM hinter der Beschriftung, damit der Reiter weiter „Verlauf …“ heißt;
    optisch sitzt er oben rechts am Symbol. */
 .reiter-zahl{
-  position:absolute;top:7px;left:calc(50% + 6.5px);
+  position:absolute;top:6px;left:calc(50% + 6.5px);
   width:7px;height:7px;border-radius:50%;
-  background:var(--akzent);box-shadow:0 0 0 2px rgba(28,32,39,.93);
+  background:var(--akzent);box-shadow:0 0 0 2px var(--flaeche);
 }
 
 @media (min-width:900px){
@@ -230,49 +232,41 @@ button{font:inherit;color:inherit}
   .navleiste{
     top:0;right:auto;width:232px;
     padding:calc(26px + env(safe-area-inset-top,0px)) 14px 20px max(14px,env(safe-area-inset-left,0px));
-    background:rgba(26,30,37,.72);border-right:1px solid var(--rand);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
-    backdrop-filter:blur(14px) saturate(140%);
+    background:var(--flaeche-sanft);border-right:1px solid var(--rand);
     overflow-y:auto;pointer-events:auto;
   }
   .navleiste-marke{
     display:flex;align-items:center;gap:8px;padding:0 13px;margin-bottom:22px;
-    font-size:17px;font-weight:660;letter-spacing:-.025em;line-height:1.2;
+    font-size:17px;font-weight:700;letter-spacing:-.025em;line-height:1.2;
   }
   .reiter{
     display:flex;flex-direction:column;gap:4px;max-width:none;margin:0;padding:0;
     border:0;border-radius:0;background:none;box-shadow:none;
-    -webkit-backdrop-filter:none;backdrop-filter:none;
   }
   .reiter button{
-    flex-direction:row;gap:12px;padding:11px 13px;border-radius:14px;
+    flex-direction:row;gap:12px;padding:11px 13px;border-radius:13px;
     border:1px solid transparent;text-align:left;
   }
   .reiter button[aria-selected="true"]{border-color:var(--akzent-rand)}
   .reiter-text{font-size:14px}
-  .reiter-zahl{top:9px;left:30px;box-shadow:0 0 0 2px rgba(26,30,37,.95)}
-  /* Die Wortmarke steht in der Seitenleiste; die Überschrift bleibt für Screenreader */
-  .kopf h1{
-    position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
-    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
-  }
+  .reiter-zahl{top:9px;left:30px;box-shadow:0 0 0 2px var(--flaeche-sanft)}
 }
 
 /* ---------- Diagramme ---------- */
 .diagramm h2{font-size:1.06rem;letter-spacing:-.02em}
 .diagramm svg{display:block;width:100%;height:auto;margin-top:16px;overflow:visible}
 .diagramm .ax{fill:var(--text-4);font-size:11px;font-weight:600}
-.diagramm .gitter{stroke:var(--rand);stroke-width:1}
+.diagramm .gitter{stroke:var(--rand-fein);stroke-width:1}
 .diagramm .achse{stroke:var(--rand-stark);stroke-width:1}
-.diagramm .linie{fill:none;stroke:var(--text-4);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.diagramm .linie{fill:none;stroke:var(--text-3);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .diagramm .punkt{cursor:pointer}
 .diagramm .punkt--ok{fill:var(--ok);stroke:var(--flaeche);stroke-width:1.5}
 .diagramm .punkt--schmerz{fill:var(--schmerz);stroke:var(--flaeche);stroke-width:1.5}
-.diagramm .punkt--offen{fill:none;stroke:var(--text-4);stroke-width:1.5;stroke-dasharray:2 2}
+.diagramm .punkt--offen{fill:none;stroke:var(--text-3);stroke-width:1.5;stroke-dasharray:2 2}
 .diagramm .balken{fill:var(--akzent)}
 .diagramm .balken-flaeche{fill:transparent;cursor:pointer}
-.diagramm .balken-flaeche:hover{fill:rgba(255,255,255,.03)}
-.diagramm .streifen{fill:var(--text-4);opacity:.75}
+.diagramm .balken-flaeche:hover{fill:var(--hauch-schwach)}
+.diagramm .streifen{fill:var(--andere-symbol)}
 .diagramm .punkt:focus-visible,.diagramm .balken-flaeche:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
 
 /* ---------- Aktivitätskalender ---------- */
@@ -280,17 +274,18 @@ button{font:inherit;color:inherit}
 .kal-monat{flex:1 1 240px;min-width:220px;max-width:320px}
 .kal-monat--einzeln{flex:1 1 100%;max-width:420px;margin:0 auto}
 .kal-monat--einzeln .kal-tag{font-size:.74rem}
-/* Der Monatsname steht in der Einzelansicht schon in der Steuerung */
+/* Der Monatsname steht in der Einzelansicht schon in der Steuerung, die Summe mittig darunter */
 .kal-monat--einzeln .kal-titel{display:none}
-.kal-monat--einzeln .kal-kopf{justify-content:flex-end}
-.kal-steuerung{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
-.kal-monat-name{font-size:1rem;font-weight:640;letter-spacing:-.015em;min-width:9.5em;text-align:center}
+.kal-monat--einzeln .kal-kopf{justify-content:center;margin:4px 0 14px}
+.kal-monat--einzeln .kal-summe{font-size:13px;font-weight:500;color:var(--text-2)}
+.kal-steuerung{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px}
+.kal-monat-name{font-size:17px;font-weight:700;letter-spacing:-.02em;text-align:center;flex:1 1 auto}
 .kal-pfeil{
-  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);color:var(--text-2);
-  width:34px;height:34px;border-radius:50%;font-size:1.15rem;line-height:1;cursor:pointer;
+  flex:0 0 auto;border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text);
+  width:32px;height:32px;border-radius:var(--radius-klein);font-size:1.15rem;line-height:1;cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich);
 }
-.kal-pfeil:hover:not([disabled]){background:#272d38;color:var(--text);border-color:var(--text-4)}
+.kal-pfeil:hover:not([disabled]){background:var(--flaeche-hoch);border-color:var(--rand-stark)}
 .kal-pfeil:active:not([disabled]){transform:translateY(1px)}
 .kal-pfeil[disabled]{opacity:.35;cursor:default}
 .kal-legende{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.75rem;color:var(--text-4);font-weight:600}
@@ -299,28 +294,40 @@ button{font:inherit;color:inherit}
 .dialog.dialog--breit{max-width:780px;max-height:84vh;overflow-y:auto}
 .dialog-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
 .kal-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
-.kal-titel{font-size:.9rem;font-weight:620;letter-spacing:-.01em}
-.kal-summe{font-size:.72rem;color:var(--text-4);font-weight:600}
-.kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px}
+.kal-titel{font-size:.9rem;font-weight:700;letter-spacing:-.01em}
+.kal-summe{font-size:.72rem;color:var(--text-4);font-weight:600;font-variant-numeric:tabular-nums}
+.kal-gitter{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 5px}
 /* Jede Zelle eine Spalte: oben die Kachel, darunter der Platz für den Befinden-Punkt */
 .kal-zelle{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .kal-zelle > .kal-tag{align-self:stretch}
 .kal-wochentag{
-  font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;
-  color:var(--text-4);font-weight:640;text-align:center;padding-bottom:2px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--text-2);font-weight:600;text-align:center;padding-bottom:2px;
 }
+/* Kachel: quadratisch; die Farbe trägt den Umfang, nie eine Wertung */
 .kal-tag{
   position:relative;overflow:hidden;
   aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-  border-radius:6px;background:var(--flaeche-sanft);border:1px solid var(--rand);
-  font-variant-numeric:tabular-nums;color:var(--text-3);
+  border-radius:var(--radius-innen);background:var(--kal-leer);border:1px solid transparent;
+  font-variant-numeric:tabular-nums;color:var(--text-4);
 }
-.kal-tag--leer{background:transparent;border-color:transparent}
+.kal-tag--leer{background:transparent}
+.kal-tag--zukunft{background:var(--kal-zukunft)}
 .kal-zahl{font-size:.74rem;line-height:1;position:relative;z-index:1}
-.kal-tag--lauf,.kal-tag--andere,.kal-tag--beides{border-color:transparent}
-.kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:640}
+.kal-tag--lauf .kal-zahl,.kal-tag--andere .kal-zahl,.kal-tag--beides .kal-zahl{font-weight:700}
+/* Andere Einheit in vier Stufen nach Dauer; ohne Stufe (Legende) der mittlere Ton */
+.kal-tag--andere{background:var(--kal-andere-3);color:var(--text)}
+.kal-andere-1{background:var(--kal-andere-1)}
+.kal-andere-2{background:var(--kal-andere-2)}
+.kal-andere-3{background:var(--kal-andere-3)}
+.kal-andere-4{background:var(--kal-andere-4)}
+/* Lauf in vier Stufen nach Umfang; die Schriftfarbe mit dem höheren Kontrast je Stufe */
+.kal-stufe-1{background:var(--kal-1);color:var(--text)}
+.kal-stufe-2{background:var(--kal-2);color:var(--text)}
+.kal-stufe-3{background:var(--kal-3);color:var(--text)}
+.kal-stufe-4{background:var(--kal-4);color:var(--bg)}
 /* Die weitere Einheit als schmaler Balken am unteren Rand */
-.kal-balken{position:absolute;left:0;right:0;bottom:0;height:5px}
+.kal-balken{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--andere-symbol)}
 /*
  * Dritte Ebene: das Befinden. Ein Punkt statt einer Farbfläche, damit er sich
  * nicht mit Aktivitätsart und Umfang vermischt. Der fein gestrichelte Rahmen
@@ -334,86 +341,90 @@ button{font:inherit;color:inherit}
 /* Im Kalender unter der Kachel, auf dem dunklen Grund; ohne Eintrag ein leerer Platz */
 .kal-zelle > .kal-punkt{position:static;transform:none;flex:0 0 auto}
 .kal-punkt--leer{background:transparent}
-.kal-tag--luecke{border-style:dashed;border-color:currentColor;opacity:.98}
+.kal-punkt--ok{background:var(--ok)}
+/* Beschwerden: eine Farbe, kräftiger bei höherer Stärke */
+.kal-punkt--s1,.kal-punkt--s2,.kal-punkt--s3,.kal-punkt--s4,.kal-punkt--s5{background:var(--schmerz)}
+/* Auch die schwächste Stufe hält 3:1 gegen die Kartenfläche */
+.kal-punkt--s1{opacity:.6}
+.kal-punkt--s2{opacity:.7}
+.kal-punkt--s3{opacity:.8}
+.kal-punkt--s4{opacity:.9}
+.kal-tag--luecke{border-style:dashed;border-color:currentColor}
 .kal-tag[role="button"]{cursor:pointer}
 .kal-tag[role="button"]:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
-.kal-probe--punkt{background:var(--flaeche-hoch);border:1px solid var(--rand)}
+.kal-probe--punkt{background:var(--kal-leer);border:1px solid var(--rand)}
 .kal-probe--punkt .kal-punkt{bottom:50%;transform:translate(-50%,50%)}
-.kal-probe--luecke{background:transparent;border:1px dashed var(--text-3)}
-.kal-tag--heute{box-shadow:0 0 0 2px var(--akzent);border-color:var(--akzent)}
+.kal-probe--luecke{background:transparent;border:1px dashed var(--text-4)}
+.kal-tag--heute{box-shadow:0 0 0 2px var(--akzent)}
 .kal-probe--heute{background:transparent;box-shadow:inset 0 0 0 2px var(--akzent)}
 .kal-skala-text{font-size:.72rem;color:var(--text-4);font-weight:600}
-.kal-probe{position:relative;overflow:hidden;width:18px;height:18px;border-radius:4px;flex:0 0 auto;display:inline-block}
+.kal-probe{position:relative;overflow:hidden;width:18px;height:18px;border-radius:5px;flex:0 0 auto;display:inline-block}
 @media (max-width:560px){
   .kalender{gap:20px}
   .kal-monat{min-width:0;max-width:none;flex-basis:100%}
 }
 .stat-detail{margin-top:14px;font-size:.83rem;color:var(--text-2);line-height:1.55;min-height:2.6em}
-.stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-3);line-height:1.6}
+.stat-hinweis{margin-top:18px;font-size:.9rem;color:var(--text-4);line-height:1.6}
 .stat-legende{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.76rem;color:var(--text-4);font-weight:600}
 .stat-legende .legende-ok{color:var(--ok)}
 .stat-legende .legende-schmerz{color:var(--schmerz)}
-/* Kopfzeile der Statistik: keine Karte, nur Überschrift und Pillenreihen.
-   Passt der Zeitraum nicht neben die Überschrift, rückt er in eine eigene Zeile. */
+/* Kopf der Statistik: Zeitraum über die volle Breite, darunter Auswahl und Erklärung */
 .stat-kopf{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
-.stat-kopf-zeile{align-self:stretch;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px}
-.stat-titel{font-size:17px;font-weight:660;letter-spacing:-.025em;line-height:1.2}
-.stat-kopf .schalter{background:var(--flaeche-sanft);max-width:100%}
+.stat-kopf .schalter{max-width:100%}
 .stat-kopf .schalter button{white-space:nowrap}
+.stat-kopf .schalter--zeitraum{align-self:stretch;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.stat-kopf .schalter--zeitraum button{padding:7px 4px}
 .stat-kopf details.stat-erklaerung{margin-top:-4px}
 .stat-erklaerung .hinweis-text{margin-top:4px;max-width:60ch}
-.stat-kennzahlen{margin-top:14px}
-/* Summenkarte der Statistik: Kilometer führend, darunter vier Kacheln im 2×2-Raster.
-   Nur über .stat-kennzahlen – die Kopfzahlen im Verlauf bleiben unberührt. */
-.kopfzahlen.stat-kennzahlen{
-  grid-template-columns:1fr 1fr;gap:8px;
-  background:none;border:0;border-radius:0;overflow:visible;box-shadow:none;
+
+/* Summenkarte: Kilometer groß, Wochenkurve über die volle Breite, darunter drei Felder */
+.summenkarte{margin-top:14px;padding:18px 16px 14px}
+.summe-zahl{display:flex;align-items:baseline;gap:6px}
+.summe-wert{
+  font-size:40px;font-weight:800;letter-spacing:-.045em;line-height:1;
+  color:var(--akzent);font-variant-numeric:tabular-nums;
 }
-.stat-kennzahlen .kopfzahl{
-  display:block;padding:12px 14px;
-  border-radius:var(--radius);border:1px solid var(--rand);
-}
-.stat-kennzahlen .kopfzahl-wert{font-size:22px;font-weight:680;text-align:left}
-.stat-kennzahlen .kopfzahl-wert.ist-text{font-size:17px;padding:3px 0 2px}
-.stat-kennzahlen .kopfzahl-name{order:0;margin-top:4px}
-.stat-kennzahlen .kopfzahl--summe{
-  grid-column:1 / -1;padding:0;overflow:hidden;
-  border-radius:var(--radius-gross);border:1px solid var(--akzent-rand);
-  background:linear-gradient(160deg,var(--akzent-sanft),transparent 62%),var(--flaeche);
-}
-.summe-text{padding:16px 18px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-.summe-haupt{min-width:0}
-.summe-zahl{display:flex;align-items:baseline;gap:5px}
-.stat-kennzahlen .kopfzahl--summe .kopfzahl-wert{font-size:33px;font-weight:700;letter-spacing:-.045em;line-height:1}
 .summe-einheit{font-size:15px;font-weight:600;color:var(--text-2)}
-.summe-neben{display:flex;flex-direction:column;gap:8px;text-align:right;flex:0 0 auto}
-.stat-kennzahlen .kopfzahl--summe .summe-neben .kopfzahl-wert{
-  font-size:16px;font-weight:660;letter-spacing:-.02em;line-height:1.2;text-align:right;
-}
-.summe-neben .kopfzahl-name{margin-top:2px}
+.summe-name{margin-top:4px;font-size:13px;font-weight:500;color:var(--text-2)}
 .summe-flaeche{display:block;width:100%;height:40px}
-.summe-flaeche-grund{fill:rgba(91,156,248,.17)}
+.summenkarte .summe-flaeche{margin-top:12px;height:48px}
+.summe-flaeche-grund{fill:var(--akzent-flaeche)}
 .summe-flaeche-linie{fill:none;stroke:var(--akzent);stroke-width:1.8;stroke-linejoin:round}
+.summe-felder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.summe-feld{min-width:0;padding:9px 10px;border-radius:var(--radius);background:var(--flaeche-tief)}
+.feld-wert{font-size:17px;font-weight:700;letter-spacing:-.02em;line-height:1.2;font-variant-numeric:tabular-nums}
+.feld-name{margin-top:2px;font-size:11px;font-weight:500;color:var(--text-2);line-height:1.3}
+
+/* Zwei Kacheln nebeneinander: Beschwerden und Abdeckung */
+.stat-kacheln{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.stat-kacheln > .karte{margin-top:0;padding:14px}
+.stat-kacheln > .karte:only-child{grid-column:1 / -1}
+.kachel-wert{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kachel-wert.ist-schmerz{color:var(--schmerz)}
+.kachel-nenner{font-size:15px;font-weight:600;letter-spacing:0;color:var(--text-2)}
+.kachel-name{margin-top:4px;font-size:12px;font-weight:500;color:var(--text-2);line-height:1.35}
+.abdeckung-balken{height:6px;margin-top:10px;border-radius:3px;background:var(--erfassung-spur);overflow:hidden}
+.abdeckung-balken span{display:block;height:100%;border-radius:3px;background:var(--erfassung)}
 
 /* Umschalter: genau ein Diagramm zur Zeit */
-.diagramm-bereich{margin-top:24px}
+.diagramm-bereich{margin-top:22px}
 .diagramm-wahl{
   display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  padding:3px;border-radius:999px;
-  background:var(--flaeche-sanft);border:1px solid var(--rand);
+  padding:3px;border-radius:var(--radius);
+  background:var(--flaeche-tief);border:1px solid var(--linie);
 }
 .diagramm-wahl button{
-  border:0;background:transparent;border-radius:999px;
-  padding:7px 4px;font-size:.82rem;font-weight:560;color:var(--text-3);
+  border:0;background:transparent;border-radius:var(--radius-innen);
+  padding:7px 4px;font-size:.82rem;font-weight:500;color:var(--text-2);
   cursor:pointer;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;
   -webkit-tap-highlight-color:transparent;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
-@media (hover:hover){.diagramm-wahl button:hover{color:var(--text-2)}}
-.diagramm-wahl button[aria-selected="true"]{background:var(--flaeche-hoch);color:var(--text);font-weight:620;box-shadow:0 1px 2px rgba(0,0,0,.4)}
-.diagramm-wahl button:focus-visible{outline:2px solid var(--akzent);outline-offset:1px;border-radius:999px}
+@media (hover:hover){.diagramm-wahl button:hover{color:var(--text)}}
+.diagramm-wahl button[aria-selected="true"]{background:var(--flaeche-aktiv);color:var(--text);font-weight:600}
+.diagramm-wahl button:focus-visible{outline:2px solid var(--akzent);outline-offset:1px;border-radius:var(--radius-innen)}
 #diagramm-feld > .karte{margin-top:10px}
-.diagramm-bereich + .karte{margin-top:16px}
+.diagramm-bereich + .karte{margin-top:14px}
 @media (max-width:560px){
   .diagramm .ax{font-size:10px}
 }
@@ -422,26 +433,26 @@ button{font:inherit;color:inherit}
 /* Der Hinweis zu Scheinzusammenhängen steht bewusst offen über der Auswahl */
 .stat-warnung{
   margin-top:14px;padding:11px 13px;
-  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
-  background:var(--flaeche-sanft);
+  border:1px solid var(--rand-fein);border-radius:var(--radius-klein);
+  background:var(--flaeche-tief);
   font-size:.82rem;line-height:1.55;color:var(--text-2);
 }
 .faktor-wahl{margin-top:16px;display:flex;flex-direction:column;gap:6px}
-.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-4);font-weight:640}
+.faktor-wahl label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-4);font-weight:600}
 .faktor-wahl select{
   width:100%;max-width:100%;box-sizing:border-box;
   appearance:none;-webkit-appearance:none;
   padding:10px 34px 10px 12px;
-  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
-  background-color:var(--flaeche-hoch);color:var(--text);
-  font-family:inherit;font-size:.9rem;font-weight:560;line-height:1.3;cursor:pointer;
-  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  border:1px solid var(--rand);border-radius:var(--radius-klein);
+  background-color:var(--flaeche-tief);color:var(--text);
+  font-family:inherit;font-size:.9rem;font-weight:500;line-height:1.3;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-4) 50%),linear-gradient(135deg,var(--text-4) 50%,transparent 50%);
   background-position:calc(100% - 17px) calc(50% + 1px),calc(100% - 12px) calc(50% + 1px);
   background-size:5px 5px,5px 5px;background-repeat:no-repeat;
   transition:border-color .16s var(--weich);
 }
-.faktor-wahl select:hover{border-color:var(--text-4)}
-.faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-hoch);color:var(--text)}
+.faktor-wahl select:hover{border-color:var(--rand-stark)}
+.faktor-wahl select option,.faktor-wahl select optgroup{background:var(--flaeche-tief);color:var(--text)}
 /* Gleiche Anmutung wie der Untertitel der übrigen Diagramme */
 .faktor-erklaerung{margin-top:14px;font-size:.88rem;color:var(--text-2);line-height:1.6}
 .faktor-fuss{margin-top:12px;font-size:.79rem;color:var(--text-4);line-height:1.55}
@@ -463,164 +474,195 @@ button{font:inherit;color:inherit}
 /* ---------- Karten ---------- */
 
 .karte{
-  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 84px),var(--flaeche);
+  background:var(--flaeche);
   border:1px solid var(--rand);
   border-radius:var(--radius-gross);
-  padding:22px;
+  padding:20px;
   box-shadow:var(--schatten-karte);
 }
-.karte + .karte{margin-top:16px}
-.karte h2{font-size:1.12rem;letter-spacing:-.02em}
+.karte + .karte{margin-top:14px}
+.karte h2{font-size:1.12rem;font-weight:700;letter-spacing:-.02em}
 
 /* ---------- Knöpfe ---------- */
 
 .knopf{
   display:inline-flex;align-items:center;gap:6px;
-  border:1px solid var(--rand-stark);
-  background:var(--flaeche-hoch);
-  border-radius:999px;padding:9px 16px;
-  font-size:.89rem;font-weight:560;letter-spacing:-.005em;
+  border:1px solid var(--rand);
+  background:var(--flaeche-tief);
+  border-radius:var(--radius);padding:9px 16px;
+  font-size:.89rem;font-weight:600;letter-spacing:-.005em;
   cursor:pointer;
   transition:background .16s var(--weich),border-color .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
 }
-.knopf:hover{border-color:var(--text-4);background:#272d38}
+.knopf:hover{border-color:var(--rand-stark);background:var(--flaeche-hoch)}
 .knopf:active{transform:translateY(1px) scale(.985)}
-.knopf--primaer{background:var(--akzent);border-color:var(--akzent);color:var(--akzent-text);font-weight:620}
-.knopf--primaer:hover{background:#74acfa;border-color:#74acfa}
-.knopf--ok{background:var(--ok-sanft);border-color:var(--ok-rand);color:var(--ok)}
-.knopf--ok:hover{background:rgba(116,185,141,.2);border-color:var(--ok)}
-.knopf--schmerz{background:var(--schmerz-sanft);border-color:var(--schmerz-rand);color:var(--schmerz)}
-.knopf--schmerz:hover{background:rgba(217,146,106,.2);border-color:var(--schmerz)}
-.knopf--kritisch{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch);font-weight:620}
-.knopf--kritisch:hover{background:rgba(224,111,95,.24);border-color:var(--kritisch)}
+.knopf--primaer{background:var(--akzent);border-color:var(--akzent);color:var(--bg);font-weight:700}
+.knopf--primaer:hover{background:var(--akzent-hover);border-color:var(--akzent-hover)}
+.knopf--ok{background:var(--ok-flaeche);border-color:var(--ok-rand);color:var(--ok)}
+.knopf--ok:hover{background:var(--ok-flaeche);border-color:var(--ok)}
+.knopf--schmerz{background:var(--schmerz-flaeche);border-color:var(--schmerz-rand);color:var(--schmerz)}
+.knopf--schmerz:hover{background:var(--schmerz-flaeche);border-color:var(--schmerz)}
+.knopf--kritisch{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch);font-weight:700}
+.knopf--kritisch:hover{background:var(--kritisch-sanft);border-color:var(--kritisch)}
 .knopf--klein{padding:6px 12px;font-size:.82rem}
 
 .link{
   background:none;border:0;padding:2px 4px;color:var(--akzent);
-  font-size:.85rem;font-weight:560;cursor:pointer;
+  font-size:.85rem;font-weight:600;cursor:pointer;
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;
   border-radius:5px;transition:color .16s var(--weich)
 }
-.link:hover{color:#8bb9fb}
+.link:hover{color:var(--akzent-hover)}
 .link:active{transform:translateY(1px)}
-.link--still{color:var(--text-3)}
+.link--still{color:var(--text-4)}
 .link--still:hover{color:var(--text-2)}
 
 /* ---------- Chips und Felder ---------- */
 
 .chip-reihe{display:flex;flex-wrap:wrap;gap:7px}
 .chip{
-  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);
-  border-radius:999px;padding:7px 13px;font-size:.85rem;color:var(--text-2);
+  border:1px solid var(--rand);background:var(--flaeche-tief);
+  border-radius:var(--radius-klein);padding:7px 13px;font-size:.85rem;font-weight:500;color:var(--text-2);
   cursor:pointer;
   transition:background .16s var(--weich),border-color .16s var(--weich),color .16s var(--weich),transform .08s var(--weich);
 }
-.chip:hover{background:#272d38;color:var(--text);border-color:var(--text-4)}
+.chip:hover{background:var(--flaeche-hoch);color:var(--text);border-color:var(--rand-stark)}
 .chip:active{transform:translateY(1px) scale(.98)}
 .chip[aria-pressed="true"]{
-  background:var(--akzent);border-color:var(--akzent);color:var(--akzent-text);font-weight:620;
+  background:var(--akzent);border-color:var(--akzent);color:var(--bg);font-weight:700;
 }
 .feld-gruppe{margin-top:16px}
 .feld-gruppe .feld-titel{
   font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;margin-bottom:8px;display:block;
+  color:var(--text-4);font-weight:600;margin-bottom:8px;display:block;
 }
 .fehlt .feld-titel{color:var(--kritisch)}
 .fehlt .chip-reihe{outline:1px dashed var(--kritisch-rand);outline-offset:6px;border-radius:12px}
 
 input[type="text"],input[type="password"],input[type="date"],textarea,select{
-  font:inherit;color:var(--text);background:var(--flaeche-sanft);
-  border:1px solid var(--rand-stark);border-radius:var(--radius-klein);
+  font:inherit;color:var(--text);background:var(--flaeche-tief);
+  border:1px solid var(--rand);border-radius:var(--radius-klein);
   padding:10px 12px;width:100%;max-width:100%;
   transition:border-color .16s var(--weich),background .16s var(--weich);
 }
-input[type="text"]:hover,input[type="password"]:hover,input[type="date"]:hover,textarea:hover,select:hover{border-color:var(--text-4)}
+input[type="text"]:hover,input[type="password"]:hover,input[type="date"]:hover,textarea:hover,select:hover{border-color:var(--rand-stark)}
 input[type="text"]:focus,input[type="password"]:focus,input[type="date"]:focus,textarea:focus,select:focus{
-  outline:none;border-color:var(--akzent);background:var(--flaeche-hoch);
+  outline:none;border-color:var(--akzent);background:var(--flaeche-tief);
   box-shadow:0 0 0 3px var(--akzent-sanft);
 }
-input[type="file"]{font-size:.86rem;max-width:100%;color:var(--text-2)}
+/* Dateifeld: gestrichelter Rahmen auf --flaeche-tief, der Auswahlknopf als Sekundärknopf */
+input[type="file"]{
+  display:block;width:100%;max-width:100%;
+  padding:14px;border:1px dashed var(--flaeche-aktiv);border-radius:var(--radius);
+  background:var(--flaeche-tief);font:inherit;font-size:.86rem;color:var(--text-2);cursor:pointer;
+  transition:border-color .16s var(--weich);
+}
+input[type="file"]:hover{border-color:var(--akzent-rand)}
+input[type="file"]:focus-visible{outline:2px solid var(--akzent);outline-offset:3px}
+input[type="file"]::file-selector-button{
+  margin-right:12px;padding:7px 14px;cursor:pointer;
+  border:1px solid var(--rand);border-radius:var(--radius-innen);
+  background:var(--flaeche);color:var(--text);font:inherit;font-size:.84rem;font-weight:600;
+}
+input[type="file"]::-webkit-file-upload-button{
+  margin-right:12px;padding:7px 14px;cursor:pointer;
+  border:1px solid var(--rand);border-radius:var(--radius-innen);
+  background:var(--flaeche);color:var(--text);font:inherit;font-size:.84rem;font-weight:600;
+}
 textarea{min-height:130px;resize:vertical;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6}
-label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640;margin-bottom:7px}
+label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600;margin-bottom:7px}
 
 /* ---------- Tag und Aktivität ---------- */
 
-.tag{margin-top:38px}
-/* Tageskopf: Datum, Wochentag und eine Linie über die restliche Breite */
-.tag-kopf{
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:9px;padding:0 4px;
+/* Monat über den Tagesgruppen – die Schiene nennt nur Tag und Wochentag */
+.monat-kopf{
+  margin:30px 0 -8px 46px;font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-2);
 }
-.tag-kopf::after{content:'';flex:1 1 auto;height:0;border-top:1px solid var(--rand)}
-.tag-datum{font-size:13px;font-weight:660;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
-.tag-wochentag{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:600;white-space:nowrap}
+.nur-vorlesen{
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+}
+/* Tagesgruppe: links die Datumsschiene, rechts die Einträge des Tages */
+.tag{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;margin-top:22px}
+.tag-schiene{display:flex;flex-direction:column;align-items:center;padding-top:6px;position:relative}
+.tag-zahl{font-size:19px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tag-wochentag{margin-top:4px;font-size:11px;font-weight:600;color:var(--text-2);letter-spacing:.04em;line-height:1.1}
+/* Durchgehend bis zum Ende der Gruppe */
+.tag-linie{flex:1 1 auto;width:2px;min-height:12px;margin-top:8px;border-radius:1px;background:var(--linie)}
+.tag-inhalt{min-width:0}
 
 .aktivitaet{
-  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 92px),var(--flaeche);
-  border:1px solid var(--rand);
+  background:var(--flaeche);
+  border:1px solid var(--rand-lauf);
   border-radius:var(--radius-gross);
-  padding:20px;
+  padding:14px;
   box-shadow:var(--schatten-karte);
-  position:relative;overflow:hidden;
+  position:relative;
 }
-/* Der Streifen zeigt das Befinden des Laufs; grau, solange keines erfasst ist */
-.aktivitaet::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:linear-gradient(180deg,var(--rand-stark),rgba(59,67,81,.25));
-}
-.aktivitaet.streifen-ok::before{background:linear-gradient(180deg,var(--ok),rgba(116,185,141,.25))}
-.aktivitaet.streifen-schmerz::before{background:linear-gradient(180deg,var(--schmerz),rgba(217,146,106,.25))}
-.aktivitaet + .aktivitaet{margin-top:10px}
+.aktivitaet + .aktivitaet,.tag-befinden + .aktivitaet{margin-top:10px}
 
-/* Andere Aktivitäten: schmale Zeile statt Karte */
-.aktivitaet--kompakt{
-  display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;
-  padding:11px 14px;border-radius:14px;
-  background:var(--flaeche-sanft);border:1px solid var(--rand);box-shadow:none;
+/* Andere Einheit: dieselbe Kartenform, leiser */
+.aktivitaet--kompakt{background:var(--flaeche-sanft);border-color:var(--rand-sanft)}
+.akt-kopf{display:flex;align-items:flex-start;gap:11px}
+.akt-symbolfeld{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:10px;
+  background:var(--akzent-flaeche);color:var(--akzent);
 }
-.aktivitaet--kompakt::before{content:none}
-.aktivitaet--kompakt + .aktivitaet--kompakt{margin-top:6px}
-.akt-symbol{flex:0 0 auto;width:18px;height:18px;color:#c8821e}
+.aktivitaet--kompakt .akt-symbolfeld{background:var(--andere-symbol-flaeche);color:var(--andere-symbol)}
+.akt-symbol{display:block;width:18px;height:18px}
 .kompakt-mitte{flex:1 1 0;min-width:0}
-.aktivitaet--kompakt .akt-titel{font-size:14px;font-weight:600;letter-spacing:-.01em}
-.aktivitaet--kompakt .akt-meta{
-  font-size:11px;color:var(--text-3);margin-top:2px;font-variant-numeric:tabular-nums;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.akt-titel{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3;overflow-wrap:anywhere}
+.akt-meta{
+  font-size:12px;font-weight:500;color:var(--akzent-meta);margin-top:2px;
+  font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.aktivitaet--kompakt details.alle{flex:1 0 100%;margin-top:0;padding-left:30px}
-.aktivitaet--kompakt details.alle > summary{font-size:11px;padding:1px 0;color:var(--text-4)}
-.aktivitaet--kompakt details.alle > summary:hover{color:var(--text)}
-.akt-kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.akt-titel{font-size:1.06rem;font-weight:620;letter-spacing:-.02em;overflow-wrap:anywhere}
-.akt-meta{font-size:.78rem;color:var(--text-3);margin-top:3px;letter-spacing:.005em}
-.akt-werkzeuge{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.aktivitaet--kompakt .akt-meta{color:var(--text-4)}
+.akt-distanz{
+  flex:0 0 auto;display:flex;align-items:baseline;gap:3px;
+  font-size:25px;font-weight:800;letter-spacing:-.035em;line-height:1.05;
+  color:var(--akzent);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.akt-distanz.kz-wert--leer{font-size:18px}
+.akt-distanz-einheit{font-size:12px;font-weight:600;letter-spacing:0;color:var(--akzent-meta)}
+.akt-rechts{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.akt-rechts-zeit{font-size:15px;font-weight:700;letter-spacing:-.015em;line-height:1.3}
+.akt-rechts-hf{font-size:12px;font-weight:500;color:var(--text-4);margin-top:2px}
+
+/* Unten: „alle Werte“ links, Einstufung und Löschen rechts in derselben Zeile */
+.akt-fuss{position:relative;min-height:30px;margin-top:10px}
+.akt-werkzeuge{position:absolute;top:0;right:0;display:flex;align-items:center;gap:4px}
+.akt-fuss details.alle{margin-top:0}
+.akt-fuss details.alle > summary{min-height:30px;margin-right:140px}
 
 .marke{
-  border:1px solid var(--rand-stark);background:var(--flaeche-hoch);color:var(--text-3);
-  border-radius:999px;padding:4px 11px;font-size:.73rem;font-weight:620;letter-spacing:.01em;
+  border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text-2);
+  border-radius:var(--radius-innen);padding:4px 10px;font-size:.73rem;font-weight:600;letter-spacing:.01em;
   cursor:pointer;white-space:nowrap;
   transition:background .16s var(--weich),color .16s var(--weich),border-color .16s var(--weich),transform .08s var(--weich);
 }
-.marke:hover{border-color:var(--text-4);color:var(--text)}
+.marke:hover{border-color:var(--rand-stark);color:var(--text)}
 .marke:active{transform:translateY(1px)}
 .marke.ist-lauf{background:var(--akzent-sanft);color:var(--akzent);border-color:var(--akzent-rand)}
 .weg{
-  border:0;background:transparent;color:var(--text-4);
-  font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:9px;cursor:pointer;
+  border:0;background:transparent;color:var(--text-3);
+  font-size:1.1rem;line-height:1;padding:6px 9px;border-radius:var(--radius-innen);cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
 .weg:hover{background:var(--kritisch-sanft);color:var(--kritisch)}
 .weg:active{transform:translateY(1px)}
 
-.kennzahlen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
-.kz{min-width:0}
-.kz-wert{font-size:16px;font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.025em;overflow-wrap:anywhere}
-.kz-wert--leer{color:var(--text-4);font-weight:560}
-.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.09em;font-weight:640;margin-top:2px}
+/* Drei Felder unter dem Kopf der Lauf-Karte */
+.kennzahlen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.kz{min-width:0;padding:8px 10px;border-radius:var(--radius-klein);background:var(--flaeche-tief)}
+.kz-wert{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.3;overflow-wrap:anywhere}
+.kz-wert--leer{color:var(--text-4);font-weight:500}
+.kz-name{font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-top:1px}
 
 details.alle{margin-top:16px}
 details.alle > summary{
-  cursor:pointer;font-size:.79rem;color:var(--text-3);font-weight:600;
+  cursor:pointer;font-size:.79rem;color:var(--text-4);font-weight:600;
   padding:5px 0;list-style:none;display:inline-flex;align-items:center;gap:7px;border-radius:7px;
   transition:color .16s var(--weich);
 }
@@ -631,60 +673,72 @@ details.alle > summary:hover{color:var(--text)}
 .werte{
   display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:4px 18px;
   margin:10px 0 0;padding:14px 16px;
-  background:var(--flaeche-sanft);border:1px solid var(--rand);
+  background:var(--flaeche-tief);border:1px solid var(--rand-fein);
   border-radius:var(--radius-klein);font-size:.82rem;
 }
-.werte dt{color:var(--text-3);min-width:0;overflow-wrap:anywhere}
+.werte dt{color:var(--text-4);min-width:0;overflow-wrap:anywhere}
 .werte dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
 
 /* ---------- Befinden ---------- */
 
-.befinden{margin-top:16px;padding-top:16px;border-top:1px solid var(--rand)}
-.bef-knoepfe{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
-.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640;width:100%;margin-bottom:2px}
+.befinden{margin-top:10px}
+/* Noch nicht erfasst: gestrichelt, damit es nicht wie ein Wert aussieht */
+.befinden.ist-offen{padding:11px 12px;border:1px dashed var(--offen);border-radius:var(--radius)}
+.bef-knoepfe{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bef-hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600;width:100%;margin-bottom:2px}
+/* Erfasst: Fläche in der Kategorie, Punkt vorn, „Ändern“ rechts */
 .bef-fazit{
-  display:inline-flex;flex-wrap:wrap;align-items:center;gap:10px;
-  padding:10px 16px;border-radius:999px;font-size:.89rem;font-weight:620;
-  border:1px solid transparent;max-width:100%;
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 10px 10px 12px;border-radius:var(--radius);font-size:.89rem;
+  border:1px solid transparent;
 }
-.bef-fazit.ist-ok{background:var(--ok-sanft);color:var(--ok);border-color:var(--ok-rand)}
-.bef-fazit.ist-schmerz{background:var(--schmerz-sanft);color:var(--schmerz);border-color:var(--schmerz-rand)}
-.bef-symbol{flex:0 0 auto;width:15px;height:15px;margin-right:-3px}
-.bef-ab{font-weight:500;font-size:.83rem;opacity:.72}
-.bef-fazit .link{color:inherit;opacity:.8;font-weight:560}
-.bef-fazit .link:hover{opacity:1;color:inherit}
-.bef-notiz{font-weight:400;font-size:.83rem;opacity:.85;overflow-wrap:anywhere}
+.bef-fazit.ist-ok{background:var(--ok-flaeche);border-color:var(--ok-rand);--kategorie:var(--ok)}
+.bef-fazit.ist-schmerz{background:var(--schmerz-flaeche);border-color:var(--schmerz-rand);--kategorie:var(--schmerz)}
+.bef-punkt{flex:0 0 auto;width:8px;height:8px;margin-top:.5em;border-radius:50%;background:var(--kategorie)}
+.bef-inhalt{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding-top:1px}
+.bef-haupt{font-weight:600;color:var(--text)}
+.bef-ab{font-weight:500;font-size:.83rem;color:var(--text-2)}
+.bef-notiz{font-weight:400;font-size:.83rem;color:var(--text-2);overflow-wrap:anywhere}
+.bef-aendern{
+  flex:0 0 auto;border:1px solid var(--rand);background:var(--flaeche-tief);color:var(--text);
+  border-radius:var(--radius-innen);padding:4px 11px;font-size:.78rem;font-weight:600;cursor:pointer;
+  transition:border-color .16s var(--weich),background .16s var(--weich);
+}
+.bef-aendern:hover{border-color:var(--rand-stark);background:var(--flaeche-hoch)}
+.bef-aendern:active{transform:translateY(1px)}
 .formular{
-  margin-top:14px;background:var(--flaeche-sanft);
-  border:1px solid var(--rand);border-radius:var(--radius);padding:18px;
+  margin-top:12px;background:var(--flaeche-tief);
+  border:1px solid var(--rand-fein);border-radius:var(--radius);padding:16px;
 }
+.befinden.ist-offen .formular{margin-left:-1px;margin-right:-1px}
 .formular-fuss{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
 
 /* ---------- Noch offen ---------- */
 
+/* Streifen links in --akzent: hier fehlt noch etwas */
 .offen-karte{
-  border-color:var(--akzent-rand);
-  background:linear-gradient(180deg,rgba(91,156,248,.09),rgba(91,156,248,.02) 120px),var(--flaeche);
-  margin-top:28px;
+  position:relative;overflow:hidden;margin-top:18px;padding-left:23px;
 }
+.offen-karte::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--akzent)}
 .offen-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .offen-kopf h2{font-size:1.12rem;letter-spacing:-.02em;color:var(--text)}
-.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-4);font-weight:640}
-.offen-zeile{border-top:1px solid var(--rand);padding-top:14px;margin-top:14px}
+.offen-kopf .hinweis{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-4);font-weight:600}
+.offen-zeile{border-top:1px solid var(--rand-fein);padding-top:14px;margin-top:14px}
 .offen-info{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;font-size:.92rem}
-.offen-datum{font-weight:660;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
-.offen-detail{color:var(--text-3);font-size:.85rem}
+.offen-datum{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
+.offen-detail{color:var(--text-4);font-size:.85rem}
 .offen-zeile .bef-knoepfe{margin-top:11px}
 .offen-tag-kopf{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
-.offen-wochentag{font-size:.82rem;color:var(--text-4)}
+.offen-wochentag{font-size:.82rem;color:var(--text-2)}
 .offen-eintrag{margin-top:11px}
 .offen-eintrag + .offen-eintrag{margin-top:16px}
+.offen-eintrag .bef-fazit{margin-top:8px}
 .offen-marke{
-  display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;margin-bottom:5px;
+  display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text-4);font-weight:600;margin-bottom:5px;
 }
 .offen-fuss{
-  border-top:1px solid var(--rand);margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--rand-fein);margin-top:16px;padding-top:14px;
   display:flex;flex-direction:column;align-items:flex-start;gap:7px;
 }
 .offen-fuss .link{text-align:left}
@@ -694,42 +748,41 @@ details.alle > summary:hover{color:var(--text)}
 
 /* Im Verlauf nur eine Zeile, kein Kasten – die Aktivitäten bleiben die Hauptsache */
 .tag-befinden{
-  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;
-  margin-top:10px;padding:0 4px;font-size:.86rem;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
+  margin-top:10px;padding:0 4px;font-size:.86rem;color:var(--text);
 }
-.tag-befinden.ist-ok{color:var(--ok)}
-.tag-befinden.ist-schmerz{color:var(--schmerz)}
+.tag-befinden.ist-ok{--kategorie:var(--ok)}
+.tag-befinden.ist-schmerz{--kategorie:var(--schmerz)}
+.tag-befinden .bef-punkt{margin-top:0;align-self:center}
 .tag-befinden-marke{
-  font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--text-4);font-weight:640;
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text-4);font-weight:600;
 }
-.tag-befinden .bef-notiz{color:var(--text-3);font-style:italic}
+.tag-befinden .bef-notiz{color:var(--text-2);font-style:italic}
 .bef-nachgetragen{
   font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
-  font-weight:640;opacity:.7;
+  font-weight:600;color:var(--text-4);
 }
 .tages-dialog{margin-top:16px}
 .tages-dialog .befinden{margin-top:0}
 .tages-dialog .hinweis-text{margin-top:0}
 #dialog-inhalt:empty{display:none}
-.stat-abdeckung{
-  margin-top:14px;font-size:.83rem;color:var(--text-3);
-  font-variant-numeric:tabular-nums;
-}
 
 /* ---------- Leiste und Filter ---------- */
 
-.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:30px}
-.zaehler{font-size:.79rem;color:var(--text-3);font-variant-numeric:tabular-nums;letter-spacing:.01em}
-.schalter{display:flex;background:var(--flaeche);border:1px solid var(--rand);border-radius:999px;padding:4px}
+.leiste{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:22px}
+.zaehler{font-size:.79rem;color:var(--text-4);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+/* Umschalter: Zeitraum, Filter, Auswahl – außen 12 px, innen 9 px */
+.schalter{display:flex;background:var(--flaeche-tief);border:1px solid var(--linie);border-radius:var(--radius);padding:3px}
 .schalter button{
-  border:0;background:transparent;padding:6px 15px;border-radius:999px;
-  font-size:.82rem;font-weight:560;color:var(--text-3);cursor:pointer;
+  border:0;background:transparent;padding:6px 14px;border-radius:var(--radius-innen);
+  font-size:.82rem;font-weight:500;color:var(--text-2);cursor:pointer;
   transition:background .16s var(--weich),color .16s var(--weich);
 }
 .schalter button:hover{color:var(--text)}
 .schalter button:active{transform:translateY(1px)}
-.schalter button[aria-pressed="true"]{background:var(--flaeche-hoch);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.schalter button[aria-pressed="true"]{background:var(--flaeche-aktiv);color:var(--text);font-weight:600}
+.schalter button:focus-visible{outline-offset:1px;border-radius:var(--radius-innen)}
 
 /* ---------- Leerzustand ---------- */
 
@@ -742,28 +795,28 @@ details.alle > summary:hover{color:var(--text)}
 /* ---------- Zusatztag ---------- */
 
 .zusatz-tag{
-  background:var(--flaeche-sanft);border:1px dashed var(--rand-stark);
-  border-radius:var(--radius);padding:13px 18px;font-size:.89rem;color:var(--text-2);
+  background:var(--flaeche-sanft);border:1px dashed var(--offen);
+  border-radius:var(--radius-gross);padding:13px 18px;font-size:.89rem;color:var(--text-2);
   display:flex;justify-content:space-between;align-items:center;gap:12px;
 }
-.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag{margin-top:10px}
+.zusatz-tag + .aktivitaet,.aktivitaet + .zusatz-tag,.tag-befinden + .zusatz-tag{margin-top:10px}
 
 .hinweis-text{font-size:.88rem;color:var(--text-2);margin-top:10px;line-height:1.6}
 .ergebnis{
   margin-top:16px;font-size:.88rem;padding:13px 16px;border-radius:var(--radius-klein);
-  background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--akzent);font-weight:560;
+  background:var(--akzent-sanft);border:1px solid var(--akzent-rand);color:var(--text);font-weight:500;
 }
 .ergebnis--fehler{background:var(--kritisch-sanft);border-color:var(--kritisch-rand);color:var(--kritisch)}
-.sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-3);line-height:1.6}
+.sicherung-stand{margin-top:14px;font-size:.83rem;color:var(--text-4);line-height:1.6}
 .sicherung-stand:empty{display:none}
 .sicherung-stand.ist-fehler{color:var(--kritisch)}
 .anleitung{margin:10px 0 0;padding-left:20px;font-size:.88rem;color:var(--text-2);line-height:1.65}
 .anleitung li{margin-bottom:6px}
-.anleitung strong{color:var(--text);font-weight:620}
+.anleitung strong{color:var(--text);font-weight:700}
 #gist-ablage:empty{display:none}
-.trenn{height:1px;background:var(--rand);margin:22px 0}
+.trenn{height:1px;background:var(--rand-fein);margin:22px 0}
 pre.ausgabe{
-  background:var(--flaeche-sanft);border:1px solid var(--rand);border-radius:var(--radius-klein);
+  background:var(--flaeche-tief);border:1px solid var(--rand-fein);border-radius:var(--radius);
   padding:16px;overflow-x:auto;font-size:.78rem;line-height:1.55;max-height:60vh;margin-top:18px;
   white-space:pre;color:var(--text-2);
   font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
@@ -773,21 +826,20 @@ pre.ausgabe{
 
 .dialog-huelle{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
 .dialog-schirm{
-  position:absolute;inset:0;background:rgba(8,10,13,.72);
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  position:absolute;inset:0;background:var(--schirm);
   opacity:0;transition:opacity .2s var(--weich);
 }
 .dialog{
   position:relative;width:100%;max-width:420px;
-  background:linear-gradient(180deg,rgba(255,255,255,.04),transparent 100px),var(--flaeche);
-  border:1px solid var(--rand-stark);border-radius:var(--radius-gross);
-  padding:26px;box-shadow:var(--schatten-hoch);
+  background:var(--flaeche);
+  border:1px solid var(--rand);border-radius:var(--radius-gross);
+  padding:24px;box-shadow:var(--schatten-karte),var(--schatten-hoch);
   opacity:0;transform:translateY(12px) scale(.98);
   transition:opacity .2s var(--weich),transform .2s var(--weich);
 }
 .dialog-huelle.offen .dialog-schirm{opacity:1}
 .dialog-huelle.offen .dialog{opacity:1;transform:none}
-.dialog h2{font-size:1.22rem;letter-spacing:-.025em}
+.dialog h2{font-size:1.22rem;font-weight:700;letter-spacing:-.025em}
 .dialog p{margin-top:10px;color:var(--text-2);font-size:.94rem;line-height:1.6}
 .dialog-fuss{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
 
@@ -805,11 +857,10 @@ pre.ausgabe{
   position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);
   background:var(--flaeche-hoch);color:var(--text);
   border:1px solid var(--rand-stark);
-  padding:12px 22px;border-radius:999px;
-  font-size:.88rem;font-weight:560;opacity:0;pointer-events:none;
+  padding:12px 22px;border-radius:var(--radius);
+  font-size:.88rem;font-weight:600;opacity:0;pointer-events:none;
   transition:opacity .22s var(--weich),transform .22s var(--weich);
   z-index:120;box-shadow:var(--schatten-hoch);max-width:90vw;text-align:center;
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
 }
 #toast.sichtbar{opacity:1;transform:translate(-50%,0)}
 /* Über der Reiterleiste, nicht darauf */
@@ -825,11 +876,9 @@ pre.ausgabe{
 <body>
 <div class="huelle">
   <header class="kopf">
-    <div class="kopf-zeile">
-      <h1><svg class="wortmarke" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false"><path d="M3 15 7.5 9l4 3.5L17 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="15" r="2" fill="currentColor"/><circle cx="17" cy="5" r="2" fill="currentColor"/></svg><span>Lauftagebuch</span></h1>
-      <span class="kopf-zeitraum" id="kopf-zeitraum"></span>
-    </div>
-    <div class="kopfzahlen kopfzahlen--kopf" id="kopfzahlen" hidden></div>
+    <h1 class="kopf-titel" id="kopf-titel">Verlauf</h1>
+    <span class="kopf-zeitraum" id="kopf-zeitraum"></span>
+    <div class="karte kopfkarte" id="kopfzahlen" hidden></div>
   </header>
 
   <main>
@@ -1885,45 +1934,41 @@ pre.ausgabe{
     return box;
   }
 
-  /* Kreis mit Haken bei „keine“, Kreis mit Ausrufezeichen bei Schmerz */
-  function befindenSymbol(ok) {
-    var bild = svg('svg', {
-      class: 'bef-symbol', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
-      'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      'aria-hidden': 'true', focusable: 'false'
-    });
-    bild.appendChild(svg('circle', { cx: 12, cy: 12, r: 9.5 }));
-    bild.appendChild(svg('path', { d: ok ? 'm7.8 12.3 2.8 2.8 5.6-5.8' : 'M12 7v6M12 16.8v.01' }));
-    return bild;
-  }
-
-  /* mitSymbol: nur an der Lauf-Karte – Symbol vorn, „ab …“ als eigener, leiserer Teil */
+  /*
+   * mitSymbol: nur an der Lauf-Karte – „ab …“ als eigener, leiserer Teil.
+   * Vorn steht immer ein Punkt in der Farbe der Kategorie, kein Warnzeichen.
+   */
   function befindenBereich(ziel, kompakt, mitSymbol) {
     var vorhanden = ziel.holen();
     var offen = Object.prototype.hasOwnProperty.call(entwuerfe, ziel.schluessel);
-    var box = el('div', { class: kompakt ? 'befinden-kompakt' : 'befinden' });
+    /* Ohne Eintrag gestrichelt: „nicht erfasst“ sieht anders aus als jeder Wert */
+    var box = el('div', {
+      class: (kompakt ? 'befinden-kompakt' : 'befinden') + (vorhanden && !offen ? '' : ' ist-offen')
+    });
 
     var notizOffen = Object.prototype.hasOwnProperty.call(notizEntwuerfe, ziel.schluessel);
 
     if (vorhanden && !offen) {
       var fazit = el('div', { class: 'bef-fazit ' + (vorhanden.art === 'keine' ? 'ist-ok' : 'ist-schmerz') });
+      fazit.appendChild(el('span', { class: 'bef-punkt', 'aria-hidden': 'true' }));
+      var inhalt = el('div', { class: 'bef-inhalt' });
       if (mitSymbol) {
-        fazit.appendChild(befindenSymbol(vorhanden.art === 'keine'));
-        fazit.appendChild(el('span', null, befindenText({
+        inhalt.appendChild(el('span', { class: 'bef-haupt' }, befindenText({
           art: vorhanden.art, staerke: vorhanden.staerke, ort: vorhanden.ort, seite: vorhanden.seite, abKm: ''
         })));
-        if (vorhanden.abKm) fazit.appendChild(el('span', { class: 'bef-ab', text: 'ab ' + vorhanden.abKm }));
+        if (vorhanden.abKm) inhalt.appendChild(el('span', { class: 'bef-ab', text: 'ab ' + vorhanden.abKm }));
       } else {
-        fazit.appendChild(el('span', null, befindenText(vorhanden)));
+        inhalt.appendChild(el('span', { class: 'bef-haupt' }, befindenText(vorhanden)));
       }
       if (vorhanden.notiz) {
-        fazit.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
+        inhalt.appendChild(el('span', { class: 'bef-notiz' }, '„' + vorhanden.notiz + '“'));
       }
       /* Rückwirkend erfasst: nur benannt, nicht hervorgehoben */
       if (vorhanden.nachgetragen) {
-        fazit.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
+        inhalt.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
       }
-      var aendern = el('button', { type: 'button', class: 'link' }, 'ändern');
+      fazit.appendChild(inhalt);
+      var aendern = el('button', { type: 'button', class: 'bef-aendern' }, 'Ändern');
       aendern.addEventListener('click', function () { oeffneFormular(ziel); });
       fazit.appendChild(aendern);
       box.appendChild(fazit);
@@ -2037,7 +2082,8 @@ pre.ausgabe{
     hantel: ['p:M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11'],
     dehnen: ['c:12,4.5,1.8', 'p:M4.5 9.5 12 8l7.5 1.5M12 8v6l-4 6.5M12 14l4 6.5'],
     schwimmen: ['c:17,7,1.8', 'p:M4 13.5 9 9.5l3 3 4.5-2', 'p:M2.5 18c1.6 0 1.6-1 3.2-1s1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1'],
-    kreis: ['c:12,12,6.5']
+    kreis: ['c:12,12,6.5'],
+    lauf: ['c:15,4.5,2', 'p:M13.5 8.5 11 14l-3.2 2.2L4.5 16M11 14l3.2 2.6-1.2 4.4M8.5 11l3.3-2.3 2.9.6 2.3 3.2 2.5.3']
   };
 
   function aktSymbolArt(akt) {
@@ -2049,13 +2095,16 @@ pre.ausgabe{
     return 'kreis';
   }
 
-  function aktSymbol(akt) {
+  /* Im Symbolfeld: Läufe mit Läufer, andere Einheiten nach Aktivitätstyp */
+  function aktSymbol(akt, lauf) {
+    var feld = el('span', { class: 'akt-symbolfeld', 'aria-hidden': 'true' });
     var bild = svg('svg', {
       class: 'akt-symbol', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
       'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       'aria-hidden': 'true', focusable: 'false'
     });
-    AKT_SYMBOLE[aktSymbolArt(akt)].forEach(function (teil) {
+    feld.appendChild(bild);
+    AKT_SYMBOLE[lauf ? 'lauf' : aktSymbolArt(akt)].forEach(function (teil) {
       var inhalt = teil.slice(2);
       if (teil.charAt(0) === 'c') {
         var z = inhalt.split(',');
@@ -2064,32 +2113,48 @@ pre.ausgabe{
         bild.appendChild(svg('path', { d: inhalt }));
       }
     });
-    return bild;
+    return feld;
   }
 
-  /* Andere Aktivität: eine schmale Zeile mit Typ, Uhrzeit, Dauer und Ø HF */
-  function aktivitaetZeile(akt) {
-    var zeile = el('article', { class: 'aktivitaet aktivitaet--kompakt', 'data-id': akt.id });
-    zeile.appendChild(aktSymbol(akt));
-
-    var mitte = el('div', { class: 'kompakt-mitte' });
-    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
-    var kz = kennzahlenVon(akt);
+  /* Metazeile: Typ und Uhrzeit. Der Typ bleibt als Text: das Symbol allein unterscheidet ihn nicht sicher */
+  function aktMeta(akt) {
     var teile = [];
-    /* Der Typ bleibt als Text: das Symbol allein unterscheidet ihn nicht sicher */
     var typ = typVon(akt);
     if (typ) teile.push(typ);
     var zeit = uhrzeit(akt.datumOriginal);
     if (zeit) teile.push(zeit + ' Uhr');
-    if (kennwert(kz, 'Zeit')) teile.push(kennwert(kz, 'Zeit'));
-    if (kennwert(kz, 'Ø HF')) teile.push('Ø HF ' + kennwert(kz, 'Ø HF'));
-    if (teile.length) mitte.appendChild(el('div', { class: 'akt-meta', text: teile.join(' · ') }));
-    zeile.appendChild(mitte);
+    return teile.length ? el('div', { class: 'akt-meta', text: teile.join(' · ') }) : null;
+  }
 
-    zeile.appendChild(akteWerkzeuge(akt, false));
-
+  /* Unten in jeder Karte: „alle Werte“ zum Aufklappen, rechts Einstufung und Löschen */
+  function aktFuss(akt, lauf) {
+    var fuss = el('div', { class: 'akt-fuss' });
+    fuss.appendChild(akteWerkzeuge(akt, lauf));
     var details = alleWerte(akt);
-    if (details) zeile.appendChild(details);
+    if (details) fuss.appendChild(details);
+    return fuss;
+  }
+
+  /* Andere Aktivität: leisere Karte mit Typ und Uhrzeit, rechts Dauer und Ø HF */
+  function aktivitaetZeile(akt) {
+    var zeile = el('article', { class: 'aktivitaet aktivitaet--kompakt', 'data-id': akt.id });
+    var kopf = el('div', { class: 'akt-kopf' });
+    kopf.appendChild(aktSymbol(akt, false));
+
+    var mitte = el('div', { class: 'kompakt-mitte' });
+    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var meta = aktMeta(akt);
+    if (meta) mitte.appendChild(meta);
+    kopf.appendChild(mitte);
+
+    var kz = kennzahlenVon(akt);
+    var rechts = el('div', { class: 'akt-rechts' });
+    if (kennwert(kz, 'Zeit')) rechts.appendChild(el('div', { class: 'akt-rechts-zeit', text: kennwert(kz, 'Zeit') }));
+    if (kennwert(kz, 'Ø HF')) rechts.appendChild(el('div', { class: 'akt-rechts-hf', text: 'Ø HF ' + kennwert(kz, 'Ø HF') }));
+    if (rechts.childNodes.length) kopf.appendChild(rechts);
+    zeile.appendChild(kopf);
+
+    zeile.appendChild(aktFuss(akt, false));
     return zeile;
   }
 
@@ -2097,26 +2162,28 @@ pre.ausgabe{
     var lauf = istLauf(akt);
     if (!lauf) return aktivitaetZeile(akt);
 
-    /* Der Streifen links trägt das Befinden; dass es ein Lauf ist, sagt die Marke */
-    var b = befindenFuer(akt.id);
-    var streifen = !b ? '' : (b.art === 'keine' ? ' streifen-ok' : ' streifen-schmerz');
-    var karte = el('article', { class: 'aktivitaet ist-lauf' + streifen, 'data-id': akt.id });
+    var karte = el('article', { class: 'aktivitaet ist-lauf', 'data-id': akt.id });
+    var kz = kennzahlenVon(akt);
 
     var kopf = el('div', { class: 'akt-kopf' });
-    var links = el('div');
-    links.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
-    var metaTeile = [];
-    var typ = typVon(akt);
-    if (typ) metaTeile.push(typ);
-    var zeit = uhrzeit(akt.datumOriginal);
-    if (zeit) metaTeile.push(zeit + ' Uhr');
-    if (metaTeile.length) links.appendChild(el('div', { class: 'akt-meta', text: metaTeile.join(' · ') }));
-    kopf.appendChild(links);
-    kopf.appendChild(akteWerkzeuge(akt, lauf));
+    kopf.appendChild(aktSymbol(akt, true));
+    var mitte = el('div', { class: 'kompakt-mitte' });
+    mitte.appendChild(el('h3', { class: 'akt-titel', text: titelVon(akt) }));
+    var meta = aktMeta(akt);
+    if (meta) mitte.appendChild(meta);
+    kopf.appendChild(mitte);
+
+    /* Die Distanz groß rechts; fehlt sie, steht die leise Form für „nicht erfasst“ */
+    var distanz = kennwert(kz, 'Distanz');
+    var rechts = el('div', { class: distanz ? 'akt-distanz' : 'akt-distanz kz-wert--leer' });
+    rechts.appendChild(document.createTextNode(distanz || '–'));
+    if (distanz) rechts.appendChild(el('span', { class: 'akt-distanz-einheit', text: 'km' }));
+    kopf.appendChild(rechts);
     karte.appendChild(kopf);
 
     var reihe = el('div', { class: 'kennzahlen' });
-    kennzahlenVon(akt).forEach(function (k) {
+    kz.forEach(function (k) {
+      if (k.name === 'Distanz') return;
       var block = el('div', { class: 'kz' });
       /* „nicht erfasst“ bekommt eine eigene, leisere Form, nie die eines Wertes */
       block.appendChild(el('div', { class: k.wert ? 'kz-wert' : 'kz-wert kz-wert--leer', text: k.wert || '–' }));
@@ -2128,8 +2195,7 @@ pre.ausgabe{
     /* Das Befinden wird täglich angetippt und steht deshalb über der Werteliste */
     karte.appendChild(befindenBereich(laufZiel(akt), false, true));
 
-    var details = alleWerte(akt);
-    if (details) karte.appendChild(details);
+    karte.appendChild(aktFuss(akt, lauf));
     return karte;
   }
 
@@ -3334,8 +3400,8 @@ pre.ausgabe{
     });
     var minuten = Math.round(sekunden / 60);
 
-    /* Rechts in der führenden Karte, untereinander */
-    var neben = [
+    /* Unter der Kurve, nebeneinander */
+    var felder = [
       {
         wert: mitZeit ? Math.floor(minuten / 60) + ':' + pad2(minuten % 60) : '–',
         name: 'Stunden'
@@ -3345,49 +3411,49 @@ pre.ausgabe{
         name: statNurLaeufe
           ? (gefiltert.length === 1 ? 'Lauf' : 'Läufe')
           : (gefiltert.length === 1 ? 'Aktivität' : 'Aktivitäten')
-      }
-    ];
-
-    var kacheln = [
-      {
-        wert: bewertet ? mitSchmerz + ' von ' + bewertet : '–',
-        name: 'mit Beschwerden',
-        klasse: ' ist-text' + (mitSchmerz ? ' ist-schmerz' : '')
       },
-      { wert: String(wochen), name: wochen === 1 ? 'Woche erfasst' : 'Wochen erfasst', klasse: '' }
+      { wert: String(wochen), name: wochen === 1 ? 'Woche erfasst' : 'Wochen erfasst' }
     ];
 
-    /* Führend: links die Kilometer, rechts Stunden und Anzahl, am unteren Rand der Wochenumfang */
-    var leiste = el('div', { class: 'kopfzahlen stat-kennzahlen' });
-    var fuehrend = el('div', { class: 'kopfzahl kopfzahl--summe' });
-    var text = el('div', { class: 'summe-text' });
-    var haupt = el('div', { class: 'summe-haupt' });
-    var zahl = el('div', { class: 'summe-zahl' });
-    zahl.appendChild(el('span', { class: 'kopfzahl-wert', text: zahlText(km, 1) }));
-    zahl.appendChild(el('span', { class: 'summe-einheit', text: 'km' }));
-    haupt.appendChild(zahl);
-    haupt.appendChild(el('div', { class: 'kopfzahl-name', text: 'gelaufen' }));
-    text.appendChild(haupt);
-    var seite = el('div', { class: 'summe-neben' });
-    neben.forEach(function (n) {
-      var block = el('div');
-      block.appendChild(el('div', { class: 'kopfzahl-wert', text: n.wert }));
-      block.appendChild(el('div', { class: 'kopfzahl-name', text: n.name }));
-      seite.appendChild(block);
-    });
-    text.appendChild(seite);
-    fuehrend.appendChild(text);
-    var flaeche = wochenFlaeche(wochenUmfang());
-    if (flaeche) fuehrend.appendChild(flaeche);
-    leiste.appendChild(fuehrend);
+    var bereich = el('div', { class: 'stat-kennzahlen' });
 
-    kacheln.forEach(function (k) {
-      var block = el('div', { class: 'kopfzahl' });
-      block.appendChild(el('div', { class: 'kopfzahl-wert' + k.klasse, text: k.wert }));
-      block.appendChild(el('div', { class: 'kopfzahl-name', text: k.name }));
-      leiste.appendChild(block);
+    /* Summenkarte: die Kilometer groß, darunter der Wochenumfang und die drei Felder */
+    var summe = el('div', { class: 'karte summenkarte' });
+    var zahl = el('div', { class: 'summe-zahl' });
+    zahl.appendChild(el('span', { class: 'summe-wert', text: zahlText(km, 1) }));
+    zahl.appendChild(el('span', { class: 'summe-einheit', text: 'km' }));
+    summe.appendChild(zahl);
+    summe.appendChild(el('div', { class: 'summe-name', text: 'gelaufen' }));
+    var flaeche = wochenFlaeche(wochenUmfang());
+    if (flaeche) summe.appendChild(flaeche);
+    var reihe = el('div', { class: 'summe-felder' });
+    felder.forEach(function (f) {
+      var block = el('div', { class: 'summe-feld' });
+      block.appendChild(el('div', { class: 'feld-wert', text: f.wert }));
+      block.appendChild(el('div', { class: 'feld-name', text: f.name }));
+      reihe.appendChild(block);
     });
-    return leiste;
+    summe.appendChild(reihe);
+    bereich.appendChild(summe);
+
+    /* Zwei Kacheln: Beschwerden von den bewerteten Läufen, daneben die Abdeckung */
+    var kacheln = el('div', { class: 'stat-kacheln' });
+    var beschwerden = el('div', { class: 'karte stat-kachel' });
+    var wert = el('div', { class: 'kachel-wert' + (mitSchmerz ? ' ist-schmerz' : '') });
+    if (bewertet) {
+      wert.appendChild(document.createTextNode(String(mitSchmerz)));
+      wert.appendChild(el('span', { class: 'kachel-nenner', text: ' / ' + bewertet }));
+    } else {
+      wert.textContent = '–';
+    }
+    beschwerden.appendChild(wert);
+    beschwerden.appendChild(el('div', { class: 'kachel-name', text: 'Läufe mit Beschwerden' }));
+    if (bewertet) beschwerden.setAttribute('title', mitSchmerz + ' von ' + bewertet + ' Läufen mit erfasstem Befinden');
+    kacheln.appendChild(beschwerden);
+    var abdeckung = abdeckungsZeile();
+    if (abdeckung) kacheln.appendChild(abdeckung);
+    bereich.appendChild(kacheln);
+    return bereich;
   }
 
   /* Wochen-km als schmale Fläche, rein zur Anmutung; die Werte stehen im Diagramm */
@@ -3419,8 +3485,8 @@ pre.ausgabe{
    * Wie viele Tage des Zeitraums tragen ein Tages-Befinden. Reine
    * Vollständigkeitsangabe, damit Lücken nicht erst beim Export auffallen.
    */
-  function abdeckungsZeile() {
-    var start = statGrenze() || ersterTag();
+  /* Tage mit Tages-Befinden von start bis heute; null, wenn der Zeitraum leer ist */
+  function abdeckungAb(start) {
     if (!start) return null;
     var heute = heuteIso();
     if (start > heute) return null;
@@ -3432,10 +3498,25 @@ pre.ausgabe{
       if (tagesBefindenFuer(isoAusZeit(zeit))) erfasst++;
     }
     if (!gesamt) return null;
+    return { erfasst: erfasst, gesamt: gesamt, prozent: Math.round((erfasst / gesamt) * 100) };
+  }
 
-    return el('p', { class: 'stat-abdeckung' },
-      'Erfassung: ' + Math.round((erfasst / gesamt) * 100) + ' % der Tage (' +
-      erfasst + ' von ' + gesamt + ')');
+  function abdeckungsZeile() {
+    var abdeckung = abdeckungAb(statGrenze() || ersterTag());
+    if (!abdeckung) return null;
+    var gesamt = abdeckung.gesamt, erfasst = abdeckung.erfasst;
+
+    /* Als Kachel neben den Beschwerden: Anteil groß, Balken in --erfassung, Zählung darunter */
+    var kachel = el('div', { class: 'karte stat-kachel stat-abdeckung' });
+    kachel.appendChild(el('div', { class: 'kachel-wert', text: abdeckung.prozent + ' %' }));
+    kachel.appendChild(el('div', { class: 'kachel-name' },
+      'der Tage mit Tagesbefinden erfasst (' + erfasst + ' von ' + gesamt + ')'));
+    var balken = el('div', { class: 'abdeckung-balken', 'aria-hidden': 'true' });
+    var fuellung = el('span');
+    fuellung.style.width = abdeckung.prozent + '%';
+    balken.appendChild(fuellung);
+    kachel.appendChild(balken);
+    return kachel;
   }
 
   /* ---------- Statistik: Schmerzverlauf ---------- */
@@ -3556,10 +3637,11 @@ pre.ausgabe{
 
   /*
    * Umfang je Kalenderwoche im gewählten Zeitraum, lückenlos von der ersten bis
-   * zur letzten Woche. Geteilt von „Kilometer pro Woche“ und der Summenkarte.
+   * zur letzten Woche. Geteilt von „Kilometer pro Woche“, der Summenkarte und
+   * – mit allen Aktivitäten statt des Zeitraums – der Kopfkarte im Verlauf.
    */
-  function wochenUmfang() {
-    var alle = statAktivitaeten(false);
+  function wochenUmfang(liste) {
+    var alle = liste || statAktivitaeten(false);
     if (!alle.length) return [];
 
     var ersteWoche = wochenStart(alle[0].datum);
@@ -3876,49 +3958,11 @@ pre.ausgabe{
   /* ---------- Statistik: Aktivitätskalender ---------- */
 
   /*
-   * Vier deckende Stufen je Farbfamilie, bewusst weit auseinander: die beiden
-   * unteren tragen hellen Text, die beiden oberen dunklen. Blau und Bernstein
-   * bleiben auch bei Rot-Grün-Schwäche auseinanderzuhalten.
+   * Die Farben stehen als Klassen im Stylesheet (--kal-1 bis --kal-4,
+   * --kal-andere-1 bis -4). Ein Lauftag färbt die Kachel in vier Stufen nach
+   * Distanz, ein Tag nur mit anderer Einheit in vier Stufen nach Dauer.
+   * Die Schriftfarbe je Stufe ist die mit dem höheren Kontrast.
    */
-  var LAUF_FARBEN = ['rgb(56,104,185)', 'rgb(75,140,235)', 'rgb(130,180,250)', 'rgb(185,214,252)'];
-  var ANDERE_FARBEN = ['rgb(158,97,17)', 'rgb(200,130,30)', 'rgb(230,170,70)', 'rgb(246,210,140)'];
-  var TEXT_DUNKEL = 'rgb(16,20,26)';
-  var TEXT_HELL = 'rgb(244,247,251)';
-
-  function farbeLauf(stufe) { return LAUF_FARBEN[stufe - 1]; }
-  function farbeAndere(stufe) { return ANDERE_FARBEN[stufe - 1]; }
-
-  function relativeHelligkeit(r, g, b) {
-    var teile = [r, g, b].map(function (wert) {
-      var anteil = wert / 255;
-      return anteil <= 0.03928 ? anteil / 12.92 : Math.pow((anteil + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * teile[0] + 0.7152 * teile[1] + 0.0722 * teile[2];
-  }
-
-  function kontrastVerhaeltnis(a, b) {
-    var hell = Math.max(a, b), dunkel = Math.min(a, b);
-    return (hell + 0.05) / (dunkel + 0.05);
-  }
-
-  function helligkeitAus(farbe) {
-    var teile = String(farbe).match(/\d+/g);
-    if (!teile || teile.length < 3) return null;
-    return relativeHelligkeit(Number(teile[0]), Number(teile[1]), Number(teile[2]));
-  }
-
-  /*
-   * Textfarbe aus der tatsächlich gesetzten Füllfarbe: es gewinnt die Variante
-   * mit dem höheren Kontrast, nicht eine fest gesetzte Schwelle.
-   */
-  function textFarbeFuer(farbe) {
-    var grund = helligkeitAus(farbe);
-    if (grund === null) return TEXT_HELL;
-    var mitHell = kontrastVerhaeltnis(grund, helligkeitAus(TEXT_HELL));
-    var mitDunkel = kontrastVerhaeltnis(grund, helligkeitAus(TEXT_DUNKEL));
-    return mitDunkel >= mitHell ? TEXT_DUNKEL : TEXT_HELL;
-  }
-
   function stufeAus(wert, groesste) {
     if (!groesste || !wert) return 1;
     return Math.min(4, Math.max(1, Math.ceil((wert / groesste) * 4)));
@@ -3927,19 +3971,13 @@ pre.ausgabe{
   /*
    * Dritte Ebene im Kalender: das Befinden als Punkt. Bewusst ein anderes
    * visuelles Mittel als die Fläche, damit sich Aktivitätsart und Befinden
-   * nicht vermischen. Grün für keine Beschwerden, Rot nach Stärke 1 bis 5.
+   * nicht vermischen. --ok für keine Beschwerden, --schmerz kräftiger nach
+   * Stärke 1 bis 5 – eine Kategorie, kein Rot.
    */
-  var BEFINDEN_OK_FARBE = 'rgb(116,185,141)';
-  var BEFINDEN_SCHMERZ_FARBEN = [
-    'rgb(230,186,158)', 'rgb(223,158,120)', 'rgb(217,130,92)',
-    'rgb(214,101,80)', 'rgb(201,68,58)'
-  ];
-
-  function befindenPunktFarbe(b) {
-    if (!b) return null;
-    if (b.art === 'keine') return BEFINDEN_OK_FARBE;
-    var stufe = Math.min(5, Math.max(1, b.staerke || 1));
-    return BEFINDEN_SCHMERZ_FARBEN[stufe - 1];
+  function befindenPunktKlasse(b) {
+    if (!b) return 'kal-punkt--leer';
+    if (b.art === 'keine') return 'kal-punkt--ok';
+    return 'kal-punkt--s' + Math.min(5, Math.max(1, b.staerke || 1));
   }
 
   function kalenderTage() {
@@ -4014,9 +4052,14 @@ pre.ausgabe{
       var istLuecke = !befindenTag && !!beginn && datum >= beginn && datum <= heute;
       var klasse = 'kal-tag';
       if (tag) {
+        /* Der Lauf färbt die ganze Fläche nach Umfang, die weitere Einheit steht als Balken unten */
         if (tag.hatLauf && tag.hatAndere) klasse += ' kal-tag--beides';
         else if (tag.hatLauf) klasse += ' kal-tag--lauf';
         else klasse += ' kal-tag--andere';
+        if (tag.hatLauf) klasse += ' kal-stufe-' + stufeAus(tag.km, maxKm);
+        else klasse += ' kal-andere-' + stufeAus(tag.dauer, maxDauer);
+      } else if (datum > heute) {
+        klasse += ' kal-tag--zukunft';
       }
       if (istLuecke) klasse += ' kal-tag--luecke';
       if (datum === heute) klasse += ' kal-tag--heute';
@@ -4029,22 +4072,10 @@ pre.ausgabe{
        */
       var spalte = el('span', { class: 'kal-zelle' });
       spalte.appendChild(zelle);
-      var punkt = el('span', { class: befindenTag ? 'kal-punkt' : 'kal-punkt kal-punkt--leer', 'aria-hidden': 'true' });
-      if (befindenTag) punkt.style.background = befindenPunktFarbe(befindenTag);
-      spalte.appendChild(punkt);
+      spalte.appendChild(el('span', { class: 'kal-punkt ' + befindenPunktKlasse(befindenTag), 'aria-hidden': 'true' }));
 
       if (tag) {
-        var stufeL = tag.hatLauf ? stufeAus(tag.km, maxKm) : 0;
-        var stufeA = tag.hatAndere ? stufeAus(tag.dauer, maxDauer) : 0;
-        /* Der Lauf färbt die ganze Fläche, die weitere Einheit steht als Balken unten */
-        var fuellung = tag.hatLauf ? farbeLauf(stufeL) : farbeAndere(stufeA);
-        zelle.style.background = fuellung;
-        zelle.style.color = textFarbeFuer(fuellung);
-        if (tag.hatLauf && tag.hatAndere) {
-          var balken = el('span', { class: 'kal-balken' });
-          balken.style.background = farbeAndere(stufeA);
-          zelle.appendChild(balken);
-        }
+        if (tag.hatLauf && tag.hatAndere) zelle.appendChild(el('span', { class: 'kal-balken' }));
         zelle.setAttribute('title', datumLang(datum) + ': ' + tag.anzahl +
           (tag.anzahl === 1 ? ' Aktivität' : ' Aktivitäten') +
           (tag.hatLauf && tag.km ? ', ' + zahlText(tag.km, 2) + ' km' : '') +
@@ -4074,24 +4105,19 @@ pre.ausgabe{
   function kalenderLegende() {
     var legende = el('div', { class: 'kal-legende' });
 
-    function probeZelle(farbe, mitBalken) {
-      var probe = el('span', { class: 'kal-probe' });
-      probe.style.background = farbe;
-      if (mitBalken) {
-        var balken = el('span', { class: 'kal-balken' });
-        balken.style.background = farbeAndere(3);
-        probe.appendChild(balken);
-      }
+    function probeZelle(klasse, mitBalken) {
+      var probe = el('span', { class: 'kal-probe ' + klasse });
+      if (mitBalken) probe.appendChild(el('span', { class: 'kal-balken' }));
       return probe;
     }
 
     [
-      { text: 'Lauf', farbe: farbeLauf(3), balken: false },
-      { text: 'Andere Aktivität', farbe: farbeAndere(3), balken: false },
-      { text: 'Lauf und weitere Einheit: Balken unten', farbe: farbeLauf(3), balken: true }
+      { text: 'Lauf', klasse: 'kal-stufe-3', balken: false },
+      { text: 'Andere Aktivität', klasse: 'kal-tag--andere', balken: false },
+      { text: 'Lauf und weitere Einheit: Balken unten', klasse: 'kal-stufe-3', balken: true }
     ].forEach(function (eintrag) {
       var zeile = el('span', { class: 'kal-legende-teil' });
-      zeile.appendChild(probeZelle(eintrag.farbe, eintrag.balken));
+      zeile.appendChild(probeZelle(eintrag.klasse, eintrag.balken));
       zeile.appendChild(el('span', { text: eintrag.text }));
       legende.appendChild(zeile);
     });
@@ -4099,26 +4125,24 @@ pre.ausgabe{
     var skala = el('span', { class: 'kal-legende-teil' });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'weniger Umfang' }));
     [1, 2, 3, 4].forEach(function (stufe) {
-      skala.appendChild(probeZelle(farbeLauf(stufe), false));
+      skala.appendChild(probeZelle('kal-stufe-' + stufe, false));
     });
     skala.appendChild(el('span', { class: 'kal-skala-text', text: 'mehr' }));
     legende.appendChild(skala);
 
     /* Dritte Ebene: das Befinden des Tages */
-    function punktProbe(farbe) {
+    function punktProbe(klasse) {
       var probe = el('span', { class: 'kal-probe kal-probe--punkt' });
-      var punkt = el('span', { class: 'kal-punkt' });
-      punkt.style.background = farbe;
-      probe.appendChild(punkt);
+      probe.appendChild(el('span', { class: 'kal-punkt ' + klasse }));
       return probe;
     }
 
     [
-      { text: 'Punkt: keine Beschwerden', farbe: BEFINDEN_OK_FARBE },
-      { text: 'Punkt: Beschwerden, kräftiger bei höherer Stärke', farbe: BEFINDEN_SCHMERZ_FARBEN[3] }
+      { text: 'Punkt: keine Beschwerden', klasse: 'kal-punkt--ok' },
+      { text: 'Punkt: Beschwerden, kräftiger bei höherer Stärke', klasse: 'kal-punkt--s4' }
     ].forEach(function (eintrag) {
       var zeile = el('span', { class: 'kal-legende-teil' });
-      zeile.appendChild(punktProbe(eintrag.farbe));
+      zeile.appendChild(punktProbe(eintrag.klasse));
       zeile.appendChild(el('span', { text: eintrag.text }));
       legende.appendChild(zeile);
     });
@@ -4825,17 +4849,14 @@ pre.ausgabe{
   /* Kopfzeile der Statistik: Überschrift, beide Umschalter, Erklärtext zum Aufklappen */
   function statFilter() {
     var kopf = el('div', { class: 'stat-kopf' });
-    var reihe = el('div', { class: 'stat-kopf-zeile' });
-    reihe.appendChild(el('h2', { class: 'stat-titel', text: 'Statistik' }));
-
-    var zeitraum = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Zeitraum' });
+    /* Die Überschrift „Statistik“ steht groß im Kopf der Seite */
+    var zeitraum = el('div', { class: 'schalter schalter--zeitraum', role: 'group', 'aria-label': 'Zeitraum' });
     ZEITRAEUME.forEach(function (z) {
       var knopf = el('button', { type: 'button', 'aria-pressed': statZeitraum === z.wert ? 'true' : 'false' }, z.text);
       knopf.addEventListener('click', function () { statZeitraum = z.wert; zeichneStatistik(); });
       zeitraum.appendChild(knopf);
     });
-    reihe.appendChild(zeitraum);
-    kopf.appendChild(reihe);
+    kopf.appendChild(zeitraum);
 
     var auswahl = el('div', { class: 'schalter', role: 'group', 'aria-label': 'Auswahl' });
     [[true, 'Nur Läufe'], [false, 'Alle Aktivitäten']].forEach(function (paar) {
@@ -4927,9 +4948,8 @@ pre.ausgabe{
     }
 
     ziel.appendChild(statFilter());
+    /* Enthält auch die Abdeckung als Kachel neben den Beschwerden */
     ziel.appendChild(statKennzahlen());
-    var abdeckung = abdeckungsZeile();
-    if (abdeckung) ziel.appendChild(abdeckung);
 
     if (!statAktivitaeten(false).length) {
       var hinweisKarte = el('div', { class: 'karte' });
@@ -5055,27 +5075,120 @@ pre.ausgabe{
     if (!aktivitaeten.length || aktiverTab !== 'verlauf') { ziel.setAttribute('hidden', ''); return; }
     ziel.removeAttribute('hidden');
 
-    var laeufe = 0, erfasst = 0, mitSchmerz = 0;
+    var laeufe = 0, erfasst = 0, mitSchmerz = 0, km = 0;
     aktivitaeten.forEach(function (a) {
       if (!istLauf(a)) return;
       laeufe++;
+      km += kmVon(a);
       var b = befindenFuer(a.id);
       if (!b) return;
       erfasst++;
       if (b.art === 'schmerz') mitSchmerz++;
     });
 
-    /* Der Zeitraum steht in der Kopfzeile, hier nicht noch einmal */
-    [
-      { wert: String(laeufe), name: laeufe === 1 ? 'Lauf' : 'Läufe', klasse: '', karte: ' kopfzahl--fuehrend' },
-      { wert: String(erfasst), name: 'Befinden erfasst', klasse: ' ist-ok', karte: ' kopfzahl--ok' },
-      { wert: String(mitSchmerz), name: 'davon mit Schmerz', klasse: ' ist-schmerz', karte: ' kopfzahl--schmerz' }
-    ].forEach(function (z) {
-      var block = el('div', { class: 'kopfzahl' + z.karte });
-      block.appendChild(el('div', { class: 'kopfzahl-wert' + z.klasse, text: z.wert }));
-      block.appendChild(el('div', { class: 'kopfzahl-name', text: z.name }));
-      ziel.appendChild(block);
+    /* Links der Ring: an wie vielen Tagen seit dem ersten Eintrag ein Tages-Befinden steht */
+    ziel.appendChild(erfassungsRing(abdeckungAb(ersterTag())));
+
+    /*
+     * Rechts drei Felder über den gesamten Bestand. Die Kleingrafiken zeigen die
+     * letzten acht Kalenderwochen mit Daten, gerechnet wie „Kilometer pro Woche“.
+     */
+    var alle = aktivitaeten.filter(function (a) { return !!a.datum; });
+    alle.sort(function (x, y) { return -sortiereAbsteigend(x, y); });
+    var wochen = wochenUmfang(alle).slice(-8);
+
+    var felder = el('div', { class: 'kopf-felder' });
+    felder.appendChild(kopfFeld(String(laeufe), laeufe === 1 ? 'Lauf' : 'Läufe', '',
+      laeufeJeWoche(wochen)));
+    felder.appendChild(kopfFeld(zahlText(km, km >= 100 ? 0 : 1), 'Kilometer', '',
+      wochenFlaeche(wochen)));
+    /*
+     * „4 /11“: Läufe mit Schmerz von den Läufen mit erfasstem Befinden. Läufe
+     * ohne Befinden zählen nicht als beschwerdefrei – sie stehen im Balken gestrichelt.
+     */
+    var schmerzFeld = kopfFeld(String(mitSchmerz), 'mit Schmerz', ' ist-schmerz',
+      anteilsBalken(mitSchmerz, erfasst - mitSchmerz, laeufe - erfasst), '/' + erfasst);
+    schmerzFeld.setAttribute('title', mitSchmerz + ' von ' + erfasst +
+      (erfasst === 1 ? ' Lauf mit erfasstem Befinden' : ' Läufen mit erfasstem Befinden') + ' mit Schmerz');
+    felder.appendChild(schmerzFeld);
+    ziel.appendChild(felder);
+  }
+
+  function kopfFeld(wert, name, klasse, grafik, nenner) {
+    var feld = el('div', { class: 'kopf-feld' });
+    var zahl = el('div', { class: 'kopf-feld-zahl' + klasse, text: wert });
+    if (nenner) {
+      zahl.appendChild(el('span', { class: 'kopf-feld-nenner', 'aria-hidden': 'true', text: ' ' + nenner }));
+      zahl.appendChild(el('span', { class: 'nur-vorlesen', text: ' von ' + nenner.slice(1) + ' mit erfasstem Befinden' }));
+    }
+    feld.appendChild(zahl);
+    feld.appendChild(el('div', { class: 'kopf-feld-name', text: name }));
+    var unten = el('div', { class: 'kopf-feld-grafik' });
+    if (grafik) unten.appendChild(grafik);
+    feld.appendChild(unten);
+    return feld;
+  }
+
+  function erfassungsRing(abdeckung) {
+    var prozent = abdeckung ? abdeckung.prozent : null;
+    var box = el('div', {
+      class: 'ring', role: 'img',
+      'aria-label': abdeckung
+        ? 'Tagesbefinden an ' + prozent + ' % der Tage erfasst (' + abdeckung.erfasst + ' von ' + abdeckung.gesamt + ')'
+        : 'Noch kein Tag im erfassten Zeitraum'
     });
+    var r = 26, umfang = 2 * Math.PI * r;
+    var bild = svg('svg', { class: 'ring-bild', viewBox: '0 0 58 58', 'aria-hidden': 'true', focusable: 'false' });
+    bild.appendChild(svg('circle', { cx: 29, cy: 29, r: r, class: 'ring-spur' }));
+    if (prozent) {
+      bild.appendChild(svg('circle', {
+        cx: 29, cy: 29, r: r, class: 'ring-bogen',
+        'stroke-dasharray': (umfang * prozent / 100).toFixed(2) + ' ' + umfang.toFixed(2)
+      }));
+    }
+    var mitte = el('div', { class: 'ring-kreis' });
+    mitte.appendChild(bild);
+    mitte.appendChild(el('span', { class: 'ring-zahl', text: prozent === null ? '–' : prozent + ' %' }));
+    box.appendChild(mitte);
+    box.appendChild(el('span', { class: 'ring-name', text: 'Tage erfasst' }));
+    return box;
+  }
+
+  /* Acht schmale Balken: Läufe je Kalenderwoche */
+  function laeufeJeWoche(wochen) {
+    if (!wochen.length) return null;
+    var max = 0;
+    wochen.forEach(function (w) { if (w.laeufe > max) max = w.laeufe; });
+    var bild = svg('svg', {
+      class: 'mini-balken', viewBox: '0 0 80 22', preserveAspectRatio: 'none',
+      'aria-hidden': 'true', focusable: 'false'
+    });
+    bild.appendChild(svg('line', { x1: 0, x2: 80, y1: 21.5, y2: 21.5, class: 'mini-grund' }));
+    wochen.forEach(function (w, i) {
+      if (!w.laeufe) return;
+      var hoehe = Math.max(3, (w.laeufe / max) * 20);
+      bild.appendChild(svg('rect', {
+        x: i * 10 + 2, y: 22 - hoehe, width: 6, height: hoehe, rx: 1.5, class: 'mini-balken-stab'
+      }));
+    });
+    return bild;
+  }
+
+  /* Anteil über alle Läufe: mit Schmerz, ohne Beschwerden, ohne Befinden (gestrichelt) */
+  function anteilsBalken(schmerz, ok, offen) {
+    var gesamt = schmerz + ok + offen;
+    if (!gesamt) return null;
+    var balken = el('div', { class: 'anteil', role: 'img' });
+    [['anteil--schmerz', schmerz], ['anteil--ok', ok], ['anteil--offen', offen]].forEach(function (teil) {
+      if (!teil[1]) return;
+      var stueck = el('span', { class: 'anteil-teil ' + teil[0] });
+      stueck.style.flexGrow = String(teil[1]);
+      balken.appendChild(stueck);
+    });
+    var text = schmerz + ' mit Schmerz · ' + ok + ' ohne Beschwerden · ' + offen + ' ohne Befinden';
+    balken.setAttribute('title', text);
+    balken.setAttribute('aria-label', 'Läufe: ' + text);
+    return balken;
   }
 
   function zeichneVerlauf() {
@@ -5097,6 +5210,7 @@ pre.ausgabe{
 
     var gruppen = tagesGruppen();
     var gezeigt = 0;
+    var letzterMonat = null;
     gruppen.forEach(function (g) {
       var liste = filter === 'laeufe' ? g.akt.filter(istLauf) : g.akt;
       var zeigeZusatz = g.zusatz && filter !== 'laeufe';
@@ -5105,27 +5219,42 @@ pre.ausgabe{
       /* Ein erfasstes Tages-Befinden läuft als Zeile mit; fehlt es, steht hier nichts */
       var tagesB = liste.length && filter !== 'laeufe' ? tagesBefindenFuer(g.datum) : null;
 
+      /* Die Schiene nennt nur Tag und Wochentag; Monat und Jahr stehen einmal darüber */
+      var monat = g.datum.slice(0, 7);
+      if (monat !== letzterMonat) {
+        letzterMonat = monat;
+        ziel.appendChild(el('h2', {
+          class: 'monat-kopf',
+          text: MONATE[Number(monat.slice(5, 7)) - 1] + ' ' + monat.slice(0, 4)
+        }));
+      }
+
       var tag = el('section', { class: 'tag' });
-      var kopf = el('div', { class: 'tag-kopf' });
-      kopf.appendChild(el('span', { class: 'tag-datum', text: datumLang(g.datum) }));
-      kopf.appendChild(el('span', { class: 'tag-wochentag', text: wochentag(g.datum) }));
-      tag.appendChild(kopf);
+      var schiene = el('div', { class: 'tag-schiene' });
+      schiene.appendChild(el('span', { class: 'tag-zahl', 'aria-hidden': 'true', text: String(Number(g.datum.slice(8, 10))) }));
+      schiene.appendChild(el('span', { class: 'tag-wochentag', 'aria-hidden': 'true', text: wochentag(g.datum).slice(0, 2).toUpperCase() }));
+      schiene.appendChild(el('span', { class: 'nur-vorlesen', text: datumLang(g.datum) + ', ' + wochentag(g.datum) }));
+      schiene.appendChild(el('span', { class: 'tag-linie', 'aria-hidden': 'true' }));
+      tag.appendChild(schiene);
+      var inhalt = el('div', { class: 'tag-inhalt' });
+      tag.appendChild(inhalt);
 
       liste.forEach(function (akt, position) {
-        tag.appendChild(einblenden(aktivitaetKarte(akt), position));
+        inhalt.appendChild(einblenden(aktivitaetKarte(akt), position));
       });
 
       if (tagesB) {
         var tagesZeile = el('div', {
           class: 'tag-befinden' + (tagesB.art === 'keine' ? ' ist-ok' : ' ist-schmerz')
         });
+        tagesZeile.appendChild(el('span', { class: 'bef-punkt', 'aria-hidden': 'true' }));
         tagesZeile.appendChild(el('span', { class: 'tag-befinden-marke', text: 'Im Tagesverlauf' }));
         tagesZeile.appendChild(el('span', null, befindenText(tagesB)));
         if (tagesB.notiz) tagesZeile.appendChild(el('span', { class: 'bef-notiz' }, '„' + tagesB.notiz + '“'));
         if (tagesB.nachgetragen) {
           tagesZeile.appendChild(el('span', { class: 'bef-nachgetragen', text: 'nachgetragen' }));
         }
-        tag.appendChild(tagesZeile);
+        inhalt.appendChild(tagesZeile);
       }
 
       if (zeigeZusatz) {
@@ -5138,7 +5267,7 @@ pre.ausgabe{
           zeichne();
         });
         zeile.appendChild(weg);
-        tag.appendChild(zeile);
+        inhalt.appendChild(zeile);
       }
       ziel.appendChild(tag);
     });
@@ -5187,6 +5316,9 @@ pre.ausgabe{
       if (n === name) { panel.removeAttribute('hidden'); reiter.setAttribute('aria-selected', 'true'); }
       else { panel.setAttribute('hidden', ''); reiter.setAttribute('aria-selected', 'false'); }
     });
+    /* Die große Überschrift trägt den Namen des Reiters, wie er in der Leiste steht */
+    document.getElementById('kopf-titel').textContent =
+      document.querySelector('#reiter-' + name + ' .reiter-text').textContent;
     zeichneKopfzahlen();
     zeichneSicherungsHinweis();
     /* Diagramme brauchen die tatsächliche Breite, die erst im sichtbaren Zustand feststeht */
