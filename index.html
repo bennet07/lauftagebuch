@@ -613,7 +613,9 @@ label.feld{display:block;font-size:.73rem;text-transform:uppercase;letter-spacin
  * Er ist Zierde (unter 3:1), die Aussage steht als Text daneben.
  */
 .monat{display:block}
-.monat + .monat{margin-top:4px}
+.monat + .monat{margin-top:8px}
+/* Offener Monat nach einem anderen: 24 px bis zur letzten Karte davor */
+.monat + .monat .monat-kopf[aria-expanded="true"]{padding-top:16px}
 .monat-titel{margin:0;font-size:inherit;font-weight:inherit}
 .monat-kopf{
   width:100%;box-sizing:border-box;display:block;
@@ -5520,21 +5522,35 @@ pre.ausgabe{
      * Monate, die schon im Zustand stehen, behalten ihn über jedes Neuzeichnen;
      * ein neu hinzugekommener bekommt die Voreinstellung.
      */
-    var neuesterMonat = gruppen.length ? gruppen[0].datum.slice(0, 7) : null;
+    var neuesterMonat = null;
     if (!offeneMonate) offeneMonate = {};
 
+    /*
+     * Einträge ohne gültiges Datum sammelt eine eigene Gruppe: immer ganz unten,
+     * immer zugeklappt voreingestellt, nie „der neueste Monat“. Ihre Zahl
+     * zählt alle Einträge darin, unabhängig vom Filter.
+     */
     var monate = [];
+    var ohneDatum = { monat: MONAT_OHNE_DATUM, tage: [], eintraege: 0 };
     gruppen.forEach(function (g) {
+      var hatDatum = /^\d{4}-\d{2}-\d{2}$/.test(g.datum);
+      if (hatDatum && !neuesterMonat) neuesterMonat = g.datum.slice(0, 7);
+      if (!hatDatum) ohneDatum.eintraege += g.akt.length + (g.zusatz ? 1 : 0);
       var liste = filter === 'laeufe' ? g.akt.filter(istLauf) : g.akt;
       var zeigeZusatz = !!g.zusatz && filter !== 'laeufe';
       if (!liste.length && !zeigeZusatz) return;
+      var tag = { g: g, liste: liste, zeigeZusatz: zeigeZusatz };
+      if (!hatDatum) { ohneDatum.tage.push(tag); return; }
       var monat = g.datum.slice(0, 7);
       if (!monate.length || monate[monate.length - 1].monat !== monat) monate.push({ monat: monat, tage: [] });
-      monate[monate.length - 1].tage.push({ g: g, liste: liste, zeigeZusatz: zeigeZusatz });
+      monate[monate.length - 1].tage.push(tag);
     });
+    if (ohneDatum.tage.length) monate.push(ohneDatum);
 
     monate.forEach(function (m) {
-      if (!Object.prototype.hasOwnProperty.call(offeneMonate, m.monat)) offeneMonate[m.monat] = m.monat === neuesterMonat;
+      if (!Object.prototype.hasOwnProperty.call(offeneMonate, m.monat)) {
+        offeneMonate[m.monat] = m.monat !== MONAT_OHNE_DATUM && m.monat === neuesterMonat;
+      }
       ziel.appendChild(monatsAbschnitt(m));
     });
 
@@ -5545,6 +5561,8 @@ pre.ausgabe{
 
   /* Klappzustand der Monate im Verlauf: { 'YYYY-MM': true/false }, nur für die Sitzung */
   var offeneMonate = null;
+  /* Schlüssel der Gruppe für Einträge ohne gültiges Datum */
+  var MONAT_OHNE_DATUM = 'ohne-datum';
 
   var MONAT_PFEIL_ZU = 'M9 6l6 6-6 6';
   var MONAT_PFEIL_OFFEN = 'M6 9l6 6 6-6';
@@ -5563,10 +5581,17 @@ pre.ausgabe{
 
   function monatsAbschnitt(m) {
     var monat = m.monat;
+    var istOhneDatum = monat === MONAT_OHNE_DATUM;
     var jahr = Number(monat.slice(0, 4)), nummer = Number(monat.slice(5, 7));
-    var name = MONATE[nummer - 1] ? MONATE[nummer - 1] + ' ' + jahr : 'Ohne Datum';
+    var name = istOhneDatum ? 'Ohne Datum' : MONATE[nummer - 1] + ' ' + jahr;
     var laeufe = monatsLaeufe(monat);
-    var inhaltId = 'monat-' + (monat || 'ohne-datum');
+    var inhaltId = istOhneDatum ? 'monat-ohne-datum' : 'monat-' + monat;
+    /* Ohne Datum gibt es keine Tage: statt Läufen und Kilometern die Zahl der Einträge */
+    var zahlen = istOhneDatum
+      ? m.eintraege + (m.eintraege === 1 ? ' Eintrag' : ' Einträge')
+      : laeufe.anzahl
+        ? laeufe.anzahl + (laeufe.anzahl === 1 ? ' Lauf' : ' Läufe') + ' · ' + zahlText(laeufe.km, 1) + ' km'
+        : 'keine Läufe';
 
     var abschnitt = el('section', { class: 'monat' });
     var knopf = el('button', { type: 'button', class: 'monat-kopf', 'aria-controls': inhaltId });
@@ -5579,9 +5604,7 @@ pre.ausgabe{
     zeile.appendChild(el('span', { class: 'monat-name', text: name }));
     /* Sonst liest die Vorlesehilfe „Juli 20263 Läufe“ */
     zeile.appendChild(el('span', { class: 'nur-vorlesen', text: ', ' }));
-    zeile.appendChild(el('span', { class: 'monat-zahlen', text: laeufe.anzahl
-      ? laeufe.anzahl + (laeufe.anzahl === 1 ? ' Lauf' : ' Läufe') + ' · ' + zahlText(laeufe.km, 1) + ' km'
-      : 'keine Läufe' }));
+    zeile.appendChild(el('span', { class: 'monat-zahlen', text: zahlen }));
     knopf.appendChild(zeile);
     abschnitt.appendChild(el('h2', { class: 'monat-titel' }, knopf));
 
@@ -5600,7 +5623,7 @@ pre.ausgabe{
         m.tage.forEach(function (t) { inhalt.appendChild(tagesAbschnitt(t.g, t.liste, t.zeigeZusatz, staffeln)); });
       } else {
         inhalt.setAttribute('hidden', '');
-        knopf.appendChild(monatsStreifen(jahr, nummer, laeufe.tage));
+        if (!istOhneDatum) knopf.appendChild(monatsStreifen(jahr, nummer, laeufe.tage));
       }
     }
 
