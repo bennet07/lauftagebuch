@@ -322,6 +322,30 @@ main > section > :first-child{margin-top:12px}
 /* Enge Stufe unter 12 px Abstand: kleinere Punkte, schmalerer Rand; die Farbe bleibt */
 .diagramm .reihe--eng .reihe-punkt{stroke-width:1}
 .diagramm .reihe--eng .reihe-punkt--offen{stroke-dasharray:1 1}
+/* Ab 41 Läufen: kleine Punkte ohne Rand, Beschwerden deckend, die übrigen zurückgenommen */
+.diagramm .reihe--dicht .reihe-punkt{stroke:none}
+.diagramm .reihe--dicht .reihe-punkt--ok{opacity:.45}
+.diagramm .reihe--dicht .reihe-punkt--offen{stroke:var(--offen);stroke-width:1;fill:none;opacity:.45}
+.diagramm .reihe-leer{fill:var(--text-3);font-size:13px;font-weight:500}
+/* Schmerzverlauf ab 41 Läufen: Anteil je Abschnitt */
+.diagramm .anteil-linie{fill:none;stroke:var(--schmerz);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.diagramm .anteil-verlauf-oben{stop-color:var(--schmerz);stop-opacity:.26}
+.diagramm .anteil-verlauf-unten{stop-color:var(--schmerz);stop-opacity:0}
+.diagramm .anteil-punkt{fill:var(--schmerz)}
+.diagramm .anteil-offen{stroke:var(--offen);stroke-width:3;stroke-dasharray:3 3}
+.diagramm .anteil-bezug{stroke:var(--text-4);stroke-width:1;stroke-dasharray:4 4}
+/* Ein Rand in der Kartenfarbe hält die Zahl lesbar, wo sie die Linie kreuzt */
+.diagramm .anteil-bezug-text{fill:var(--text-4);font-size:10px;font-weight:600;paint-order:stroke;stroke:var(--flaeche);stroke-width:3px;stroke-linejoin:round}
+.stat-legende .legende-strich{display:inline-flex;align-items:center;gap:6px}
+.stat-legende .legende-strich svg{display:block;width:18px;height:8px;margin:0;overflow:visible}
+/* Marke neben dem Titel: der Zustand des Diagramms */
+.diagramm-kopf{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.diagramm-marke{margin-left:auto;font-size:11px;font-weight:600;color:var(--text-3);font-variant-numeric:tabular-nums}
+/* Erster Import: Läufe da, aber noch kein Befinden */
+.stat-erstimport{
+  margin-top:12px;padding:10px 12px;border-left:3px solid var(--akzent);border-radius:var(--radius-innen);
+  background:var(--flaeche-tief);font-size:.83rem;color:var(--text-2);line-height:1.5;
+}
 .diagramm .reihe-ring{fill:none;stroke:var(--akzent);stroke-width:2;pointer-events:none}
 .diagramm .reihe-knopf{cursor:pointer}
 .diagramm .reihe-knopf:focus{outline:none}
@@ -3546,9 +3570,17 @@ pre.ausgabe{
     return Math.max(250, Math.min(700, breite - 44));
   }
 
-  function diagrammKarte(titel, hinweis) {
+  /* Mit Marke steht neben dem Titel der Zustand des Diagramms, etwa „12 Läufe“ oder „je Woche“ */
+  function diagrammKarte(titel, hinweis, marke) {
     var karte = el('div', { class: 'karte diagramm' });
-    karte.appendChild(el('h2', null, titel));
+    if (marke) {
+      var kopf = el('div', { class: 'diagramm-kopf' });
+      kopf.appendChild(el('h2', null, titel));
+      kopf.appendChild(el('span', { class: 'diagramm-marke', text: marke }));
+      karte.appendChild(kopf);
+    } else {
+      karte.appendChild(el('h2', null, titel));
+    }
     if (hinweis) karte.appendChild(el('p', { class: 'hinweis-text', text: hinweis }));
     return karte;
   }
@@ -3680,7 +3712,8 @@ pre.ausgabe{
       wert.textContent = '–';
     }
     beschwerden.appendChild(wert);
-    beschwerden.appendChild(el('div', { class: 'kachel-name', text: 'Läufe mit Beschwerden' }));
+    /* Ohne bewerteten Lauf kein „0 / 0“, sondern ein Gedankenstrich und dieser Satz */
+    beschwerden.appendChild(el('div', { class: 'kachel-name', text: bewertet ? 'Läufe mit Beschwerden' : 'Noch kein Lauf mit Befinden' }));
     if (bewertet) beschwerden.setAttribute('title', mitSchmerz + ' von ' + bewertet + ' Läufen mit erfasstem Befinden');
     /* Balken wie bei der Abdeckung: Anteil der Läufe mit Beschwerden an den bewerteten */
     var anteil = el('div', { class: 'abdeckung-balken', 'aria-hidden': 'true' });
@@ -3721,10 +3754,11 @@ pre.ausgabe{
   }
 
   /*
-   * Wie viele Tage des Zeitraums tragen ein Tages-Befinden. Reine
-   * Vollständigkeitsangabe, damit Lücken nicht erst beim Export auffallen.
+   * Wie viele Tage des Zeitraums ein Befinden tragen – alle Kalendertage, nicht
+   * nur Lauftage, und nach derselben Regel wie Band und Kalender (tagesLage).
+   * Reine Vollständigkeitsangabe, damit Lücken nicht erst beim Export auffallen.
    */
-  /* Tage mit Tages-Befinden von start bis heute; null, wenn der Zeitraum leer ist */
+  /* Tage mit Befinden von start bis heute; null, wenn der Zeitraum leer ist */
   function abdeckungAb(start) {
     if (!start) return null;
     var heute = heuteIso();
@@ -3734,7 +3768,7 @@ pre.ausgabe{
     var zeit = tagAus(start), ende = tagAus(heute);
     for (; zeit <= ende && gesamt < 4000; zeit += 86400000) {
       gesamt++;
-      if (tagesBefindenFuer(isoAusZeit(zeit))) erfasst++;
+      if (tagesLage(isoAusZeit(zeit))) erfasst++;
     }
     if (!gesamt) return null;
     return { erfasst: erfasst, gesamt: gesamt, prozent: Math.round((erfasst / gesamt) * 100), start: start };
@@ -3775,15 +3809,24 @@ pre.ausgabe{
     return kachel;
   }
 
-  /* ---------- Statistik: ein Wert je Lauf ---------- */
+  /* ---------- Statistik: Diagramme ---------- */
 
   /*
-   * Gemeinsames Gerüst für Schmerzverlauf, Tempo und Puls. Die Punkte stehen
-   * gleichabständig, einer je Lauf in zeitlicher Reihenfolge – nicht nach
-   * Datum gesetzt, sonst liegen dichte Wochen übereinander. Die Zeit geht
-   * dadurch nicht verloren: Liegen zwei Wochen oder mehr zwischen zwei
-   * Läufen, ist die Verbindung gestrichelt und nennt die Pause in Wochen.
-   * Die Farbe eines Punkts ist das erfasste Befinden, sonst nichts.
+   * Zwei Zustände je Diagramm, allein nach der Zahl der Läufe im gewählten
+   * Zeitraum: bis 40 steht jeder Lauf für sich (bis 3 ohne Verbindungslinie,
+   * denn drei Punkte ergeben keinen Verlauf), ab 41 die dichte Form. Die Marke
+   * neben dem Titel nennt immer den Zustand, damit nichts still umschaltet.
+   */
+  var VIELE_LAEUFE = 41;
+  var LINIE_AB = 4;
+  /* Bekommt jeder Tag mindestens so viel Breite, stehen die Läufe an ihrem Tag */
+  var TAG_MIN_PX = 12;
+  /* Unter diesem Abstand zweier Punkte die enge Stufe */
+  var ENG_PX = 12;
+
+  /*
+   * Gleichabständig liegen zwei Wochen oder mehr zwischen zwei Läufen: die
+   * Verbindung ist gestrichelt und nennt die Pause in Wochen.
    */
   var PAUSE_TAGE = 14;
   /* Um die Wochenzahl: je 3 px Luft und mindestens 6 px Strich auf jeder Seite */
@@ -3796,6 +3839,8 @@ pre.ausgabe{
     var wochen = Math.round(tage / 7);
     return wochen + (wochen === 1 ? ' Woche' : ' Wochen');
   }
+
+  function laeufeText(n) { return n + (n === 1 ? ' Lauf' : ' Läufe'); }
 
   function befindenArt(b) {
     if (!b) return 'offen';
@@ -3814,7 +3859,7 @@ pre.ausgabe{
   }
 
   var textMesser = null;
-  /* Breite einer Achsenbeschriftung in px, ohne das SVG schon im Dokument zu haben */
+  /* Breite einer Beschriftung in px, ohne das SVG schon im Dokument zu haben */
   function textBreite(text, groesse, gewicht) {
     if (!textMesser) textMesser = document.createElement('canvas').getContext('2d');
     if (!textMesser) return text.length * groesse * 0.6;
@@ -3863,149 +3908,310 @@ pre.ausgabe{
     });
   }
 
-  function reihenDiagramm(o) {
-    var karte = diagrammKarte(o.titel, o.erklaerung);
+  /* Das Fenster des gewählten Zeitraums, immer bis heute; „Gesamt“ ab dem ersten Tag mit Daten */
+  function statFenster() {
+    var bis = heuteIso();
+    var von = statGrenze();
+    if (!von) {
+      von = bis;
+      aktivitaeten.forEach(function (a) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(a.datum || '') && a.datum < von) von = a.datum;
+      });
+    }
+    return { von: von, bis: bis, tage: Math.round((tagAus(bis) - tagAus(von)) / 86400000) + 1 };
+  }
+
+  /* Waagerechte über das ganze Fenster: jeder Tag gleich breit */
+  function zeitAchse(fenster, links, breite) {
+    var start = tagAus(fenster.von);
+    var proTag = breite / fenster.tage;
+    function tagIndex(iso) { return (tagAus(iso) - start) / 86400000; }
+    return {
+      proTag: proTag,
+      xAnfang: function (iso) { return links + tagIndex(iso) * proTag; },
+      xEnde: function (iso) { return links + (tagIndex(iso) + 1) * proTag; },
+      xMitte: function (iso) { return links + (tagIndex(iso) + 0.5) * proTag; }
+    };
+  }
+
+  /*
+   * Beschriftung unter der Zeitachse, je nach Zeitraum: die Wochentage, die
+   * Tage 1./10./20./Monatsende, die Monate oder vier Marken über den ganzen
+   * Bestand. Was sich überdecken würde, fällt weg.
+   */
+  function zeitBeschriftung(bild, fenster, achse, y, links, breite) {
+    var marken = [];
+    var start = tagAus(fenster.von);
+    function isoBei(i) { return isoAusZeit(start + i * 86400000); }
+    var i, iso;
+
+    if (statZeitraum === 'woche') {
+      for (i = 0; i < fenster.tage; i++) {
+        iso = isoBei(i);
+        marken.push({ x: achse.xMitte(iso), text: wochentag(iso).slice(0, 2) });
+      }
+    } else if (statZeitraum === 'monat') {
+      for (i = 0; i < fenster.tage; i++) {
+        iso = isoBei(i);
+        var tag = Number(iso.slice(8, 10));
+        var monatsEnde = new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)), 0)).getUTCDate();
+        /* Folgt der Erste direkt, trägt er die Marke – mit dem Monatsnamen */
+        var endeZaehlt = tag === monatsEnde && i === fenster.tage - 1;
+        if (tag === 1 || tag === 10 || tag === 20 || endeZaehlt) {
+          marken.push({ x: achse.xMitte(iso), text: tag + '.' + (tag === 1 ? ' ' + MONATE[Number(iso.slice(5, 7)) - 1].slice(0, 3) : '') });
+        }
+      }
+    } else if (statZeitraum === 'quartal') {
+      /* Jeder angebrochene Monat in der Mitte seines sichtbaren Stücks */
+      var stueckVon = fenster.von;
+      for (i = 0; i < fenster.tage; i++) {
+        iso = isoBei(i);
+        var naechster = isoBei(i + 1);
+        if (i === fenster.tage - 1 || naechster.slice(0, 7) !== iso.slice(0, 7)) {
+          var mitte = (achse.xAnfang(stueckVon) + achse.xEnde(iso)) / 2;
+          var name = MONATE[Number(iso.slice(5, 7)) - 1].slice(0, 3);
+          if (achse.xEnde(iso) - achse.xAnfang(stueckVon) >= textBreite(name, 11, 600) + 4) marken.push({ x: mitte, text: name });
+          stueckVon = naechster;
+        }
+      }
+    } else {
+      /* Gesamt: vier Marken; ab zwei Jahren Spanne als Jahr, darunter als Monat mit Jahr */
+      var alsJahr = fenster.tage >= 730;
+      [0, 1 / 3, 2 / 3, 1].forEach(function (anteil) {
+        var tagNr = Math.round(anteil * (fenster.tage - 1));
+        var d = isoBei(tagNr);
+        var text = alsJahr ? d.slice(0, 4) : MONATE[Number(d.slice(5, 7)) - 1].slice(0, 3) + ' ' + d.slice(2, 4);
+        if (marken.length && marken[marken.length - 1].text === text) return;
+        marken.push({ x: achse.xMitte(d), text: text });
+      });
+    }
+
+    /* Am Rand bündig statt abgeschnitten; überdeckende Marken fallen weg */
+    var rechtsBisher = -Infinity;
+    marken.forEach(function (m) {
+      var w = textBreite(m.text, 11, 600);
+      var anker = 'middle', x = m.x, linkeKante = m.x - w / 2;
+      if (linkeKante < links - 2) { anker = 'start'; x = links; linkeKante = links; }
+      else if (m.x + w / 2 > links + breite + 2) { anker = 'end'; x = links + breite; linkeKante = x - w; }
+      if (linkeKante < rechtsBisher + 6) return;
+      rechtsBisher = linkeKante + w;
+      bild.appendChild(svgText(x, y, m.text, 'ax', anker));
+    });
+  }
+
+  /* Ein Satz in der Höhe der Zeichenfläche, wenn es nichts zu zeichnen gibt */
+  function leerSatz(bild, text, x, y) {
+    bild.appendChild(svgText(x, y, text, 'reihe-leer', 'middle'));
+  }
+
+  /*
+   * Hinweis beim ersten Import: Läufe sind da, aber keiner trägt ein Befinden.
+   * Ohne diesen Satz sähe der Schmerzverlauf aus, als sei die App kaputt.
+   */
+  function erstImportHinweis() {
+    return el('p', { class: 'stat-erstimport' },
+      'Zu keinem dieser Läufe ist bisher ein Befinden erfasst. Die Punkte bleiben offen, bis im Verlauf etwas eingetragen wird – rückwirkend bis zu drei Tage.');
+  }
+
+  /*
+   * Ein Punkt je Lauf: Schmerzverlauf bis 40 Läufe, Tempo und Puls immer.
+   * Bis 40 Läufe stehen die Punkte an ihrem Tag, wenn jeder Tag des Zeitraums
+   * mindestens 12 px Breite hat; sonst gleichabständig, einer je Lauf, mit
+   * gestrichelten Pausen. Ab 41 Läufen echte Zeitachse, kleine Punkte und eine
+   * Trendlinie durch ausgewählte echte Läufe.
+   */
+  function punktDiagramm(o) {
+    var karte = diagrammKarte(o.titel, o.erklaerung, o.marke);
     var punkte = o.punkte;
     var n = punkte.length;
+    var dicht = n >= VIELE_LAEUFE;
+    var fenster = statFenster();
 
     var breite = diagrammBreite();
     var hoehe = 200;
     var links = 34, rechts = 10, oben = 10;
-    /* Unter der Nulllinie: beim Schmerzverlauf eine Reihe für Läufe ohne Befinden, dann die Daten */
+    /* Unter der Nulllinie: beim Schmerzverlauf eine Reihe für Läufe ohne Befinden, dann die Achse */
     var unten = o.ohneWertUnten ? 44 : 24;
     var flaecheBreite = breite - links - rechts;
     var flaecheHoehe = hoehe - oben - unten;
     var grund = oben + flaecheHoehe;
+    var achse = zeitAchse(fenster, links, flaecheBreite);
+    var aufZeitachse = dicht || achse.proTag >= TAG_MIN_PX;
 
-    /*
-     * Abstände: ein Schritt von Lauf zu Lauf, eine Pause ab 14 Tagen breiter –
-     * Platz für die Wochenzahl in der Linie. Die Breite sagt nichts über die
-     * Dauer, die steht als Zahl da. Dazu je ein halber Schritt Rand links und
-     * rechts, wie ohne Pause bisher.
-     */
-    var pausen = [], einfache = 0;
-    for (var j = 1; j < n; j++) {
-      var abstandTage = Math.round((tagAus(punkte[j].akt.datum) - tagAus(punkte[j - 1].akt.datum)) / 86400000);
-      if (abstandTage < PAUSE_TAGE) { einfache++; continue; }
-      /* Was die Wochenzahl in der Linie braucht – dieselbe Rechnung wie in pauseStrecke() */
-      pausen.push({ index: j, bedarf: textBreite(wochenText(abstandTage), 9, 600) + PAUSE_RAND });
-    }
-
-    /*
-     * Eine Pause ist mindestens drei Schritte breit, sonst so breit, wie ihre
-     * Wochenzahl braucht. Die Schrittbreite folgt aus dem, was übrig bleibt;
-     * wird sie zu schmal, gilt für alle Pausen wieder nur das Gewicht 3.
-     */
-    var schritt = flaecheBreite / (einfache + 1 + 3 * pausen.length);
-    var breitePause = {};
-    for (var runde = 0; runde <= pausen.length; runde++) {
-      var fest = 0, gewicht = einfache + 1;
-      pausen.forEach(function (p) {
-        if (p.bedarf > 3 * schritt) fest += p.bedarf;
-        else gewicht += 3;
-      });
-      var neu = (flaecheBreite - fest) / gewicht;
-      if (Math.abs(neu - schritt) < 0.01) break;
-      schritt = neu;
-    }
-    if (schritt >= PAUSE_MIN_SCHRITT) {
-      pausen.forEach(function (p) { breitePause[p.index] = Math.max(3 * schritt, p.bedarf); });
-    } else {
-      schritt = flaecheBreite / (einfache + 1 + 3 * pausen.length);
-    }
-
-    var lage = [schritt / 2];
-    for (var m = 1; m < n; m++) {
-      lage.push(lage[m - 1] + (breitePause[m] || (pausen.some(function (p) { return p.index === m; }) ? 3 * schritt : schritt)));
-    }
-    /* Unter 12 px Abstand die enge Stufe: kleinere Punkte, kleinerer Ring */
-    var eng = schritt < 12;
-    var punktRadius = eng ? 2 : 3.5, ringRadius = eng ? 5 : 8;
-
-    function xVon(i) { return links + lage[i]; }
     function yVon(wert) { return oben + (1 - (wert - o.min) / (o.max - o.min)) * flaecheHoehe; }
     function yPunkt(p) { return p.wert === null ? grund + 14 : yVon(p.wert); }
 
     var bild = svg('svg', {
       viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe,
-      class: 'reihe' + (eng ? ' reihe--eng' : ''), role: 'group', 'aria-label': o.beschreibung
+      class: 'reihe' + (dicht ? ' reihe--dicht' : ''), role: 'group',
+      'aria-label': o.titel + (o.marke ? ', ' + o.marke : '')
     });
 
-    /* Fläche unter der Linie: 30 % der Linienfarbe oben, nach unten auslaufend. Eigene id je Diagramm */
-    var verlaufId = 'reihe-verlauf-' + o.id;
-    var defs = svg('defs');
-    /* Auf die Zeichenfläche bezogen, nicht auf das einzelne Flächenstück: oben 30 %, an der Nulllinie 0 */
-    var verlauf = svg('linearGradient', { id: verlaufId, gradientUnits: 'userSpaceOnUse', x1: 0, y1: oben, x2: 0, y2: grund });
-    verlauf.appendChild(svg('stop', { offset: '0', class: 'reihe-verlauf-oben' }));
-    verlauf.appendChild(svg('stop', { offset: '1', class: 'reihe-verlauf-unten' }));
-    defs.appendChild(verlauf);
-    bild.appendChild(defs);
-
-    o.gitter.forEach(function (wert, i) {
-      bild.appendChild(svg('line', {
-        x1: links, x2: links + flaecheBreite, y1: yVon(wert), y2: yVon(wert),
-        class: i === 0 ? 'reihe-null' : 'gitter'
-      }));
-    });
-    /* Beschriftet sind nur unterster und oberster Wert */
-    bild.appendChild(svgText(links - 6, yVon(o.min) + 4, o.achsenText(o.min), 'ax', 'end'));
-    bild.appendChild(svgText(links - 6, yVon(o.max) + 4, o.achsenText(o.max), 'ax', 'end'));
-
-    /* Zusammenhängende Stücke: fehlt ein Wert, bricht die Linie ab, statt eine Null zu behaupten */
-    var stuecke = [], stueck = [];
-    punkte.forEach(function (p, i) {
-      if (p.wert === null) { if (stueck.length) stuecke.push(stueck); stueck = []; return; }
-      stueck.push(i);
-    });
-    if (stueck.length) stuecke.push(stueck);
-
-    stuecke.forEach(function (s) {
-      if (s.length < 2) return;
-      var umriss = s.map(function (i) { return xVon(i) + ',' + yVon(punkte[i].wert); });
-      bild.appendChild(svg('polygon', {
-        points: xVon(s[0]) + ',' + grund + ' ' + umriss.join(' ') + ' ' + xVon(s[s.length - 1]) + ',' + grund,
-        class: 'reihe-flaeche', fill: 'url(#' + verlaufId + ')'
-      }));
-    });
-
-    stuecke.forEach(function (s) {
-      var zug = [];
-      function zugEnde() {
-        if (zug.length > 1) bild.appendChild(svg('polyline', { points: zug.join(' '), class: 'reihe-linie' }));
-        zug = [];
-      }
-      s.forEach(function (i, k) {
-        var punkt = xVon(i) + ',' + yVon(punkte[i].wert);
-        if (k === 0) { zug.push(punkt); return; }
-        var vorher = s[k - 1];
-        var tage = Math.round((tagAus(punkte[i].akt.datum) - tagAus(punkte[vorher].akt.datum)) / 86400000);
-        if (tage < PAUSE_TAGE) { zug.push(punkt); return; }
-        zugEnde();
-        pauseStrecke(bild, xVon(vorher), yVon(punkte[vorher].wert), xVon(i), yVon(punkte[i].wert), tage);
-        zug.push(punkt);
+    if (o.gitter) {
+      o.gitter.forEach(function (wert, i) {
+        bild.appendChild(svg('line', {
+          x1: links, x2: links + flaecheBreite, y1: yVon(wert), y2: yVon(wert),
+          class: i === 0 ? 'reihe-null' : 'gitter'
+        }));
       });
-      zugEnde();
-    });
+      /* Beschriftet sind nur unterster und oberster Wert */
+      bild.appendChild(svgText(links - 6, yVon(o.min) + 4, o.achsenText(o.min), 'ax', 'end'));
+      bild.appendChild(svgText(links - 6, yVon(o.max) + 4, o.achsenText(o.max), 'ax', 'end'));
+    } else {
+      bild.appendChild(svg('line', { x1: links, x2: links + flaecheBreite, y1: grund, y2: grund, class: 'reihe-null' }));
+    }
 
+    if (!n) {
+      /* Achse und Beschriftung bleiben stehen, darin ein Satz */
+      leerSatz(bild, o.leerText, links + flaecheBreite / 2, oben + flaecheHoehe / 2);
+      zeitBeschriftung(bild, fenster, achse, hoehe - 6, links, flaecheBreite);
+      karte.appendChild(bild);
+      return karte;
+    }
+
+    /* ---- Waagerechte ---- */
+    var xs = [];
+    var pausen = {};
+    if (aufZeitachse) {
+      /* Mehrere Läufe an einem Tag teilen sich die Breite dieses Tages */
+      var jeTag = {};
+      punkte.forEach(function (p) { jeTag[p.akt.datum] = (jeTag[p.akt.datum] || 0) + 1; });
+      var schonDa = {};
+      punkte.forEach(function (p) {
+        var k = schonDa[p.akt.datum] = (schonDa[p.akt.datum] || 0) + 1;
+        xs.push(achse.xAnfang(p.akt.datum) + (k / (jeTag[p.akt.datum] + 1)) * achse.proTag);
+      });
+    } else {
+      /*
+       * Gleichabständig: ein Schritt von Lauf zu Lauf, eine Pause ab 14 Tagen
+       * mindestens drei Schritte, sonst so breit, wie ihre Wochenzahl braucht.
+       * Die Breite sagt nichts über die Dauer, die steht als Zahl da. Dazu je
+       * ein halber Schritt Rand links und rechts.
+       */
+      var liste = [], einfache = 0;
+      for (var j = 1; j < n; j++) {
+        var abstandTage = Math.round((tagAus(punkte[j].akt.datum) - tagAus(punkte[j - 1].akt.datum)) / 86400000);
+        if (abstandTage < PAUSE_TAGE) { einfache++; continue; }
+        pausen[j] = abstandTage;
+        liste.push({ index: j, bedarf: textBreite(wochenText(abstandTage), 9, 600) + PAUSE_RAND });
+      }
+      var schritt = flaecheBreite / (einfache + 1 + 3 * liste.length);
+      for (var runde = 0; runde <= liste.length; runde++) {
+        var fest = 0, gewicht = einfache + 1;
+        liste.forEach(function (p) {
+          if (p.bedarf > 3 * schritt) fest += p.bedarf;
+          else gewicht += 3;
+        });
+        var neu = (flaecheBreite - fest) / gewicht;
+        if (Math.abs(neu - schritt) < 0.01) break;
+        schritt = neu;
+      }
+      var breitePause = {};
+      if (schritt >= PAUSE_MIN_SCHRITT) {
+        liste.forEach(function (p) { breitePause[p.index] = Math.max(3 * schritt, p.bedarf); });
+      } else {
+        schritt = flaecheBreite / (einfache + 1 + 3 * liste.length);
+        liste.forEach(function (p) { breitePause[p.index] = 3 * schritt; });
+      }
+      var lage = links + schritt / 2;
+      for (var m = 0; m < n; m++) {
+        if (m) lage += breitePause[m] || schritt;
+        xs.push(lage);
+      }
+    }
+
+    /* Enge Stufe, sobald zwei Punkte näher als 12 px beieinander liegen */
+    var minAbstand = Infinity;
+    for (var q = 1; q < n; q++) minAbstand = Math.min(minAbstand, xs[q] - xs[q - 1]);
+    var eng = dicht || minAbstand < ENG_PX;
+    if (eng) bild.setAttribute('class', bild.getAttribute('class') + ' reihe--eng');
+    var punktRadius = eng ? 2 : 3.5, ringRadius = eng ? 5 : 8;
+
+    /* ---- Linie ---- */
+    if (dicht) {
+      /* Trendlinie aus echten Läufen, ausgewählt nach LTTB – kein Mittelwert, keine Glättung */
+      var gemessen = [];
+      punkte.forEach(function (p, i) { if (p.wert !== null) gemessen.push({ x: xs[i], y: yVon(p.wert) }); });
+      var stuetzen = lttb(gemessen, 26);
+      if (stuetzen.length > 1) {
+        bild.appendChild(svg('polyline', {
+          points: stuetzen.map(function (s) { return s.x + ',' + s.y; }).join(' '), class: 'reihe-linie reihe-trend'
+        }));
+      }
+    } else if (n >= LINIE_AB) {
+      /* Fehlt ein Wert, bricht die Linie ab, statt eine Null zu behaupten */
+      var stuecke = [], stueck = [];
+      punkte.forEach(function (p, i) {
+        if (p.wert === null) { if (stueck.length) stuecke.push(stueck); stueck = []; return; }
+        stueck.push(i);
+      });
+      if (stueck.length) stuecke.push(stueck);
+
+      var verlaufId = 'reihe-verlauf-' + o.id;
+      var defs = svg('defs');
+      /* Auf die Zeichenfläche bezogen, nicht auf das einzelne Flächenstück: oben 30 %, an der Nulllinie 0 */
+      var verlauf = svg('linearGradient', { id: verlaufId, gradientUnits: 'userSpaceOnUse', x1: 0, y1: oben, x2: 0, y2: grund });
+      verlauf.appendChild(svg('stop', { offset: '0', class: 'reihe-verlauf-oben' }));
+      verlauf.appendChild(svg('stop', { offset: '1', class: 'reihe-verlauf-unten' }));
+      defs.appendChild(verlauf);
+      bild.appendChild(defs);
+
+      stuecke.forEach(function (s) {
+        if (s.length < 2) return;
+        var umriss = s.map(function (i) { return xs[i] + ',' + yVon(punkte[i].wert); });
+        bild.appendChild(svg('polygon', {
+          points: xs[s[0]] + ',' + grund + ' ' + umriss.join(' ') + ' ' + xs[s[s.length - 1]] + ',' + grund,
+          class: 'reihe-flaeche', fill: 'url(#' + verlaufId + ')'
+        }));
+      });
+
+      stuecke.forEach(function (s) {
+        var zug = [];
+        function zugEnde() {
+          if (zug.length > 1) bild.appendChild(svg('polyline', { points: zug.join(' '), class: 'reihe-linie' }));
+          zug = [];
+        }
+        s.forEach(function (i, k) {
+          var punkt = xs[i] + ',' + yVon(punkte[i].wert);
+          if (k === 0) { zug.push(punkt); return; }
+          var vorher = s[k - 1];
+          var tage = Math.round((tagAus(punkte[i].akt.datum) - tagAus(punkte[vorher].akt.datum)) / 86400000);
+          if (tage < PAUSE_TAGE) { zug.push(punkt); return; }
+          zugEnde();
+          if (aufZeitachse) {
+            /* Auf der Zeitachse ist die Pause echter Abstand: gestrichelt, ohne Zahl */
+            bild.appendChild(svg('line', { x1: xs[vorher], y1: yVon(punkte[vorher].wert), x2: xs[i], y2: yVon(punkte[i].wert), class: 'reihe-pause' }));
+          } else {
+            pauseStrecke(bild, xs[vorher], yVon(punkte[vorher].wert), xs[i], yVon(punkte[i].wert), tage);
+          }
+          zug.push(punkt);
+        });
+        zugEnde();
+      });
+    }
+
+    /* ---- Punkte, Auswahl ---- */
     var ring = svg('circle', { r: ringRadius, class: 'reihe-ring', 'aria-hidden': 'true' });
     var zeile = auswahlZeile();
     var knoten = [];
     var gewaehlt = null;
 
     punkte.forEach(function (p, i) {
-      var x = xVon(i), y = yPunkt(p);
+      var x = xs[i], y = yPunkt(p);
       var gruppe = svg('g', {
         class: 'reihe-knopf', role: 'button', tabindex: '-1', 'aria-pressed': 'false',
         'aria-label': wochentag(p.akt.datum) + ', ' + Number(p.akt.datum.slice(8, 10)) + '. ' +
           MONATE[Number(p.akt.datum.slice(5, 7)) - 1] + ' · ' + o.werteText(p)
       });
       /* Unsichtbare Tippfläche bis zur Mitte zu den Nachbarn, der sichtbare Punkt bleibt klein */
-      var vonX = i === 0 ? x - schritt / 2 : (xVon(i - 1) + x) / 2;
-      var bisX = i === n - 1 ? x + schritt / 2 : (x + xVon(i + 1)) / 2;
+      var vonX = i === 0 ? x - Math.min(12, (xs[1] || x + 24) - x) / 2 : (xs[i - 1] + x) / 2;
+      var bisX = i === n - 1 ? x + Math.min(12, x - (xs[i - 1] || x - 24)) / 2 : (x + xs[i + 1]) / 2;
       gruppe.appendChild(svg('rect', {
-        x: vonX, y: oben, width: bisX - vonX, height: hoehe - oben - 20, class: 'reihe-tippflaeche'
+        x: vonX, y: oben, width: Math.max(1, bisX - vonX), height: hoehe - oben - 20, class: 'reihe-tippflaeche'
       }));
-      gruppe.appendChild(svg('circle', { cx: x, cy: y, r: punktRadius, class: 'reihe-punkt reihe-punkt--' + befindenArt(p.befinden) }));
+      gruppe.appendChild(svg('circle', {
+        cx: x, cy: y, r: punktRadius, class: 'reihe-punkt reihe-punkt--' + befindenArt(p.befinden)
+      }));
       bild.appendChild(gruppe);
       knoten.push(gruppe);
     });
@@ -4019,17 +4225,19 @@ pre.ausgabe{
         k.setAttribute('aria-pressed', i === gewaehlt ? 'true' : 'false');
         k.setAttribute('tabindex', i === index ? '0' : '-1');
       });
-      /* Der gewählte Punkt wird nicht größer, er bekommt einen Ring */
+      /* Der gewählte Punkt wird nicht größer, er bekommt einen Ring – in jeder Stufe */
       if (gewaehlt === null) { ring.setAttribute('visibility', 'hidden'); return; }
-      ring.setAttribute('cx', xVon(gewaehlt));
+      ring.setAttribute('cx', xs[gewaehlt]);
       ring.setAttribute('cy', yPunkt(punkte[gewaehlt]));
       ring.removeAttribute('visibility');
     }
     waehlbareReihe(bild, knoten, function (i) { gewaehlt = i; zeige(); });
 
-    bild.appendChild(svgText(links, hoehe - 6, datumLang(punkte[0].akt.datum).slice(0, 6), 'ax', 'start'));
-    if (n > 1) {
-      bild.appendChild(svgText(links + flaecheBreite, hoehe - 6, datumLang(punkte[n - 1].akt.datum), 'ax', 'end'));
+    if (aufZeitachse) {
+      zeitBeschriftung(bild, fenster, achse, hoehe - 6, links, flaecheBreite);
+    } else {
+      bild.appendChild(svgText(links, hoehe - 6, datumLang(punkte[0].akt.datum).slice(0, 6), 'ax', 'start'));
+      if (n > 1) bild.appendChild(svgText(links + flaecheBreite, hoehe - 6, datumLang(punkte[n - 1].akt.datum), 'ax', 'end'));
     }
 
     karte.appendChild(bild);
@@ -4038,9 +4246,37 @@ pre.ausgabe{
     legende.appendChild(el('span', { class: 'legende-schmerz' }, o.legendeSchmerz));
     legende.appendChild(el('span', { class: 'legende-offen' }, o.legendeOffen));
     karte.appendChild(legende);
+    if (o.hinweis) karte.appendChild(o.hinweis);
     karte.appendChild(zeile.knoten);
     zeige();
     return karte;
+  }
+
+  /*
+   * Largest-Triangle-Three-Buckets: wählt aus vielen Punkten die aus, die den
+   * Verlauf am deutlichsten tragen. Zurück kommen echte Punkte, keine Mittel.
+   */
+  function lttb(daten, anzahl) {
+    if (daten.length <= anzahl || anzahl < 3) return daten.slice();
+    var raus = [daten[0]];
+    var eimer = (daten.length - 2) / (anzahl - 2);
+    var a = 0;
+    for (var i = 0; i < anzahl - 2; i++) {
+      var vonN = Math.floor((i + 1) * eimer) + 1, bisN = Math.min(Math.floor((i + 2) * eimer) + 1, daten.length);
+      var mx = 0, my = 0, zahl = bisN - vonN;
+      for (var k = vonN; k < bisN; k++) { mx += daten[k].x; my += daten[k].y; }
+      if (zahl > 0) { mx /= zahl; my /= zahl; } else { mx = daten[daten.length - 1].x; my = daten[daten.length - 1].y; }
+      var start = Math.floor(i * eimer) + 1, ende = Math.floor((i + 1) * eimer) + 1;
+      var groesste = -1, wahl = start;
+      for (var j = start; j < ende; j++) {
+        var flaeche = Math.abs((daten[a].x - mx) * (daten[j].y - daten[a].y) - (daten[a].x - daten[j].x) * (my - daten[a].y));
+        if (flaeche > groesste) { groesste = flaeche; wahl = j; }
+      }
+      raus.push(daten[wahl]);
+      a = wahl;
+    }
+    raus.push(daten[daten.length - 1]);
+    return raus;
   }
 
   /*
@@ -4070,12 +4306,19 @@ pre.ausgabe{
     bild.appendChild(svgText(mx, my + 3, text, 'reihe-pause-text', 'middle'));
   }
 
-  /* Grenzen aus den Daten, auf einen Schritt gerundet; Hilfslinien je Schritt, höchstens sechs */
+  /*
+   * Grenzen aus den Daten, nach außen auf einen Schritt gerundet und mindestens
+   * drei Schritte hoch; Hilfslinien je Schritt, bei mehr als sechs in Vierteln.
+   */
   function gerundeteAchse(werte, schritt) {
     var min = Math.min.apply(null, werte), max = Math.max.apply(null, werte);
     var unten = Math.floor(min / schritt) * schritt;
     var oben = Math.ceil(max / schritt) * schritt;
-    if (oben === unten) oben = unten + schritt;
+    var mal = 0;
+    while ((oben - unten) / schritt < 3 - 1e-9) {
+      if (mal++ % 2 === 0 || unten - schritt < 0) oben += schritt;
+      else unten -= schritt;
+    }
     var gitter = [];
     var anzahl = Math.round((oben - unten) / schritt);
     var je = anzahl > 6 ? (oben - unten) / 4 : schritt;
@@ -4083,31 +4326,30 @@ pre.ausgabe{
     return { min: unten, max: oben, gitter: gitter };
   }
 
+  /* ---------- Schmerzverlauf ---------- */
+
   function schmerzDiagramm() {
     var laeufe = statAktivitaeten(true);
-    var titel = 'Schmerzverlauf', erklaerung = 'Erfasstes Befinden je Lauf, 0 steht für keine Beschwerden.';
     var punkte = laeufe.map(function (a) {
       var b = befindenFuer(a.id);
       return { akt: a, befinden: b, wert: b ? (b.art === 'keine' ? 0 : (b.staerke || 0)) : null };
     });
-    var bewertete = punkte.filter(function (p) { return p.wert !== null; });
+    var bewertet = punkte.filter(function (p) { return p.wert !== null; }).length;
+    /* Erster Import: Läufe da, aber keiner bewertet */
+    var hinweis = laeufe.length && !bewertet ? erstImportHinweis() : null;
 
-    if (!laeufe.length || bewertete.length < 2) {
-      var karte = diagrammKarte(titel, erklaerung);
-      karte.appendChild(statHinweis(!laeufe.length ? 'Für diesen Zeitraum sind keine Läufe erfasst.'
-        : 'Ab zwei bewerteten Läufen entsteht hier ein Verlauf. Zurzeit ' +
-          (bewertete.length === 1 ? 'ist einer' : 'ist keiner') + ' von ' +
-          laeufe.length + (laeufe.length === 1 ? ' Lauf' : ' Läufen') + ' bewertet.'));
-      return karte;
-    }
+    if (laeufe.length >= VIELE_LAEUFE) return anteilDiagramm(laeufe, hinweis);
 
-    return reihenDiagramm({
-      id: 'schmerz', titel: titel, erklaerung: erklaerung,
-      beschreibung: 'Schmerzverlauf je Lauf, Werte 0 bis 5',
+    return punktDiagramm({
+      id: 'schmerz', titel: 'Schmerzverlauf',
+      erklaerung: 'Erfasstes Befinden je Lauf, 0 steht für keine Beschwerden.',
+      marke: laeufe.length ? laeufeText(laeufe.length) : '',
       punkte: punkte, min: 0, max: 5, gitter: [0, 1, 2, 3, 4, 5],
+      leerText: 'In diesem Zeitraum liegt kein Lauf.',
       /* Läufe ohne Befinden stehen hohl unter der Nulllinie */
       ohneWertUnten: true,
       legendeSchmerz: '● Schmerz 1 bis 5', legendeOffen: '○ Lauf ohne Befinden',
+      hinweis: hinweis,
       achsenText: function (w) { return String(w); },
       werteText: function (p) {
         var teile = [p.befinden ? (p.befinden.art === 'schmerz' ? befindenKurz(p.befinden, ' · ') : 'Keine Beschwerden')
@@ -4119,8 +4361,221 @@ pre.ausgabe{
   }
 
   /*
-   * Tempo und Puls: nur Läufe, die den Wert tragen. Die größere Zahl steht
-   * oben, auch beim Tempo – eine umgekehrte Achse ließe „oben“ wie „besser“ aussehen.
+   * Abschnitte über das ganze Fenster: Tage, Kalenderwochen oder -monate.
+   * Jeder Abschnitt kennt sein sichtbares Stück im Fenster.
+   */
+  function fensterAbschnitte(fenster, art) {
+    var liste = [];
+    var ende = tagAus(fenster.bis);
+    var zeit;
+    if (art === 'tag') {
+      for (zeit = tagAus(fenster.von); zeit <= ende; zeit += 86400000) {
+        var iso = isoAusZeit(zeit);
+        liste.push({ von: iso, bis: iso, schluessel: iso });
+      }
+    } else if (art === 'woche') {
+      for (zeit = wochenStart(fenster.von); zeit <= ende; zeit += 7 * 86400000) {
+        liste.push({ von: isoAusZeit(zeit), bis: isoAusZeit(zeit + 6 * 86400000), schluessel: isoAusZeit(zeit), start: zeit });
+      }
+    } else {
+      var jahr = Number(fenster.von.slice(0, 4)), monat = Number(fenster.von.slice(5, 7));
+      while (Date.UTC(jahr, monat - 1, 1) <= ende) {
+        var letzter = new Date(Date.UTC(jahr, monat, 0)).getUTCDate();
+        liste.push({ von: jahr + '-' + pad2(monat) + '-01', bis: jahr + '-' + pad2(monat) + '-' + pad2(letzter),
+          schluessel: jahr + '-' + pad2(monat), jahr: jahr, monat: monat });
+        monat++;
+        if (monat > 12) { monat = 1; jahr++; }
+      }
+    }
+    liste.forEach(function (a) {
+      a.sichtVon = a.von < fenster.von ? fenster.von : a.von;
+      a.sichtBis = a.bis > fenster.bis ? fenster.bis : a.bis;
+    });
+    return liste;
+  }
+
+  function abschnittFuer(liste, datum) {
+    for (var i = 0; i < liste.length; i++) if (datum >= liste[i].von && datum <= liste[i].bis) return liste[i];
+    return null;
+  }
+
+  /* „KW 38“, „September 2026“ oder „Di, 22. Sep“ */
+  function abschnittName(a, art) {
+    if (art === 'tag') return datumBandKurz(a.von);
+    if (art === 'woche') return 'KW ' + wochenNummer(a.start).woche;
+    return MONATE[a.monat - 1] + ' ' + a.jahr;
+  }
+
+  /*
+   * Schmerzverlauf ab 41 Läufen: nicht mehr jeder Lauf, sondern der Anteil der
+   * bewerteten Läufe mit Beschwerden je Abschnitt – dieselbe Zählung wie in
+   * der Kachel, kein Mittelwert. Läufe ohne Befinden stehen weder im Zähler
+   * noch im Nenner; ein Abschnitt ganz ohne bewerteten Lauf ist gestrichelt.
+   */
+  function anteilDiagramm(laeufe, hinweis) {
+    var fenster = statFenster();
+    var art = fenster.tage <= 366 ? 'woche' : 'monat';
+    var marke = art === 'woche' ? 'Anteil je Woche' : 'Anteil je Monat';
+    var karte = diagrammKarte('Schmerzverlauf',
+      'Anteil der Läufe mit Beschwerden an den Läufen mit erfasstem Befinden, ' + (art === 'woche' ? 'je Kalenderwoche.' : 'je Kalendermonat.'),
+      marke);
+
+    var abschnitte = fensterAbschnitte(fenster, art);
+    abschnitte.forEach(function (a) { a.laeufe = 0; a.bewertet = 0; a.schmerz = 0; a.staerke = 0; });
+    var summeBewertet = 0, summeSchmerz = 0;
+    laeufe.forEach(function (l) {
+      var a = abschnittFuer(abschnitte, l.datum);
+      if (!a) return;
+      a.laeufe++;
+      var b = befindenFuer(l.id);
+      if (!b) return;
+      a.bewertet++;
+      summeBewertet++;
+      if (b.art !== 'schmerz') return;
+      a.schmerz++;
+      summeSchmerz++;
+      if ((b.staerke || 0) > a.staerke) a.staerke = b.staerke || 0;
+    });
+
+    var breite = diagrammBreite();
+    var hoehe = 200;
+    var links = 38, rechts = 10, oben = 10, unten = 24;
+    var flaecheBreite = breite - links - rechts;
+    var flaecheHoehe = hoehe - oben - unten;
+    var grund = oben + flaecheHoehe;
+    var achse = zeitAchse(fenster, links, flaecheBreite);
+    function yVon(anteil) { return oben + (1 - anteil) * flaecheHoehe; }
+
+    var bild = svg('svg', {
+      viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe,
+      class: 'reihe reihe--anteil', role: 'group', 'aria-label': 'Schmerzverlauf, ' + marke + ', 0 bis 100 %'
+    });
+
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (w, i) {
+      bild.appendChild(svg('line', { x1: links, x2: links + flaecheBreite, y1: yVon(w), y2: yVon(w), class: i === 0 ? 'reihe-null' : 'gitter' }));
+    });
+    bild.appendChild(svgText(links - 6, yVon(0) + 4, '0 %', 'ax', 'end'));
+    bild.appendChild(svgText(links - 6, yVon(1) + 4, '100 %', 'ax', 'end'));
+
+    abschnitte.forEach(function (a) {
+      a.x1 = achse.xAnfang(a.sichtVon);
+      a.x2 = achse.xEnde(a.sichtBis);
+      a.x = (a.x1 + a.x2) / 2;
+      a.anteil = a.bewertet ? a.schmerz / a.bewertet : null;
+    });
+
+    /* Fläche und Linie, unterbrochen an Abschnitten ohne bewerteten Lauf */
+    var defs = svg('defs');
+    var verlauf = svg('linearGradient', { id: 'reihe-verlauf-anteil', gradientUnits: 'userSpaceOnUse', x1: 0, y1: oben, x2: 0, y2: grund });
+    verlauf.appendChild(svg('stop', { offset: '0', class: 'anteil-verlauf-oben' }));
+    verlauf.appendChild(svg('stop', { offset: '1', class: 'anteil-verlauf-unten' }));
+    defs.appendChild(verlauf);
+    bild.appendChild(defs);
+
+    var stuecke = [], stueck = [];
+    abschnitte.forEach(function (a) {
+      if (a.anteil === null) { if (stueck.length) stuecke.push(stueck); stueck = []; return; }
+      stueck.push(a);
+    });
+    if (stueck.length) stuecke.push(stueck);
+    stuecke.forEach(function (s) {
+      if (s.length < 2) return;
+      var zug = s.map(function (a) { return a.x + ',' + yVon(a.anteil); });
+      bild.appendChild(svg('polygon', {
+        points: s[0].x + ',' + grund + ' ' + zug.join(' ') + ' ' + s[s.length - 1].x + ',' + grund,
+        class: 'reihe-flaeche', fill: 'url(#reihe-verlauf-anteil)'
+      }));
+      bild.appendChild(svg('polyline', { points: zug.join(' '), class: 'anteil-linie' }));
+    });
+
+    /* Gestrichelt auf der Grundlinie: nicht erfasst – eine bloße Lücke sähe aus wie keine Beschwerden */
+    abschnitte.forEach(function (a) {
+      if (a.anteil !== null) return;
+      bild.appendChild(svg('line', { x1: a.x1 + 1, x2: a.x2 - 1, y1: grund, y2: grund, class: 'anteil-offen' }));
+    });
+
+    /* Bezugslinie: der Anteil über den gewählten Zeitraum */
+    if (summeBewertet) {
+      var gesamtAnteil = summeSchmerz / summeBewertet;
+      var yB = yVon(gesamtAnteil);
+      bild.appendChild(svg('line', { x1: links, x2: links + flaecheBreite, y1: yB, y2: yB, class: 'anteil-bezug' }));
+      /* Über der Linie, außer sie liegt zu weit oben – nie abgeschnitten */
+      var yText = yB - oben < 14 ? yB + 12 : yB - 5;
+      bild.appendChild(svgText(links + flaecheBreite, yText, Math.round(gesamtAnteil * 100) + ' % im Zeitraum', 'anteil-bezug-text', 'end'));
+    }
+
+    var ring = svg('circle', { r: 7, class: 'reihe-ring', 'aria-hidden': 'true' });
+    var zeile = auswahlZeile();
+    var knoten = [];
+    var gewaehlt = null;
+    var letzter = abschnitte.length - 1;
+    for (var i = abschnitte.length - 1; i >= 0; i--) if (abschnitte[i].anteil !== null) { letzter = i; break; }
+
+    function wertText(a) {
+      if (!a.laeufe) return 'kein Lauf';
+      if (!a.bewertet) return 'kein bewerteter Lauf';
+      var von = ' von ' + a.bewertet + (a.bewertet === 1 ? ' Lauf' : ' Läufen');
+      if (!a.schmerz) return '0' + von + ' mit Beschwerden';
+      return a.schmerz + von + ' · stärkster Eintrag ' + a.staerke + '/5';
+    }
+
+    abschnitte.forEach(function (a, i) {
+      var gruppe = svg('g', {
+        class: 'reihe-knopf', role: 'button', tabindex: '-1', 'aria-pressed': 'false',
+        'aria-label': abschnittName(a, art) + ' · ' + wertText(a)
+      });
+      gruppe.appendChild(svg('rect', { x: a.x1, y: oben, width: Math.max(1, a.x2 - a.x1), height: flaecheHoehe + 4, class: 'reihe-tippflaeche' }));
+      if (a.anteil !== null) {
+        a.punkt = svg('circle', { cx: a.x, cy: yVon(a.anteil), r: 2, class: 'anteil-punkt' });
+        gruppe.appendChild(a.punkt);
+      }
+      bild.appendChild(gruppe);
+      knoten.push(gruppe);
+    });
+    bild.appendChild(ring);
+
+    function zeige() {
+      var index = gewaehlt === null ? letzter : gewaehlt;
+      var a = abschnitte[index];
+      zeile.zeige(abschnittName(a, art), wertText(a));
+      abschnitte.forEach(function (b, k) {
+        knoten[k].setAttribute('aria-pressed', k === gewaehlt ? 'true' : 'false');
+        knoten[k].setAttribute('tabindex', k === index ? '0' : '-1');
+        /* Hier wird der gewählte Punkt größer, dazu der Ring */
+        if (b.punkt) b.punkt.setAttribute('r', k === gewaehlt ? 3.5 : 2);
+      });
+      if (gewaehlt === null) { ring.setAttribute('visibility', 'hidden'); return; }
+      ring.setAttribute('cx', a.x);
+      ring.setAttribute('cy', a.anteil === null ? grund : yVon(a.anteil));
+      ring.removeAttribute('visibility');
+    }
+    waehlbareReihe(bild, knoten, function (k) { gewaehlt = k; zeige(); });
+
+    zeitBeschriftung(bild, fenster, achse, hoehe - 6, links, flaecheBreite);
+    karte.appendChild(bild);
+
+    var legende = el('div', { class: 'stat-legende' });
+    [['anteil-linie', marke], ['anteil-offen', 'kein bewerteter Lauf'], ['anteil-bezug', 'Anteil im Zeitraum']].forEach(function (e) {
+      var teil = el('span', { class: 'legende-strich' });
+      var probe = svg('svg', { width: 18, height: 8, viewBox: '0 0 18 8', 'aria-hidden': 'true', focusable: 'false' });
+      probe.appendChild(svg('line', { x1: 1, x2: 17, y1: 4, y2: 4, class: e[0] }));
+      teil.appendChild(probe);
+      teil.appendChild(document.createTextNode(e[1]));
+      legende.appendChild(teil);
+    });
+    karte.appendChild(legende);
+    if (hinweis) karte.appendChild(hinweis);
+    karte.appendChild(zeile.knoten);
+    zeige();
+    return karte;
+  }
+
+  /* ---------- Tempo und Puls ---------- */
+
+  /*
+   * Immer ein Punkt je Lauf, nie umgeschaltet: Puls und Tempo verteilen sich
+   * über die ganze Höhe. Nur Läufe, die den Wert tragen. Die Senkrechte kommt
+   * aus den Daten des Zeitraums; die größere Zahl steht oben, auch beim Tempo.
    */
   function messwertDiagramm(einstellung) {
     var laeufe = statAktivitaeten(true);
@@ -4130,20 +4585,15 @@ pre.ausgabe{
       if (wert !== null) punkte.push({ akt: a, befinden: befindenFuer(a.id), wert: wert });
     });
 
-    if (!laeufe.length || punkte.length < 2) {
-      var karte = diagrammKarte(einstellung.titel, einstellung.erklaerung);
-      karte.appendChild(statHinweis(!laeufe.length ? 'Für diesen Zeitraum sind keine Läufe erfasst.'
-        : 'Ab zwei Läufen mit diesem Wert entsteht hier ein Verlauf. Zurzeit ' +
-          (punkte.length === 1 ? 'trägt einer' : 'trägt keiner') + ' von ' + laeufe.length +
-          (laeufe.length === 1 ? ' Lauf' : ' Läufen') + ' den Wert.'));
-      return karte;
-    }
-
-    var achse = gerundeteAchse(punkte.map(function (p) { return p.wert; }), einstellung.schritt);
-    return reihenDiagramm({
+    var achse = punkte.length ? gerundeteAchse(punkte.map(function (p) { return p.wert; }), einstellung.schritt) : null;
+    var marke = punkte.length
+      ? laeufeText(punkte.length) + ' · ' + einstellung.achsenText(achse.min) + ' – ' + einstellung.achsenText(achse.max) + ' ' + einstellung.einheit
+      : '';
+    return punktDiagramm({
       id: einstellung.id, titel: einstellung.titel, erklaerung: einstellung.erklaerung,
-      beschreibung: einstellung.beschreibung, punkte: punkte,
-      min: achse.min, max: achse.max, gitter: achse.gitter,
+      marke: marke, punkte: punkte,
+      min: achse ? achse.min : 0, max: achse ? achse.max : 1, gitter: achse ? achse.gitter : null,
+      leerText: laeufe.length ? 'In diesem Zeitraum trägt kein Lauf diesen Wert.' : 'In diesem Zeitraum liegt kein Lauf.',
       achsenText: einstellung.achsenText,
       legendeSchmerz: '● Mit Beschwerden', legendeOffen: '○ Ohne Befinden',
       werteText: function (p) {
@@ -4155,12 +4605,12 @@ pre.ausgabe{
     });
   }
 
-  /* ---------- Statistik: Kilometer pro Woche ---------- */
+  /* ---------- Kilometer ---------- */
 
   /*
    * Umfang je Kalenderwoche im gewählten Zeitraum, lückenlos von der ersten bis
-   * zur letzten Woche. Geteilt von „Kilometer pro Woche“, der Summenkarte und
-   * – mit allen Aktivitäten statt des Zeitraums – der Kopfkarte im Verlauf.
+   * zur letzten Woche. Geteilt von der Summenkarte und – mit allen Aktivitäten
+   * statt des Zeitraums – der Kopfkarte im Verlauf.
    */
   function wochenUmfang(liste) {
     var alle = liste || statAktivitaeten(false);
@@ -4182,39 +4632,49 @@ pre.ausgabe{
     return wochen;
   }
 
-  function wochenDiagramm() {
-    var karte = diagrammKarte('Kilometer pro Woche',
-      'Summe der gelaufenen Kilometer je Kalenderwoche. Wochen ohne Lauf bleiben als Null sichtbar.');
-    var wochen = wochenUmfang();
+  /*
+   * Kilometer als Balken über das ganze Fenster, Null-Balken für leere
+   * Abschnitte. Summen dürfen zusammengefasst werden – deshalb wächst nur hier
+   * der Abschnitt mit dem Zeitraum: bis 1 Monat je Tag, bis 1 Jahr je
+   * Kalenderwoche, darüber je Kalendermonat.
+   */
+  function kilometerDiagramm() {
+    var fenster = statFenster();
+    var art = fenster.tage <= 31 ? 'tag' : fenster.tage <= 366 ? 'woche' : 'monat';
+    var marke = { tag: 'je Tag', woche: 'je Woche', monat: 'je Monat' }[art];
+    var karte = diagrammKarte('Kilometer', {
+      tag: 'Summe der gelaufenen Kilometer je Tag. Tage ohne Lauf bleiben als Null sichtbar.',
+      woche: 'Summe der gelaufenen Kilometer je Kalenderwoche. Wochen ohne Lauf bleiben als Null sichtbar.',
+      monat: 'Summe der gelaufenen Kilometer je Kalendermonat. Monate ohne Lauf bleiben als Null sichtbar.'
+    }[art], marke);
 
-    if (!wochen.length) {
-      karte.appendChild(statHinweis('Für diesen Zeitraum sind keine Aktivitäten erfasst.'));
-      return karte;
-    }
-    if (wochen.length < 2) {
-      karte.appendChild(statHinweis('Ab zwei Kalenderwochen entsteht hier ein Verlauf. Zurzeit liegt nur eine Woche vor.'));
-      return karte;
-    }
-
-    var maxKm = 0, maxAndere = 0;
-    wochen.forEach(function (w) {
-      if (w.km > maxKm) maxKm = w.km;
-      if (w.andere > maxAndere) maxAndere = w.andere;
+    var abschnitte = fensterAbschnitte(fenster, art);
+    abschnitte.forEach(function (a) { a.km = 0; a.laeufe = 0; a.andere = 0; });
+    var alle = statAktivitaeten(false);
+    alle.forEach(function (akt) {
+      var a = abschnittFuer(abschnitte, akt.datum);
+      if (!a) return;
+      if (istLauf(akt)) { a.km += kmVon(akt); a.laeufe++; }
+      else a.andere++;
+    });
+    var laeufeGesamt = 0, maxKm = 0, maxAndere = 0;
+    abschnitte.forEach(function (a) {
+      laeufeGesamt += a.laeufe;
+      if (a.km > maxKm) maxKm = a.km;
+      if (a.andere > maxAndere) maxAndere = a.andere;
     });
 
     var breite = diagrammBreite();
     var links = 32, rechts = 8, oben = 12;
     var balkenHoehe = 150;
-    var streifenHoehe = maxAndere ? 30 : 0;
+    var streifenHoehe = maxAndere && laeufeGesamt ? 30 : 0;
     var hoehe = oben + balkenHoehe + 22 + (streifenHoehe ? streifenHoehe + 28 : 0);
     var flaecheBreite = breite - links - rechts;
-    var spalte = flaecheBreite / wochen.length;
-    var balkenBreite = Math.max(3, Math.min(30, spalte - 4));
+    var achse = zeitAchse(fenster, links, flaecheBreite);
 
     var bild = svg('svg', {
-      viewBox: '0 0 ' + breite + ' ' + hoehe,
-      width: '100%', height: hoehe, role: 'group',
-      'aria-label': 'Kilometer je Kalenderwoche'
+      viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe, role: 'group',
+      'aria-label': 'Kilometer, ' + marke
     });
 
     /* Hilfslinien wie in den anderen Diagrammen; beschriftet nur unterster und oberster Wert */
@@ -4225,83 +4685,85 @@ pre.ausgabe{
       bild.appendChild(svg('line', {
         x1: links, x2: links + flaecheBreite, y1: yS, y2: yS, class: s === 0 ? 'reihe-null' : 'gitter'
       }));
-      if (s === 0 || s === stufen) bild.appendChild(svgText(links - 6, yS + 4, zahlText(wertS, wertS >= 10 ? 0 : 1), 'ax', 'end'));
+      if (laeufeGesamt && (s === 0 || s === stufen)) {
+        bild.appendChild(svgText(links - 6, yS + 4, zahlText(wertS, wertS >= 10 ? 0 : 1), 'ax', 'end'));
+      }
+    }
+
+    if (!laeufeGesamt) {
+      leerSatz(bild, 'In diesem Zeitraum liegt kein Lauf.', links + flaecheBreite / 2, oben + balkenHoehe / 2);
+      zeitBeschriftung(bild, fenster, achse, oben + balkenHoehe + 16, links, flaecheBreite);
+      karte.appendChild(bild);
+      return karte;
     }
 
     var zeile = auswahlZeile();
     var knoten = [];
     var gewaehlt = null;
-    var abstand = Math.max(1, Math.ceil(wochen.length / Math.max(2, Math.floor(flaecheBreite / 34))));
     var streifenOben = oben + balkenHoehe + 22 + 20;
 
     if (streifenHoehe) {
-      bild.appendChild(svgText(links, streifenOben - 7, 'Andere Aktivitäten je Woche', 'ax', 'start'));
+      bild.appendChild(svgText(links, streifenOben - 7, 'Andere Aktivitäten', 'ax', 'start'));
       bild.appendChild(svg('line', {
         x1: links, x2: links + flaecheBreite,
         y1: streifenOben + streifenHoehe, y2: streifenOben + streifenHoehe, class: 'achse'
       }));
     }
 
-    wochen.forEach(function (w, i) {
-      var mitte = links + spalte * i + spalte / 2;
-      var nummer = wochenNummer(w.start);
-      var ende = w.start + 6 * 86400000;
-      w.wertText = datumLang(isoAusZeit(w.start)).slice(0, 6) + '–' + datumLang(isoAusZeit(ende)).slice(0, 6) +
-        ' · ' + zahlText(w.km, 1) + ' km · ' + w.laeufe + (w.laeufe === 1 ? ' Lauf' : ' Läufe') + ' · ' +
-        w.andere + (w.andere === 1 ? ' andere Aktivität' : ' andere Aktivitäten');
-      w.kw = 'KW ' + nummer.woche;
+    abschnitte.forEach(function (a, i) {
+      var x1 = achse.xAnfang(a.sichtVon), x2 = achse.xEnde(a.sichtBis);
+      var spalte = x2 - x1, mitte = (x1 + x2) / 2;
+      var balkenBreite = Math.max(1, Math.min(30, spalte - (spalte > 6 ? 4 : 1)));
+      a.wertText = (art === 'woche' ? datumLang(a.von).slice(0, 6) + '–' + datumLang(a.bis).slice(0, 6) + ' · ' : '') +
+        zahlText(a.km, 1) + ' km · ' + laeufeText(a.laeufe) + ' · ' +
+        a.andere + (a.andere === 1 ? ' andere Aktivität' : ' andere Aktivitäten');
+      a.name = abschnittName(a, art);
 
-      /* Auch Null-Wochen sind wählbar; die Fläche über die ganze Spalte trägt Wahl und Fokus */
+      /* Auch Null-Abschnitte sind wählbar; die Fläche über die ganze Spalte trägt Wahl und Fokus */
       var flaeche = svg('rect', {
-        x: mitte - spalte / 2, y: oben, width: spalte, height: balkenHoehe,
+        x: x1, y: oben, width: Math.max(1, spalte), height: balkenHoehe,
         class: 'balken-flaeche', role: 'button', tabindex: '-1', 'aria-pressed': 'false',
-        'aria-label': w.kw + ' · ' + w.wertText
+        'aria-label': a.name + ' · ' + a.wertText
       });
       bild.appendChild(flaeche);
       knoten.push(flaeche);
 
-      if (w.km > 0) {
-        var hoeheBalken = Math.max((w.km / maxKm) * balkenHoehe, 2);
-        var balken = svg('rect', {
+      if (a.km > 0) {
+        var hoeheBalken = Math.max((a.km / maxKm) * balkenHoehe, 2);
+        bild.appendChild(svg('rect', {
           x: mitte - balkenBreite / 2, y: oben + balkenHoehe - hoeheBalken,
-          width: balkenBreite, height: hoeheBalken, rx: 2, class: 'balken', 'pointer-events': 'none'
-        });
-        bild.appendChild(balken);
+          width: balkenBreite, height: hoeheBalken, rx: Math.min(2, balkenBreite / 2), class: 'balken', 'pointer-events': 'none'
+        }));
       }
 
-      if (i % abstand === 0) {
-        bild.appendChild(svgText(mitte, oben + balkenHoehe + 16, String(nummer.woche), 'ax'));
-      }
-
-      if (streifenHoehe && w.andere > 0) {
-        var hoeheAndere = Math.max((w.andere / maxAndere) * streifenHoehe, 3);
+      if (streifenHoehe && a.andere > 0) {
+        var hoeheAndere = Math.max((a.andere / maxAndere) * streifenHoehe, 3);
         var stab = svg('rect', {
           x: mitte - balkenBreite / 2, y: streifenOben + streifenHoehe - hoeheAndere,
-          width: balkenBreite, height: hoeheAndere, rx: 2, class: 'streifen'
+          width: balkenBreite, height: hoeheAndere, rx: Math.min(2, balkenBreite / 2), class: 'streifen'
         });
-        var index = i;
-        stab.addEventListener('click', function () { waehleWoche(index); });
+        stab.addEventListener('click', function () { waehle(i); });
         bild.appendChild(stab);
       }
     });
 
-    bild.appendChild(svgText(links - 6, oben + balkenHoehe + 16, 'KW', 'ax', 'end'));
+    zeitBeschriftung(bild, fenster, achse, oben + balkenHoehe + 16, links, flaecheBreite);
 
-    /* Ohne Auswahl nennt die Zeile die letzte Woche */
-    function zeigeWoche() {
-      var index = gewaehlt === null ? wochen.length - 1 : gewaehlt;
-      zeile.zeige(wochen[index].kw, wochen[index].wertText);
+    /* Ohne Auswahl nennt die Zeile den letzten Abschnitt */
+    function zeige() {
+      var index = gewaehlt === null ? abschnitte.length - 1 : gewaehlt;
+      zeile.zeige(abschnitte[index].name, abschnitte[index].wertText);
       knoten.forEach(function (k, i) {
         k.setAttribute('aria-pressed', i === gewaehlt ? 'true' : 'false');
         k.setAttribute('tabindex', i === index ? '0' : '-1');
       });
     }
-    function waehleWoche(i) { gewaehlt = i; zeigeWoche(); }
-    waehlbareReihe(bild, knoten, waehleWoche);
+    function waehle(i) { gewaehlt = i; zeige(); }
+    waehlbareReihe(bild, knoten, waehle);
 
     karte.appendChild(bild);
     karte.appendChild(zeile.knoten);
-    zeigeWoche();
+    zeige();
     return karte;
   }
 
@@ -4328,8 +4790,8 @@ pre.ausgabe{
     return messwertDiagramm({
       id: 'tempo',
       titel: 'Tempo',
-      erklaerung: 'Tempo je Lauf in Minuten pro Kilometer. Farbe: das erfasste Befinden.',
-      beschreibung: 'Tempo je Lauf in Minuten pro Kilometer',
+      erklaerung: 'Tempo je Lauf in Minuten pro Kilometer. Oben langsamer, unten schneller – die Achse ist nicht umgedreht. Farbe: das erfasste Befinden.',
+      einheit: 'min/km',
       /* Grenzen auf halbe Minuten */
       schritt: 30,
       wertVon: tempoVon,
@@ -4343,7 +4805,7 @@ pre.ausgabe{
       id: 'puls',
       titel: 'Puls',
       erklaerung: 'Puls je Lauf in Schlägen pro Minute. Farbe: das erfasste Befinden.',
-      beschreibung: 'Durchschnittlicher Puls je Lauf in Schlägen pro Minute',
+      einheit: 'bpm',
       schritt: 10,
       wertVon: function (akt) {
         var hf = zahlAus(wertVon(akt, 'Ø Herzfrequenz'));
@@ -4353,6 +4815,7 @@ pre.ausgabe{
       wertText: function (wert) { return 'Ø ' + Math.round(wert) + ' bpm'; }
     });
   }
+
 
   /* ---------- Statistik: Aktivitätskalender ---------- */
 
@@ -5337,7 +5800,7 @@ pre.ausgabe{
   /* Die Kurzform steht nur auf dem Umschalter, die Karte behält ihre Überschrift */
   var DIAGRAMME = [
     { wert: 'schmerz', text: 'Schmerz', zeichnen: function () { return schmerzDiagramm(); } },
-    { wert: 'wochen', text: 'Wochen-km', zeichnen: function () { return wochenDiagramm(); } },
+    { wert: 'wochen', text: 'Kilometer', zeichnen: function () { return kilometerDiagramm(); } },
     { wert: 'tempo', text: 'Tempo', zeichnen: function () { return tempoDiagramm(); } },
     { wert: 'puls', text: 'Puls', zeichnen: function () { return pulsDiagramm(); } }
   ];
@@ -5410,6 +5873,8 @@ pre.ausgabe{
     ziel.appendChild(statKennzahlen());
 
     if (!statAktivitaeten(false).length) {
+      /* Das Diagramm bleibt mit Achse und dem Satz „In diesem Zeitraum liegt kein Lauf.“ stehen */
+      ziel.appendChild(diagrammWahl());
       var hinweisKarte = el('div', { class: 'karte' });
       hinweisKarte.appendChild(statHinweis('Für diesen Zeitraum sind keine Aktivitäten erfasst. Ein längerer Zeitraum zeigt mehr.'));
       ziel.appendChild(hinweisKarte);
