@@ -5380,7 +5380,7 @@ pre.ausgabe{
     unten.appendChild(skala);
 
     var flaeche = el('div', { class: 'kopf-band-flaeche' });
-    var balken = el('div', { class: 'kopf-band-balken' });
+    var balken = el('div', { class: 'kopf-band-balken', role: 'group', 'aria-label': 'Letzte 14 Tage' });
     var zeile = el('div', { class: 'kopf-band-tag', 'aria-live': 'polite' });
 
     function zeigeTag() {
@@ -5390,10 +5390,27 @@ pre.ausgabe{
       zeile.appendChild(el('span', { class: 'kopf-band-tag-datum',
         text: kopfBandWahl ? datumBandKurz(gewaehlt.datum) : 'Heute' }));
       zeile.appendChild(el('span', { class: 'kopf-band-tag-wert', text: bandTagWert(gewaehlt) }));
+      /* Ein Tab-Stopp für das ganze Band: der gewählte Tag, sonst heute */
       Array.prototype.forEach.call(balken.children, function (knopf) {
-        knopf.setAttribute('aria-pressed', knopf.getAttribute('data-datum') === kopfBandWahl ? 'true' : 'false');
+        var datum = knopf.getAttribute('data-datum');
+        knopf.setAttribute('aria-pressed', datum === kopfBandWahl ? 'true' : 'false');
+        knopf.tabIndex = datum === gewaehlt.datum ? 0 : -1;
       });
     }
+
+    /* Innerhalb des Bands wählen die Pfeiltasten den Nachbartag, Pos1 und Ende die Ränder */
+    balken.addEventListener('keydown', function (ereignis) {
+      var knoepfe = Array.prototype.slice.call(balken.children);
+      var jetzt = knoepfe.indexOf(document.activeElement);
+      if (jetzt < 0) return;
+      var ziel = { ArrowLeft: jetzt - 1, ArrowRight: jetzt + 1, Home: 0, End: knoepfe.length - 1 }[ereignis.key];
+      if (ziel === undefined) return;
+      ereignis.preventDefault();
+      ziel = Math.max(0, Math.min(knoepfe.length - 1, ziel));
+      kopfBandWahl = knoepfe[ziel].getAttribute('data-datum');
+      zeigeTag();
+      knoepfe[ziel].focus();
+    });
 
     tage.forEach(function (t) {
       var klasse = 'kopf-balken';
