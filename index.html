@@ -3451,7 +3451,8 @@ pre.ausgabe{
     { wert: 'woche', text: '1 Woche', tage: 7 }
   ];
 
-  var statZeitraum = 'gesamt';
+  /* Beim Öffnen der letzte Monat; die Wahl gilt nur für die Sitzung */
+  var statZeitraum = 'monat';
   var statNurLaeufe = true;
   /* Nur für die laufende Sitzung; nach dem Neuladen steht wieder „Schmerz“ */
   var statDiagramm = 'schmerz';
@@ -3819,8 +3820,8 @@ pre.ausgabe{
    */
   var VIELE_LAEUFE = 41;
   var LINIE_AB = 4;
-  /* Bekommt jeder Tag mindestens so viel Breite, stehen die Läufe an ihrem Tag */
-  var TAG_MIN_PX = 12;
+  /* Liegen zwei aufeinander folgende Läufe mindestens so weit auseinander, stehen sie an ihrem Tag */
+  var ZEITACHSE_MIN_PX = 9;
   /* Unter diesem Abstand zweier Punkte die enge Stufe */
   var ENG_PX = 12;
 
@@ -4014,17 +4015,19 @@ pre.ausgabe{
   }
 
   /*
-   * Ein Punkt je Lauf: Schmerzverlauf bis 40 Läufe, Tempo und Puls immer.
-   * Bis 40 Läufe stehen die Punkte an ihrem Tag, wenn jeder Tag des Zeitraums
-   * mindestens 12 px Breite hat; sonst gleichabständig, einer je Lauf, mit
-   * gestrichelten Pausen. Ab 41 Läufen echte Zeitachse, kleine Punkte und eine
-   * Trendlinie durch ausgewählte echte Läufe.
+   * Ein Punkt je Lauf: Schmerzverlauf ohne passende Anteilsstufe, Tempo und
+   * Puls immer. Bis 40 Läufe stehen die Punkte an ihrem Tag, wenn zwei
+   * aufeinander folgende Läufe nirgends näher als 9 px beieinander liegen;
+   * sonst gleichabständig, einer je Lauf, mit gestrichelten Pausen. Ab 41
+   * Läufen (Tempo, Puls) echte Zeitachse, kleine Punkte und eine Trendlinie
+   * durch ausgewählte echte Läufe.
    */
   function punktDiagramm(o) {
     var karte = diagrammKarte(o.titel, o.erklaerung, o.marke);
     var punkte = o.punkte;
     var n = punkte.length;
-    var dicht = n >= VIELE_LAEUFE;
+    /* Ab 41 Läufen dicht – außer beim Schmerzverlauf ohne passende Anteilsstufe */
+    var dicht = n >= VIELE_LAEUFE && o.dicht !== false;
     var fenster = statFenster();
 
     var breite = diagrammBreite();
@@ -4036,7 +4039,6 @@ pre.ausgabe{
     var flaecheHoehe = hoehe - oben - unten;
     var grund = oben + flaecheHoehe;
     var achse = zeitAchse(fenster, links, flaecheBreite);
-    var aufZeitachse = dicht || achse.proTag >= TAG_MIN_PX;
 
     function yVon(wert) { return oben + (1 - (wert - o.min) / (o.max - o.min)) * flaecheHoehe; }
     function yPunkt(p) { return p.wert === null ? grund + 14 : yVon(p.wert); }
@@ -4072,15 +4074,27 @@ pre.ausgabe{
     /* ---- Waagerechte ---- */
     var xs = [];
     var pausen = {};
+    /* Lage auf der Zeitachse; mehrere Läufe an einem Tag teilen sich dessen Breite */
+    var zeitXs = [];
+    var jeTag = {};
+    punkte.forEach(function (p) { jeTag[p.akt.datum] = (jeTag[p.akt.datum] || 0) + 1; });
+    var schonDa = {};
+    punkte.forEach(function (p) {
+      var k = schonDa[p.akt.datum] = (schonDa[p.akt.datum] || 0) + 1;
+      zeitXs.push(achse.xAnfang(p.akt.datum) + (k / (jeTag[p.akt.datum] + 1)) * achse.proTag);
+    });
+    /*
+     * Die Zeitachse gilt, wenn der engste Fall passt: der kleinste Abstand
+     * zweier aufeinander folgender Läufe mindestens 9 px, der Durchmesser eines
+     * Punkts samt Rand. Der Durchschnitt taugt nicht – neun Läufe in zwölf
+     * Tagen kleben auch in einem Monat zusammen, der im Mittel Platz hätte.
+     */
+    var engsterZeitAbstand = Infinity;
+    for (var z = 1; z < n; z++) engsterZeitAbstand = Math.min(engsterZeitAbstand, zeitXs[z] - zeitXs[z - 1]);
+    var aufZeitachse = dicht || engsterZeitAbstand >= ZEITACHSE_MIN_PX;
+
     if (aufZeitachse) {
-      /* Mehrere Läufe an einem Tag teilen sich die Breite dieses Tages */
-      var jeTag = {};
-      punkte.forEach(function (p) { jeTag[p.akt.datum] = (jeTag[p.akt.datum] || 0) + 1; });
-      var schonDa = {};
-      punkte.forEach(function (p) {
-        var k = schonDa[p.akt.datum] = (schonDa[p.akt.datum] || 0) + 1;
-        xs.push(achse.xAnfang(p.akt.datum) + (k / (jeTag[p.akt.datum] + 1)) * achse.proTag);
-      });
+      xs = zeitXs;
     } else {
       /*
        * Gleichabständig: ein Schritt von Lauf zu Lauf, eine Pause ab 14 Tagen
@@ -4338,10 +4352,13 @@ pre.ausgabe{
     /* Erster Import: Läufe da, aber keiner bewertet */
     var hinweis = laeufe.length && !bewertet ? erstImportHinweis() : null;
 
-    if (laeufe.length >= VIELE_LAEUFE) return anteilDiagramm(laeufe, hinweis);
+    var stufe = laeufe.length >= VIELE_LAEUFE ? anteilStufe(laeufe.length, statFenster()) : null;
+    if (stufe) return anteilDiagramm(laeufe, hinweis, stufe);
 
     return punktDiagramm({
       id: 'schmerz', titel: 'Schmerzverlauf',
+      /* Auch über 40 Läufe Einzelläufe, wenn keine Anteilsstufe genug Daten hat */
+      dicht: false,
       erklaerung: 'Erfasstes Befinden je Lauf, 0 steht für keine Beschwerden.',
       marke: laeufe.length ? laeufeText(laeufe.length) : '',
       punkte: punkte, min: 0, max: 5, gitter: [0, 1, 2, 3, 4, 5],
@@ -4407,17 +4424,35 @@ pre.ausgabe{
   }
 
   /*
-   * Schmerzverlauf ab 41 Läufen: nicht mehr jeder Lauf, sondern der Anteil der
-   * bewerteten Läufe mit Beschwerden je Abschnitt – dieselbe Zählung wie in
-   * der Kachel, kein Mittelwert. Läufe ohne Befinden stehen weder im Zähler
+   * Die feinste Stufe, die beide Bedingungen erfüllt: im Schnitt mindestens
+   * vier Läufe je Abschnitt – ein Anteil aus einem Lauf ist nur 0 oder 100 % –
+   * und mindestens vier Abschnitte im Zeitraum, sonst ist es keine
+   * Entwicklung. Gerechnet mit dem Durchschnitt, damit eine einzelne
+   * Urlaubswoche nicht die ganze Darstellung kippt. Null: keine Stufe passt.
+   */
+  var ANTEIL_STUFEN = [['tag', 1], ['woche', 7], ['monat', 365.25 / 12]];
+  var ANTEIL_MIN = 4;
+
+  function anteilStufe(laeufe, fenster) {
+    for (var i = 0; i < ANTEIL_STUFEN.length; i++) {
+      var abschnitte = fenster.tage / ANTEIL_STUFEN[i][1];
+      if (abschnitte >= ANTEIL_MIN && laeufe / abschnitte >= ANTEIL_MIN) return ANTEIL_STUFEN[i][0];
+    }
+    return null;
+  }
+
+  /*
+   * Schmerzverlauf mit genug Daten: nicht mehr jeder Lauf, sondern der Anteil
+   * der bewerteten Läufe mit Beschwerden je Abschnitt – dieselbe Zählung wie
+   * in der Kachel, kein Mittelwert. Läufe ohne Befinden stehen weder im Zähler
    * noch im Nenner; ein Abschnitt ganz ohne bewerteten Lauf ist gestrichelt.
    */
-  function anteilDiagramm(laeufe, hinweis) {
+  function anteilDiagramm(laeufe, hinweis, art) {
     var fenster = statFenster();
-    var art = fenster.tage <= 366 ? 'woche' : 'monat';
-    var marke = art === 'woche' ? 'Anteil je Woche' : 'Anteil je Monat';
+    var marke = { tag: 'Anteil je Tag', woche: 'Anteil je Woche', monat: 'Anteil je Monat' }[art];
     var karte = diagrammKarte('Schmerzverlauf',
-      'Anteil der Läufe mit Beschwerden an den Läufen mit erfasstem Befinden, ' + (art === 'woche' ? 'je Kalenderwoche.' : 'je Kalendermonat.'),
+      'Anteil der Läufe mit Beschwerden an den Läufen mit erfasstem Befinden, ' +
+        { tag: 'je Tag.', woche: 'je Kalenderwoche.', monat: 'je Kalendermonat.' }[art],
       marke);
 
     var abschnitte = fensterAbschnitte(fenster, art);
