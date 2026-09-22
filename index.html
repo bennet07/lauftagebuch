@@ -80,6 +80,9 @@
   --monat-lauf:#3C4478;
   --monat-leer:#17172A;
 
+  /* Linie und Fläche in Schmerzverlauf, Tempo und Puls */
+  --reihe-linie:#5A63B8;
+
   /* Kritische Aktion: Löschen, Ersetzen, Fehlermeldung – nie für Messwerte */
   --kritisch:#e06f5f;
   --kritisch-sanft:rgba(224,111,95,.14);
@@ -304,9 +307,8 @@ main > section > :first-child{margin-top:12px}
 .diagramm .balken-flaeche[aria-pressed="true"]{fill:var(--hauch)}
 /*
  * Ein Wert je Lauf (Schmerzverlauf, Tempo, Puls): Linie mit auslaufender
- * Fläche, Punkte in der Farbe des Befindens. Die Linienfarbe gilt nur hier.
+ * Fläche, Punkte in der Farbe des Befindens.
  */
-.diagramm .reihe{--reihe-linie:#5A63B8}
 .diagramm .reihe-null{stroke:var(--rand-sanft);stroke-width:1}
 .diagramm .reihe-linie{fill:none;stroke:var(--reihe-linie);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .diagramm .reihe-verlauf-oben{stop-color:var(--reihe-linie);stop-opacity:.3}
@@ -317,6 +319,9 @@ main > section > :first-child{margin-top:12px}
 .diagramm .reihe-punkt--ok{fill:var(--ok)}
 .diagramm .reihe-punkt--schmerz{fill:var(--schmerz)}
 .diagramm .reihe-punkt--offen{fill:var(--flaeche);stroke:var(--offen);stroke-width:1.5;stroke-dasharray:2 2}
+/* Enge Stufe unter 12 px Abstand: kleinere Punkte, schmalerer Rand; die Farbe bleibt */
+.diagramm .reihe--eng .reihe-punkt{stroke-width:1}
+.diagramm .reihe--eng .reihe-punkt--offen{stroke-dasharray:1 1}
 .diagramm .reihe-ring{fill:none;stroke:var(--akzent);stroke-width:2;pointer-events:none}
 .diagramm .reihe-knopf{cursor:pointer}
 .diagramm .reihe-knopf:focus{outline:none}
@@ -3861,15 +3866,30 @@ pre.ausgabe{
     var flaecheBreite = breite - links - rechts;
     var flaecheHoehe = hoehe - oben - unten;
     var grund = oben + flaecheHoehe;
-    var schritt = flaecheBreite / n;
 
-    function xVon(i) { return links + schritt * (i + 0.5); }
+    /*
+     * Gewichte der Verbindungen: ein Schritt von Lauf zu Lauf zählt 1, eine
+     * Pause ab 14 Tagen zählt 3 – Platz für die Wochenzahl in der Linie. Die
+     * Breite sagt nichts über die Dauer, die steht als Zahl da. Dazu je ein
+     * halber Schritt Rand links und rechts, wie ohne Pause bisher.
+     */
+    var lage = [0.5];
+    for (var j = 1; j < n; j++) {
+      var abstandTage = Math.round((tagAus(punkte[j].akt.datum) - tagAus(punkte[j - 1].akt.datum)) / 86400000);
+      lage.push(lage[j - 1] + (abstandTage >= PAUSE_TAGE ? 3 : 1));
+    }
+    var schritt = flaecheBreite / (lage[n - 1] + 0.5);
+    /* Unter 12 px Abstand die enge Stufe: kleinere Punkte, kleinerer Ring */
+    var eng = schritt < 12;
+    var punktRadius = eng ? 2 : 3.5, ringRadius = eng ? 5 : 8;
+
+    function xVon(i) { return links + schritt * lage[i]; }
     function yVon(wert) { return oben + (1 - (wert - o.min) / (o.max - o.min)) * flaecheHoehe; }
     function yPunkt(p) { return p.wert === null ? grund + 14 : yVon(p.wert); }
 
     var bild = svg('svg', {
       viewBox: '0 0 ' + breite + ' ' + hoehe, width: '100%', height: hoehe,
-      class: 'reihe', role: 'group', 'aria-label': o.beschreibung
+      class: 'reihe' + (eng ? ' reihe--eng' : ''), role: 'group', 'aria-label': o.beschreibung
     });
 
     /* Fläche unter der Linie: 30 % der Linienfarbe oben, nach unten auslaufend. Eigene id je Diagramm */
@@ -3928,7 +3948,7 @@ pre.ausgabe{
       zugEnde();
     });
 
-    var ring = svg('circle', { r: 8, class: 'reihe-ring', 'aria-hidden': 'true' });
+    var ring = svg('circle', { r: ringRadius, class: 'reihe-ring', 'aria-hidden': 'true' });
     var zeile = auswahlZeile();
     var knoten = [];
     var gewaehlt = null;
@@ -3940,11 +3960,13 @@ pre.ausgabe{
         'aria-label': wochentag(p.akt.datum) + ', ' + Number(p.akt.datum.slice(8, 10)) + '. ' +
           MONATE[Number(p.akt.datum.slice(5, 7)) - 1] + ' · ' + o.werteText(p)
       });
-      /* Unsichtbare Tippfläche über die Spalte, der sichtbare Punkt bleibt klein */
+      /* Unsichtbare Tippfläche bis zur Mitte zu den Nachbarn, der sichtbare Punkt bleibt klein */
+      var vonX = i === 0 ? x - schritt / 2 : (xVon(i - 1) + x) / 2;
+      var bisX = i === n - 1 ? x + schritt / 2 : (x + xVon(i + 1)) / 2;
       gruppe.appendChild(svg('rect', {
-        x: x - schritt / 2, y: oben, width: schritt, height: hoehe - oben - 20, class: 'reihe-tippflaeche'
+        x: vonX, y: oben, width: bisX - vonX, height: hoehe - oben - 20, class: 'reihe-tippflaeche'
       }));
-      gruppe.appendChild(svg('circle', { cx: x, cy: y, r: 3.5, class: 'reihe-punkt reihe-punkt--' + befindenArt(p.befinden) }));
+      gruppe.appendChild(svg('circle', { cx: x, cy: y, r: punktRadius, class: 'reihe-punkt reihe-punkt--' + befindenArt(p.befinden) }));
       bild.appendChild(gruppe);
       knoten.push(gruppe);
     });
@@ -4387,7 +4409,8 @@ pre.ausgabe{
     for (d = 1; d <= anzahlTage; d++) {
       var datum = eintrag.jahr + '-' + pad2(eintrag.monat) + '-' + pad2(d);
       var tag = tage[datum];
-      var befindenTag = tagesBefindenFuer(datum);
+      /* Dieselbe Regel wie im Band: Tagesbefinden und Befinden an den Aktivitäten zusammen */
+      var befindenTag = tagesLage(datum);
       /*
        * Vor dem Zählbeginn gab es das Erfassungsdesign nicht: dort weder Rahmen
        * noch Punkt, denn „nicht erfasst“ wäre eine falsche Aussage.
@@ -4418,7 +4441,7 @@ pre.ausgabe{
       var spalte = el('span', { class: 'kal-zelle' });
       spalte.appendChild(zelle);
       spalte.appendChild(el('span', { class: 'kal-punkt ' + befindenPunktKlasse(vorZaehlbeginn ? null : befindenTag), 'aria-hidden': 'true' }));
-      var befindenHinweis = vorZaehlbeginn ? ' · vor dem Zählbeginn' : ' · Tagesbefinden: ' + befindenExport(befindenTag);
+      var befindenHinweis = vorZaehlbeginn ? ' · vor dem Zählbeginn' : ' · Befinden: ' + befindenExport(befindenTag);
 
       if (tag) {
         if (tag.hatLauf && tag.hatAndere) zelle.appendChild(el('span', { class: 'kal-balken' }));
@@ -5525,11 +5548,9 @@ pre.ausgabe{
     var heute = heuteIso();
     /* Derselbe Beginn wie in der Tagesabdeckung: Zählbeginn, sonst erster Tag mit Daten */
     var beginn = abdeckungsBeginn(null);
-    var kmJeTag = {}, aktJeTag = {};
+    var kmJeTag = {};
     aktivitaeten.forEach(function (a) {
-      if (!a.datum) return;
-      (aktJeTag[a.datum] = aktJeTag[a.datum] || []).push(a);
-      if (!istLauf(a)) return;
+      if (!istLauf(a) || !a.datum) return;
       kmJeTag[a.datum] = (kmJeTag[a.datum] || 0) + kmVon(a);
     });
 
@@ -5541,7 +5562,7 @@ pre.ausgabe{
         datum: datum,
         hatLauf: hatLauf,
         km: hatLauf ? kmJeTag[datum] : 0,
-        befinden: befindenDesTages(datum, aktJeTag[datum] || []),
+        befinden: tagesLage(datum),
         vorher: !beginn || datum < beginn
       };
       if (tag.km > max) max = tag.km;
@@ -5646,15 +5667,17 @@ pre.ausgabe{
   }
 
   /*
-   * Was an einem Tag erfasst ist, zusammengefasst: Beschwerden, sobald das
-   * Tagesbefinden oder das Befinden irgendeiner Aktivität des Tages sie nennt;
-   * sonst keine Beschwerden, sobald eines von beiden erfasst ist; sonst null.
-   * Zurück kommt der Eintrag, der das belegt – ein Befinden an einer Aktivität
-   * vor dem Tagesbefinden, damit Zeile und Farbe dasselbe sagen.
+   * Die eine Befindensregel für einen Tag – Band und Kalender lesen beide hier.
+   * Beschwerden, sobald das Tagesbefinden oder das Befinden irgendeiner
+   * Aktivität des Tages sie nennt; sonst keine Beschwerden, sobald eines von
+   * beiden erfasst ist; sonst null. Zurück kommt der Eintrag, der das belegt –
+   * ein Befinden an einer Aktivität vor dem Tagesbefinden, damit Zeile und
+   * Farbe dasselbe sagen. Den Zählbeginn prüfen die Aufrufer.
    */
-  function befindenDesTages(datum, aktDesTages) {
+  function tagesLage(datum) {
     var kandidaten = [];
-    aktDesTages.forEach(function (a) {
+    aktivitaeten.forEach(function (a) {
+      if (a.datum !== datum) return;
       var b = befindenFuer(a.id);
       if (b) kandidaten.push(b);
     });
