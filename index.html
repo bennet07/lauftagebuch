@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Lauftagebuch">
-<meta name="theme-color" content="#0A0E14">
+<meta name="theme-color" content="#08080F">
 <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
 <title>Lauftagebuch</title>
 <style>
@@ -17,64 +17,64 @@
   color-scheme:dark;
 
   /* Grundflächen – flach, ohne Verlauf */
-  --bg-tief:#070A0F;
-  --bg:#0A0E14;
-  --flaeche:#19202C;        /* Karte */
-  --flaeche-sanft:#161B24;  /* Karte einer anderen Einheit */
-  --flaeche-tief:#111722;   /* Feld innerhalb einer Karte */
-  --flaeche-hoch:#222B3A;   /* Überfahren, Rückmeldung */
-  --flaeche-aktiv:#32405A;  /* aktives Feld im Umschalter, Rahmen der Dateifelder */
-  --rand:#2B3547;
-  --rand-sanft:#252E3C;
-  --rand-lauf:#2E3D55;
-  --rand-fein:#242E3D;      /* Trennlinie in einer Karte */
-  --rand-stark:#32405A;
-  --linie:#222B3A;          /* Rahmen der Umschalter, Datumsschiene */
+  --bg-tief:#05050B;
+  --bg:#08080F;
+  --flaeche:#151528;        /* Karte */
+  --flaeche-sanft:#12121F;  /* Karte einer anderen Einheit */
+  --flaeche-tief:#0E0E1A;   /* Feld innerhalb einer Karte */
+  --flaeche-hoch:#20203A;   /* Überfahren, Rückmeldung */
+  --flaeche-aktiv:#2E2E4C;  /* aktives Feld im Umschalter, Rahmen der Dateifelder */
+  --rand:#272742;
+  --rand-sanft:#23233C;
+  --rand-lauf:#33335C;
+  --rand-fein:#212138;      /* Trennlinie in einer Karte */
+  --rand-stark:#333356;
+  --linie:#202038;          /* Rahmen der Umschalter, Datumsschiene */
 
   /* Text in vier Abstufungen */
   --text:#FFFFFF;
-  --text-2:#A3AEC0;
-  --text-3:#93A0B4;         /* inaktiver Reiter, mittlere Beschriftungen */
-  --text-4:#8695AA;         /* die kleinsten Beschriftungen */
+  --text-2:#A9ACC4;
+  --text-3:#9DA2BE;         /* inaktiver Reiter, mittlere Beschriftungen */
+  --text-4:#989CB8;         /* die kleinsten Beschriftungen */
 
   /* Ein Akzent für alles Interaktive */
-  --akzent:#4D8DF0;
-  --akzent-hover:#6BA1F4;
-  --akzent-hell:#8FBCFF;    /* nur Beschriftung des aktiven Reiters: 4,5:1 auf --akzent-sanft */
-  --akzent-sanft:rgba(77,141,240,.18);
-  --akzent-flaeche:rgba(77,141,240,.16);
-  --akzent-rand:rgba(77,141,240,.38);
-  --akzent-meta:#7FA6D8;    /* Metazeile einer Lauf-Karte */
+  --akzent:#7C8CFF;
+  --akzent-hover:#A6B1FF;
+  --akzent-hell:#A6B1FF;    /* nur Beschriftung des aktiven Reiters: 4,5:1 auf --akzent-sanft */
+  --akzent-sanft:rgba(124,140,255,.18);
+  --akzent-flaeche:rgba(124,140,255,.16);
+  --akzent-rand:rgba(124,140,255,.38);
+  --akzent-meta:#A3ABE8;    /* Metazeile einer Lauf-Karte */
 
   /* Erfassung: nur der Ring und der Abdeckungsbalken */
-  --erfassung:#4FD1C5;
-  --erfassung-spur:#222D3E;
+  --erfassung:#3FD0E8;
+  --erfassung-spur:#23233C;
 
   /* Zwei Statusfarben – Kategorien, keine Wertung */
-  --ok:#5BD68F;
-  --ok-flaeche:rgba(91,214,143,.12);
-  --ok-rand:rgba(91,214,143,.30);
+  --ok:#3FD0E8;
+  --ok-flaeche:rgba(63,208,232,.12);
+  --ok-rand:rgba(63,208,232,.30);
   --schmerz:#FFB02E;
   --schmerz-flaeche:rgba(255,176,46,.12);
   --schmerz-rand:rgba(255,176,46,.34);
 
-  --offen:#66738A;          /* gestrichelt: nicht erfasst – hält 3:1 auf allen Flächen */
+  --offen:#6A6A8F;          /* gestrichelt: nicht erfasst – hält 3:1 auf allen Flächen */
 
-  --andere-symbol-flaeche:#232C3A;
-  --andere-symbol:#93A6BE;
+  --andere-symbol-flaeche:#232338;
+  --andere-symbol:#A0A3C0;
 
   /* Kalender: Umfang in vier Stufen */
-  --kal-1:#1E2E45;
-  --kal-2:#2C4A72;
-  --kal-3:#3C6BA8;
-  --kal-4:#4D8DF0;
-  --kal-andere-1:#23203A;   /* andere Einheit: vier Stufen nach Dauer, Violett */
-  --kal-andere-2:#2C2851;
-  --kal-andere-3:#372F6B;
-  --kal-andere-4:#443B86;
-  --kal-andere-zahl:#C6D2E2;
-  --kal-leer:#141A24;
-  --kal-zukunft:#0F141C;
+  --kal-1:#1C1C33;
+  --kal-2:#2B2B5E;
+  --kal-3:#4650A8;
+  --kal-4:#7C8CFF;
+  --kal-andere-1:#251C38;   /* andere Einheit: vier Stufen nach Dauer, Violett */
+  --kal-andere-2:#382553;
+  --kal-andere-3:#4D3270;
+  --kal-andere-4:#664091;
+  --kal-andere-zahl:#D3C9E4;
+  --kal-leer:#101018;
+  --kal-zukunft:#0B0B12;
 
   /* Kritische Aktion: Löschen, Ersetzen, Fehlermeldung – nie für Messwerte */
   --kritisch:#e06f5f;
@@ -83,7 +83,7 @@
 
   --hauch:rgba(255,255,255,.04);
   --hauch-schwach:rgba(255,255,255,.03);
-  --schirm:rgba(7,10,15,.78);
+  --schirm:rgba(5,5,11,.78);
   --schatten-tief:rgba(0,0,0,.4);
 
   --radius-gross:18px;      /* Karte, Reiterleiste */
@@ -96,7 +96,7 @@
   --leiste-hoehe:65px;
   /* Abstand unter der Pille: die Safe-Area selbst, mindestens 10 px – nicht beides addiert */
   --leiste-unten:max(10px,env(safe-area-inset-bottom,0px));
-  --bg-klar:rgba(10,14,20,0);   /* --bg mit Alpha 0: Verlauf ohne Graustich */
+  --bg-klar:rgba(8,8,15,0);   /* --bg mit Alpha 0: Verlauf ohne Graustich */
   --schatten-leiste:0 8px 28px -10px rgba(0,0,0,.9);
   --schatten-hoch:0 2px 4px var(--schatten-tief),0 30px 60px -22px rgba(0,0,0,.95);
 
@@ -146,45 +146,56 @@ button{font:inherit;color:inherit}
 }
 .wortmarke{flex:0 0 auto;width:20px;height:20px;color:var(--akzent)}
 
-/* ---------- Kopfkarte im Verlauf: links der Erfassungsring, rechts drei Felder ---------- */
+/* ---------- Kopfkarte im Verlauf: oben die Läufe und zwei Felder, darunter 14 Tage ---------- */
 /* .karte.kopfkarte: sonst gewinnt der Innenabstand von .karte (20 px), der weiter unten steht */
-.karte.kopfkarte{display:flex;align-items:stretch;gap:12px;padding:12px;margin-top:12px}
-.ring{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.ring-kreis{position:relative;width:58px;height:58px}
-/* Um 90° gegen den Uhrzeigersinn gedreht: der Bogen beginnt oben */
-.ring-bild{display:block;width:58px;height:58px;transform:rotate(-90deg)}
-.ring-spur{fill:none;stroke:var(--erfassung-spur);stroke-width:6}
-.ring-bogen{fill:none;stroke:var(--erfassung);stroke-width:6;stroke-linecap:round}
-.ring-zahl{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+.karte.kopfkarte{display:block;padding:12px;margin-top:12px}
+.kopf-oben{display:flex;align-items:flex-end;gap:12px}
+.kopf-summe{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:6px}
+.kopf-summe-zahl{
+  font-size:40px;font-weight:800;line-height:.9;letter-spacing:-.04em;
+  color:var(--akzent);font-variant-numeric:tabular-nums;
 }
-.ring-name{font-size:9px;font-weight:600;color:var(--text-4);white-space:nowrap;line-height:1.2}
-.kopf-felder{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kopf-summe-name{font-size:16px;font-weight:600;color:var(--text-2)}
+.kopf-felder{flex:0 0 auto;display:flex;gap:8px}
 .kopf-feld{
-  display:flex;flex-direction:column;min-width:0;
-  padding:8px;border-radius:var(--radius);background:var(--flaeche-tief);
+  min-width:0;padding:8px 12px;border-radius:var(--radius);
+  background:var(--flaeche-tief);border:1px solid var(--rand-sanft);text-align:right;
 }
 .kopf-feld-zahl{
-  font-size:21px;font-weight:800;letter-spacing:-.03em;line-height:1.05;
-  font-variant-numeric:tabular-nums;white-space:nowrap;
+  font-size:20px;font-weight:700;line-height:1;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;color:var(--erfassung);
 }
 .kopf-feld-zahl.ist-schmerz{color:var(--schmerz)}
-.kopf-feld-nenner{font-size:13px;font-weight:600;letter-spacing:0;color:var(--text-2)}
-.kopf-feld-name{margin-top:4px;font-size:10px;font-weight:500;color:var(--text-2);line-height:1.3}
-.kopf-feld-grafik{margin-top:auto;padding-top:8px}
-.kopf-feld-grafik:empty{display:none}
-/* Acht Wochen bleiben schmale Balken, auch wenn das Feld breit wird */
-.mini-balken{display:block;width:100%;max-width:120px;height:22px}
-.mini-grund{stroke:var(--rand-fein);stroke-width:1;vector-effect:non-scaling-stroke}
-.mini-balken-stab{fill:var(--akzent)}
-.kopf-feld .summe-flaeche{height:22px}
-/* Anteil über alle Läufe; ohne Befinden gestrichelt, damit es nicht wie ein Wert aussieht */
-.anteil{display:flex;gap:4px;height:7px;margin-bottom:8px}
-.anteil-teil{flex:0 0 0;min-width:4px;border-radius:4px}
-.anteil--schmerz{background:var(--schmerz)}
-.anteil--ok{background:var(--ok)}
-.anteil--offen{border:1px dashed var(--offen)}
+.kopf-feld-name{margin-top:4px;font-size:10px;font-weight:500;color:var(--text-3)}
+
+/* Ein Balken je Kalendertag: Höhe nach Kilometern, Farbe nach dem Tagesbefinden */
+.kopf-band{margin-top:12px;padding:12px;border-radius:var(--radius);background:var(--flaeche-tief)}
+.kopf-band-kopf{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.kopf-band-titel{flex:1 1 auto;font-size:12px;font-weight:700;color:var(--text-3)}
+.kopf-band-zahl{flex:0 0 auto;font-size:12px;font-weight:500;color:var(--text-3);font-variant-numeric:tabular-nums}
+.kopf-band-unten{display:flex;align-items:stretch;gap:8px}
+.kopf-band-skala{
+  flex:0 0 auto;display:flex;flex-direction:column;justify-content:space-between;
+  align-items:flex-end;width:28px;height:42px;font-size:9px;font-weight:600;color:var(--text-4);line-height:1;
+  white-space:nowrap;
+}
+.kopf-band-flaeche{flex:1 1 auto;min-width:0;border-left:1px solid var(--rand-sanft);padding-left:8px}
+.kopf-band-balken{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;align-items:end;height:42px}
+.kopf-band-balken button{border:0;background:none;padding:0;display:flex;align-items:flex-end;height:42px;cursor:pointer}
+.kopf-band-balken button > span{width:100%;border-radius:3px}
+.kopf-band-balken button[aria-pressed="true"] > span{outline:2px solid var(--akzent);outline-offset:2px}
+/* Die Tageszeile ersetzt die Legende: sie nennt immer einen Tag mit seinen Werten */
+.kopf-band-tag{
+  display:flex;align-items:baseline;gap:6px;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--rand-sanft);font-size:11px;
+}
+.kopf-band-tag-datum{flex:0 0 auto;font-weight:700;color:var(--akzent)}
+.kopf-band-tag-wert{flex:1 1 auto;min-width:0;font-weight:500;color:var(--text-2)}
+.kopf-balken{background:var(--ok)}
+.kopf-balken--schmerz{background:var(--schmerz)}
+.kopf-balken--offen{background:none;border:1px dashed var(--offen)}
+/* Vor dem Zählbeginn: weder gefüllt noch gestrichelt – „nicht erfasst“ wäre dort falsch */
+.kopf-balken--vorher{background:var(--rand-fein)}
 
 .ergebnis.verlaufs-meldung{margin-top:8px}
 /* Vom Seitenkopf zum ersten Inhalt 12 px; im Verlauf folgt er auf die Kopfkarte, dort 8 px */
@@ -5263,6 +5274,9 @@ pre.ausgabe{
     ziel.removeAttribute('hidden');
   }
 
+  /* Im Band angetippter Tag; null zeigt heute. Gilt nur für die Sitzung */
+  var kopfBandWahl = null;
+
   function zeichneKopfzahlen() {
     var ziel = document.getElementById('kopfzahlen');
     leeren(ziel);
@@ -5270,121 +5284,174 @@ pre.ausgabe{
     if (!aktivitaeten.length || aktiverTab !== 'verlauf') { ziel.setAttribute('hidden', ''); return; }
     ziel.removeAttribute('hidden');
 
-    var laeufe = 0, erfasst = 0, mitSchmerz = 0, km = 0;
+    var laeufe = 0, erfasst = 0, mitSchmerz = 0;
     aktivitaeten.forEach(function (a) {
       if (!istLauf(a)) return;
       laeufe++;
-      km += kmVon(a);
       var b = befindenFuer(a.id);
       if (!b) return;
       erfasst++;
       if (b.art === 'schmerz') mitSchmerz++;
     });
 
-    /* Links der Ring: an wie vielen Tagen seit dem Zählbeginn ein Tages-Befinden steht */
-    ziel.appendChild(erfassungsRing(abdeckungAb(abdeckungsBeginn(null))));
+    var oben = el('div', { class: 'kopf-oben' });
+    var summe = el('div', { class: 'kopf-summe' });
+    summe.appendChild(el('span', { class: 'kopf-summe-zahl', text: String(laeufe) }));
+    summe.appendChild(el('span', { class: 'kopf-summe-name', text: laeufe === 1 ? 'Lauf' : 'Läufe' }));
+    oben.appendChild(summe);
 
     /*
-     * Rechts drei Felder über den gesamten Bestand. Die Kleingrafiken zeigen die
-     * letzten acht Kalenderwochen mit Daten, gerechnet wie „Kilometer pro Woche“.
+     * „erfasst“ zählt hier Läufe mit Befinden, im Band darunter Tage mit
+     * Tagesbefinden. Der ausgeschriebene Name hält beides auseinander.
+     * Schmerz bezieht sich auf die erfassten Läufe: ohne Befinden zählt ein
+     * Lauf nicht still als beschwerdefrei.
      */
-    var alle = aktivitaeten.filter(function (a) { return !!a.datum; });
-    alle.sort(function (x, y) { return -sortiereAbsteigend(x, y); });
-    var wochen = wochenUmfang(alle).slice(-8);
-
     var felder = el('div', { class: 'kopf-felder' });
-    felder.appendChild(kopfFeld(String(laeufe), laeufe === 1 ? 'Lauf' : 'Läufe', '',
-      laeufeJeWoche(wochen)));
-    felder.appendChild(kopfFeld(zahlText(km, km >= 100 ? 0 : 1), 'Kilometer', '',
-      wochenFlaeche(wochen)));
-    /*
-     * „4 /11“: Läufe mit Schmerz von den Läufen mit erfasstem Befinden. Läufe
-     * ohne Befinden zählen nicht als beschwerdefrei – sie stehen im Balken gestrichelt.
-     */
-    var schmerzFeld = kopfFeld(String(mitSchmerz), 'mit Schmerz', ' ist-schmerz',
-      anteilsBalken(mitSchmerz, erfasst - mitSchmerz, laeufe - erfasst), '/' + erfasst);
-    schmerzFeld.setAttribute('title', mitSchmerz + ' von ' + erfasst +
-      (erfasst === 1 ? ' Lauf mit erfasstem Befinden' : ' Läufen mit erfasstem Befinden') + ' mit Schmerz');
-    felder.appendChild(schmerzFeld);
-    ziel.appendChild(felder);
+    felder.appendChild(kopfFeld(erfasst, 'erfasst', '',
+      erfasst + ' von ' + laeufe + (laeufe === 1 ? ' Lauf' : ' Läufen') + ' mit erfasstem Befinden'));
+    felder.appendChild(kopfFeld(mitSchmerz, 'Schmerz', ' ist-schmerz',
+      mitSchmerz + ' von ' + erfasst + (erfasst === 1 ? ' Lauf' : ' Läufen') + ' mit erfasstem Befinden mit Schmerz'));
+    oben.appendChild(felder);
+    ziel.appendChild(oben);
+
+    ziel.appendChild(tagesBand());
   }
 
-  function kopfFeld(wert, name, klasse, grafik, nenner) {
-    var feld = el('div', { class: 'kopf-feld' });
-    var zahl = el('div', { class: 'kopf-feld-zahl' + klasse, text: wert });
-    if (nenner) {
-      zahl.appendChild(el('span', { class: 'kopf-feld-nenner', 'aria-hidden': 'true', text: ' ' + nenner }));
-      zahl.appendChild(el('span', { class: 'nur-vorlesen', text: ' von ' + nenner.slice(1) + ' mit erfasstem Befinden' }));
-    }
-    feld.appendChild(zahl);
-    feld.appendChild(el('div', { class: 'kopf-feld-name', text: name }));
-    var unten = el('div', { class: 'kopf-feld-grafik' });
-    if (grafik) unten.appendChild(grafik);
-    feld.appendChild(unten);
+  function kopfFeld(wert, name, klasse, langText) {
+    var feld = el('div', { class: 'kopf-feld', title: langText });
+    feld.appendChild(el('div', { class: 'kopf-feld-zahl' + klasse, 'aria-hidden': 'true', text: String(wert) }));
+    feld.appendChild(el('div', { class: 'kopf-feld-name', 'aria-hidden': 'true', text: name }));
+    feld.appendChild(el('span', { class: 'nur-vorlesen', text: langText }));
     return feld;
   }
 
-  function erfassungsRing(abdeckung) {
-    var prozent = abdeckung ? abdeckung.prozent : null;
-    var box = el('div', {
-      class: 'ring', role: 'img',
-      'aria-label': abdeckung
-        ? 'Tagesbefinden an ' + prozent + ' % der Tage seit ' + seitText(abdeckung.start) + ' erfasst (' + abdeckung.erfasst + ' von ' + abdeckung.gesamt + ')'
-        : 'Noch kein Tag im erfassten Zeitraum'
+  /*
+   * Die letzten 14 Kalendertage bis heute, links der älteste. Höhe nach den
+   * Kilometern aller Läufe des Tages, Farbe nach dem Tagesbefinden – derselben
+   * Quelle wie im Kalender.
+   */
+  function tagesBand() {
+    var heute = heuteIso();
+    /* Derselbe Beginn wie in der Tagesabdeckung: Zählbeginn, sonst erster Tag mit Daten */
+    var beginn = abdeckungsBeginn(null);
+    var kmJeTag = {};
+    aktivitaeten.forEach(function (a) {
+      if (!istLauf(a) || !a.datum) return;
+      kmJeTag[a.datum] = (kmJeTag[a.datum] || 0) + kmVon(a);
     });
-    var r = 26, umfang = 2 * Math.PI * r;
-    var bild = svg('svg', { class: 'ring-bild', viewBox: '0 0 58 58', 'aria-hidden': 'true', focusable: 'false' });
-    bild.appendChild(svg('circle', { cx: 29, cy: 29, r: r, class: 'ring-spur' }));
-    if (prozent) {
-      bild.appendChild(svg('circle', {
-        cx: 29, cy: 29, r: r, class: 'ring-bogen',
-        'stroke-dasharray': (umfang * prozent / 100).toFixed(2) + ' ' + umfang.toFixed(2)
-      }));
+
+    var tage = [], max = 0, gezaehlt = 0, mitBefinden = 0;
+    for (var i = 13; i >= 0; i--) {
+      var datum = isoAusZeit(tagAus(heute) - i * 86400000);
+      var hatLauf = Object.prototype.hasOwnProperty.call(kmJeTag, datum);
+      var tag = {
+        datum: datum,
+        hatLauf: hatLauf,
+        km: hatLauf ? kmJeTag[datum] : 0,
+        befinden: tagesBefindenFuer(datum),
+        vorher: !beginn || datum < beginn
+      };
+      if (tag.km > max) max = tag.km;
+      if (!tag.vorher) {
+        gezaehlt++;
+        if (tag.befinden) mitBefinden++;
+      }
+      tage.push(tag);
     }
-    var mitte = el('div', { class: 'ring-kreis' });
-    mitte.appendChild(bild);
-    mitte.appendChild(el('span', { class: 'ring-zahl', text: prozent === null ? '–' : prozent + ' %' }));
-    box.appendChild(mitte);
-    box.appendChild(el('span', { class: 'ring-name', text: 'Tage erfasst' }));
-    if (abdeckung) box.appendChild(el('span', { class: 'ring-name ring-zeitraum', text: 'seit ' + seitText(abdeckung.start) }));
-    return box;
+    if (kopfBandWahl && !tage.some(function (t) { return t.datum === kopfBandWahl; })) kopfBandWahl = null;
+
+    var band = el('div', { class: 'kopf-band' });
+    var kopf = el('div', { class: 'kopf-band-kopf' });
+    kopf.appendChild(el('span', { class: 'kopf-band-titel', text: 'Letzte 14 Tage' }));
+    if (gezaehlt) {
+      var langText = 'Tagesbefinden an ' + mitBefinden + ' von ' + gezaehlt + (gezaehlt === 1 ? ' Tag' : ' Tagen') + ' erfasst';
+      var zahl = el('span', { class: 'kopf-band-zahl', title: langText });
+      zahl.appendChild(el('span', { 'aria-hidden': 'true',
+        text: (gezaehlt === 14 ? mitBefinden : mitBefinden + ' von ' + gezaehlt) + ' erfasst' }));
+      zahl.appendChild(el('span', { class: 'nur-vorlesen', text: langText }));
+      kopf.appendChild(zahl);
+    }
+    band.appendChild(kopf);
+
+    var unten = el('div', { class: 'kopf-band-unten' });
+    var skala = el('div', { class: 'kopf-band-skala', 'aria-hidden': 'true' });
+    skala.appendChild(el('span', { text: max > 0 ? zahlText(max, max >= 10 ? 0 : 1) + ' km' : '' }));
+    skala.appendChild(el('span', { text: '0' }));
+    unten.appendChild(skala);
+
+    var flaeche = el('div', { class: 'kopf-band-flaeche' });
+    var balken = el('div', { class: 'kopf-band-balken' });
+    var zeile = el('div', { class: 'kopf-band-tag', 'aria-live': 'polite' });
+
+    function zeigeTag() {
+      var gewaehlt = null;
+      tage.forEach(function (t) { if (t.datum === (kopfBandWahl || heute)) gewaehlt = t; });
+      leeren(zeile);
+      zeile.appendChild(el('span', { class: 'kopf-band-tag-datum',
+        text: kopfBandWahl ? datumBandKurz(gewaehlt.datum) : 'Heute' }));
+      zeile.appendChild(el('span', { class: 'kopf-band-tag-wert', text: bandTagWert(gewaehlt) }));
+      Array.prototype.forEach.call(balken.children, function (knopf) {
+        knopf.setAttribute('aria-pressed', knopf.getAttribute('data-datum') === kopfBandWahl ? 'true' : 'false');
+      });
+    }
+
+    tage.forEach(function (t) {
+      var klasse = 'kopf-balken';
+      if (t.vorher) klasse += ' kopf-balken--vorher';
+      else if (!t.befinden) klasse += ' kopf-balken--offen';
+      else if (t.befinden.art === 'schmerz') klasse += ' kopf-balken--schmerz';
+      /* Ohne Lauf ein Sockel von 6 px, damit die Farbe des Tages zu sehen bleibt */
+      var hoehe = t.km > 0 ? Math.max(6, Math.round((t.km / max) * 42)) : 6;
+      var stab = el('span', { class: klasse, 'aria-hidden': 'true' });
+      stab.style.height = hoehe + 'px';
+      var knopf = el('button', {
+        type: 'button', 'data-datum': t.datum, 'aria-pressed': 'false',
+        'aria-label': bandTagLang(t)
+      }, stab);
+      knopf.addEventListener('click', function () {
+        kopfBandWahl = kopfBandWahl === t.datum ? null : t.datum;
+        zeigeTag();
+      });
+      balken.appendChild(knopf);
+    });
+
+    flaeche.appendChild(balken);
+    unten.appendChild(flaeche);
+    band.appendChild(unten);
+    band.appendChild(zeile);
+    zeigeTag();
+    return band;
   }
 
-  /* Acht schmale Balken: Läufe je Kalenderwoche */
-  function laeufeJeWoche(wochen) {
-    if (!wochen.length) return null;
-    var max = 0;
-    wochen.forEach(function (w) { if (w.laeufe > max) max = w.laeufe; });
-    var bild = svg('svg', {
-      class: 'mini-balken', viewBox: '0 0 80 22', preserveAspectRatio: 'none',
-      'aria-hidden': 'true', focusable: 'false'
-    });
-    bild.appendChild(svg('line', { x1: 0, x2: 80, y1: 21.5, y2: 21.5, class: 'mini-grund' }));
-    wochen.forEach(function (w, i) {
-      if (!w.laeufe) return;
-      var hoehe = Math.max(3, (w.laeufe / max) * 20);
-      bild.appendChild(svg('rect', {
-        x: i * 10 + 2, y: 22 - hoehe, width: 6, height: hoehe, rx: 1.5, class: 'mini-balken-stab'
-      }));
-    });
-    return bild;
+  /* „Do, 17. Sep“ */
+  function datumBandKurz(iso) {
+    return wochentag(iso).slice(0, 2) + ', ' + Number(iso.slice(8, 10)) + '. ' +
+      MONATE[Number(iso.slice(5, 7)) - 1].slice(0, 3);
   }
 
-  /* Anteil über alle Läufe: mit Schmerz, ohne Beschwerden, ohne Befinden (gestrichelt) */
-  function anteilsBalken(schmerz, ok, offen) {
-    var gesamt = schmerz + ok + offen;
-    if (!gesamt) return null;
-    var balken = el('div', { class: 'anteil', role: 'img' });
-    [['anteil--schmerz', schmerz], ['anteil--ok', ok], ['anteil--offen', offen]].forEach(function (teil) {
-      if (!teil[1]) return;
-      var stueck = el('span', { class: 'anteil-teil ' + teil[0] });
-      stueck.style.flexGrow = String(teil[1]);
-      balken.appendChild(stueck);
-    });
-    var text = schmerz + ' mit Schmerz · ' + ok + ' ohne Beschwerden · ' + offen + ' ohne Befinden';
-    balken.setAttribute('title', text);
-    balken.setAttribute('aria-label', 'Läufe: ' + text);
-    return balken;
+  /* „Knie links, Stärke 2“ – die Farbe des Balkens sagt schon, dass es Schmerz ist */
+  function bandBefindenKurz(b) {
+    if (b.art !== 'schmerz') return 'keine Beschwerden';
+    var ort = [];
+    if (b.ort) ort.push(b.ort);
+    if (b.seite && b.seite !== 'keine Angabe') ort.push(b.seite);
+    return (ort.length ? ort.join(' ') : 'Schmerz') + (b.staerke ? ', Stärke ' + b.staerke : '');
+  }
+
+  function bandTagWert(t) {
+    var teile = [t.hatLauf ? zahlText(t.km, 1) + ' km' : 'kein Lauf'];
+    /* Vor dem Zählbeginn kein Befindenstext: „nicht erfasst“ wäre dort falsch */
+    if (!t.vorher) teile.push(t.befinden ? bandBefindenKurz(t.befinden) : 'nicht erfasst');
+    return teile.join(' · ');
+  }
+
+  /* „Mittwoch, 17. September · 8,4 km · Tagesbefinden: keine Beschwerden“ */
+  function bandTagLang(t) {
+    var text = wochentag(t.datum) + ', ' + Number(t.datum.slice(8, 10)) + '. ' +
+      MONATE[Number(t.datum.slice(5, 7)) - 1] + ' · ' + (t.hatLauf ? zahlText(t.km, 1) + ' km' : 'kein Lauf');
+    if (t.vorher) return text + ' · vor dem Zählbeginn';
+    if (!t.befinden) return text + ' · Tagesbefinden: nicht erfasst';
+    return text + ' · Tagesbefinden: ' + (t.befinden.art === 'schmerz' ? 'Schmerz, ' : '') + bandBefindenKurz(t.befinden);
   }
 
   function zeichneVerlauf() {
