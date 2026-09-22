@@ -3786,6 +3786,16 @@ pre.ausgabe{
    * Die Farbe eines Punkts ist das erfasste Befinden, sonst nichts.
    */
   var PAUSE_TAGE = 14;
+  /* Um die Wochenzahl: je 3 px Luft und mindestens 6 px Strich auf jeder Seite */
+  var PAUSE_LUFT = 3, PAUSE_STRICH = 6;
+  var PAUSE_RAND = 2 * (PAUSE_LUFT + PAUSE_STRICH);
+  /* Schmaler dürfen die übrigen Schritte für breite Pausen nicht werden */
+  var PAUSE_MIN_SCHRITT = 4;
+
+  function wochenText(tage) {
+    var wochen = Math.round(tage / 7);
+    return wochen + (wochen === 1 ? ' Woche' : ' Wochen');
+  }
 
   function befindenArt(b) {
     if (!b) return 'offen';
@@ -3868,22 +3878,51 @@ pre.ausgabe{
     var grund = oben + flaecheHoehe;
 
     /*
-     * Gewichte der Verbindungen: ein Schritt von Lauf zu Lauf zählt 1, eine
-     * Pause ab 14 Tagen zählt 3 – Platz für die Wochenzahl in der Linie. Die
-     * Breite sagt nichts über die Dauer, die steht als Zahl da. Dazu je ein
-     * halber Schritt Rand links und rechts, wie ohne Pause bisher.
+     * Abstände: ein Schritt von Lauf zu Lauf, eine Pause ab 14 Tagen breiter –
+     * Platz für die Wochenzahl in der Linie. Die Breite sagt nichts über die
+     * Dauer, die steht als Zahl da. Dazu je ein halber Schritt Rand links und
+     * rechts, wie ohne Pause bisher.
      */
-    var lage = [0.5];
+    var pausen = [], einfache = 0;
     for (var j = 1; j < n; j++) {
       var abstandTage = Math.round((tagAus(punkte[j].akt.datum) - tagAus(punkte[j - 1].akt.datum)) / 86400000);
-      lage.push(lage[j - 1] + (abstandTage >= PAUSE_TAGE ? 3 : 1));
+      if (abstandTage < PAUSE_TAGE) { einfache++; continue; }
+      /* Was die Wochenzahl in der Linie braucht – dieselbe Rechnung wie in pauseStrecke() */
+      pausen.push({ index: j, bedarf: textBreite(wochenText(abstandTage), 9, 600) + PAUSE_RAND });
     }
-    var schritt = flaecheBreite / (lage[n - 1] + 0.5);
+
+    /*
+     * Eine Pause ist mindestens drei Schritte breit, sonst so breit, wie ihre
+     * Wochenzahl braucht. Die Schrittbreite folgt aus dem, was übrig bleibt;
+     * wird sie zu schmal, gilt für alle Pausen wieder nur das Gewicht 3.
+     */
+    var schritt = flaecheBreite / (einfache + 1 + 3 * pausen.length);
+    var breitePause = {};
+    for (var runde = 0; runde <= pausen.length; runde++) {
+      var fest = 0, gewicht = einfache + 1;
+      pausen.forEach(function (p) {
+        if (p.bedarf > 3 * schritt) fest += p.bedarf;
+        else gewicht += 3;
+      });
+      var neu = (flaecheBreite - fest) / gewicht;
+      if (Math.abs(neu - schritt) < 0.01) break;
+      schritt = neu;
+    }
+    if (schritt >= PAUSE_MIN_SCHRITT) {
+      pausen.forEach(function (p) { breitePause[p.index] = Math.max(3 * schritt, p.bedarf); });
+    } else {
+      schritt = flaecheBreite / (einfache + 1 + 3 * pausen.length);
+    }
+
+    var lage = [schritt / 2];
+    for (var m = 1; m < n; m++) {
+      lage.push(lage[m - 1] + (breitePause[m] || (pausen.some(function (p) { return p.index === m; }) ? 3 * schritt : schritt)));
+    }
     /* Unter 12 px Abstand die enge Stufe: kleinere Punkte, kleinerer Ring */
     var eng = schritt < 12;
     var punktRadius = eng ? 2 : 3.5, ringRadius = eng ? 5 : 8;
 
-    function xVon(i) { return links + schritt * lage[i]; }
+    function xVon(i) { return links + lage[i]; }
     function yVon(wert) { return oben + (1 - (wert - o.min) / (o.max - o.min)) * flaecheHoehe; }
     function yPunkt(p) { return p.wert === null ? grund + 14 : yVon(p.wert); }
 
@@ -4010,8 +4049,7 @@ pre.ausgabe{
    * braucht. Reicht die Strecke dafür nicht, bleibt sie ohne Beschriftung.
    */
   function pauseStrecke(bild, x1, y1, x2, y2, tage) {
-    var wochen = Math.round(tage / 7);
-    var text = wochen + (wochen === 1 ? ' Woche' : ' Wochen');
+    var text = wochenText(tage);
     var dx = x2 - x1, dy = y2 - y1;
     var laenge = Math.sqrt(dx * dx + dy * dy);
     var ux = dx / laenge, uy = dy / laenge;
@@ -4020,10 +4058,10 @@ pre.ausgabe{
     var imKasten = Math.min(
       Math.abs(ux) > 1e-6 ? (breiteText / 2) / Math.abs(ux) : Infinity,
       Math.abs(uy) > 1e-6 ? (hoeheText / 2) / Math.abs(uy) : Infinity);
-    var luecke = imKasten + 3;
+    var luecke = imKasten + PAUSE_LUFT;
     var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
 
-    if (laenge / 2 - luecke < 6) {
+    if (laenge / 2 - luecke < PAUSE_STRICH - 0.01) {
       bild.appendChild(svg('line', { x1: x1, y1: y1, x2: x2, y2: y2, class: 'reihe-pause' }));
       return;
     }
